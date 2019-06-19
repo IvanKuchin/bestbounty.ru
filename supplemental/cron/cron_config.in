@@ -1,0 +1,4 @@
+40 23 * * *	root ${CRON_INSTALL_DIR}/health
+* * * * *	root ${CRON_INSTALL_DIR}/cron_minute
+0 3 * * *	root ${CRON_INSTALL_DIR}/cron_daily
+
