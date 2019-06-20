@@ -14,8 +14,6 @@
 
 using namespace std;
 
-// extern int convert_utf8_to_windows1251(const char* utf8, char* windows1251, size_t n);
-
 class CHTML
 {
 private: 
@@ -31,8 +29,6 @@ private:
 	string							embedVideoURL = "";
 	string							type = "feed"; // --- depends on type different /images/xxxx folders stores images
 	bool							isParsingRequired = true;
-
-	string 							ConvertUTF8ToCP1251(const string &);
 
 	string 							GetTagContent(string tag_name);
 	string							GetAttributeValue(string tag_name, string attr_name, string name_content, string attr_content_name);

@@ -40,7 +40,7 @@
 #define	DB_LOGIN									"bestbounty"
 #define	DB_PASSWORD									"bestbounty"
 #define	DB_HOST										"localhost"
-#define	DB_CHARSET									"cp1251"s
+#define	DB_CHARSET									"utf8"s
 
 #define	DOMAIN_NAME									string(DB_NAME)
 
@@ -186,6 +186,6 @@
 #define	SMSC_LOGIN									"ivan.kuchin"s
 #define	SMSC_PASSWORD								"ivankuchinsupersecret"s
 #define	SMSC_EXPIRATION								120
-#define SMSC_CHARSET								"windows-1251"s
+#define SMSC_CHARSET								"utf-8"s
 
 #endif

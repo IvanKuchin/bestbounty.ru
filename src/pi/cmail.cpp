@@ -341,7 +341,7 @@ bool CMail::SendSMTP()
 int CMail::Input (int fd)
 {
 	int	result;
-	/* перенаправить стандартный ввод */
+	/* РїРµСЂРµРЅР°РїСЂР°РІРёС‚СЊ СЃС‚Р°РЅРґР°СЂС‚РЅС‹Р№ РІРІРѕРґ */
 	result = dup2(fd, 0);
 	close(fd); 
 	if(result < 0)
@@ -569,20 +569,20 @@ int CMail::SendMailExec(const char *progr, char **av, int inp)
 	del = signal(SIGINT, SIG_IGN); quit = signal(SIGQUIT, SIG_IGN);
 	if( ! (pid = fork()))
 	{   
-		/* ветвление */
-		/* порожденный процесс (сын) */
-		signal(SIGINT, SIG_DFL); /* восстановить реакции */
-		signal(SIGQUIT,SIG_DFL); /* по умолчанию         */
+		/* РІРµС‚РІР»РµРЅРёРµ */
+		/* РїРѕСЂРѕР¶РґРµРЅРЅС‹Р№ РїСЂРѕС†РµСЃСЃ (СЃС‹РЅ) */
+		signal(SIGINT, SIG_DFL); /* РІРѕСЃСЃС‚Р°РЅРѕРІРёС‚СЊ СЂРµР°РєС†РёРё */
+		signal(SIGQUIT,SIG_DFL); /* РїРѕ СѓРјРѕР»С‡Р°РЅРёСЋ         */
 		{
 			ostringstream	ost;
 			CLog		log;
 
-			/* getpid() выдает номер (идентификатор) данного процесса */
+			/* getpid() РІС‹РґР°РµС‚ РЅРѕРјРµСЂ (РёРґРµРЅС‚РёС„РёРєР°С‚РѕСЂ) РґР°РЅРЅРѕРіРѕ РїСЂРѕС†РµСЃСЃР° */
 			pid = getpid();
 			ost <<  "CMail::" << __func__ << "[" << __LINE__ << "]: child process: pid=" << pid << " run";
 			log.Write(DEBUG, ost.str());
 		}
-		/* Перенаправить ввод-вывод */
+		/* РџРµСЂРµРЅР°РїСЂР°РІРёС‚СЊ РІРІРѕРґ-РІС‹РІРѕРґ */
 		if(Input( inp ))
 		{
 			RedirStderrToFile(GetStderrFname());
@@ -594,24 +594,24 @@ int CMail::SendMailExec(const char *progr, char **av, int inp)
 		}
 
 		// we get here just in case Input return false 
-		// при неудаче печатаем причину и завершаем порожденный процесс 
+		// РїСЂРё РЅРµСѓРґР°С‡Рµ РїРµС‡Р°С‚Р°РµРј РїСЂРёС‡РёРЅСѓ Рё Р·Р°РІРµСЂС€Р°РµРј РїРѕСЂРѕР¶РґРµРЅРЅС‹Р№ РїСЂРѕС†РµСЃСЃ 
 		{
 			CLog	log;
 			log.Write(ERROR, "CMail::" + string(__func__) + "[" + to_string(__LINE__) + "]:ERROR: redirecting input: ", strerror(errno));
 		}
-		/* Мы не делаем free(firstfound),firstfound = NULL
-		* потому что данный процесс завершается (поэтому ВСЯ его
-		* память освобождается) :
+		/* РњС‹ РЅРµ РґРµР»Р°РµРј free(firstfound),firstfound = NULL
+		* РїРѕС‚РѕРјСѓ С‡С‚Рѕ РґР°РЅРЅС‹Р№ РїСЂРѕС†РµСЃСЃ Р·Р°РІРµСЂС€Р°РµС‚СЃСЏ (РїРѕСЌС‚РѕРјСѓ Р’РЎРЇ РµРіРѕ
+		* РїР°РјСЏС‚СЊ РѕСЃРІРѕР±РѕР¶РґР°РµС‚СЃСЏ) :
 		*/
-//		if( outp )  /* был создан новый файл     */
-//			unlink(outp); /* но теперь он нам не нужен */
+//		if( outp )  /* Р±С‹Р» СЃРѕР·РґР°РЅ РЅРѕРІС‹Р№ С„Р°Р№Р»     */
+//			unlink(outp); /* РЅРѕ С‚РµРїРµСЂСЊ РѕРЅ РЅР°Рј РЅРµ РЅСѓР¶РµРЅ */
 		throw CExceptionHTML("mail error");
 	}
-	/* процесс - отец */
-	/* Сейчас сигналы игнорируются, wait не может быть оборван
-	* прерыванием с клавиатуры */
+	/* РїСЂРѕС†РµСЃСЃ - РѕС‚РµС† */
+	/* РЎРµР№С‡Р°СЃ СЃРёРіРЅР°Р»С‹ РёРіРЅРѕСЂРёСЂСѓСЋС‚СЃСЏ, wait РЅРµ РјРѕР¶РµС‚ Р±С‹С‚СЊ РѕР±РѕСЂРІР°РЅ
+	* РїСЂРµСЂС‹РІР°РЅРёРµРј СЃ РєР»Р°РІРёР°С‚СѓСЂС‹ */
 
-	// ожидание завершения дочернего процесса
+	// РѕР¶РёРґР°РЅРёРµ Р·Р°РІРµСЂС€РµРЅРёСЏ РґРѕС‡РµСЂРЅРµРіРѕ РїСЂРѕС†РµСЃСЃР°
 	{
 		int ws;
 		int pid;
@@ -638,7 +638,7 @@ int CMail::SendMailExec(const char *progr, char **av, int inp)
 		}
 	}
 
-	/* восстановить реакции на сигналы от клавиатуры */
+	/* РІРѕСЃСЃС‚Р°РЅРѕРІРёС‚СЊ СЂРµР°РєС†РёРё РЅР° СЃРёРіРЅР°Р»С‹ РѕС‚ РєР»Р°РІРёР°С‚СѓСЂС‹ */
 	signal(SIGINT, del); signal(SIGQUIT, quit);
 
 	{
@@ -646,7 +646,7 @@ int CMail::SendMailExec(const char *progr, char **av, int inp)
 		log.Write(DEBUG, "CMail::SendMailExec: end");
 	}
 
-	return pid;     /* вернуть идентификатор сына */
+	return pid;     /* РІРµСЂРЅСѓС‚СЊ РёРґРµРЅС‚РёС„РёРєР°С‚РѕСЂ СЃС‹РЅР° */
 }
 
 int CMail::MakeMailFile(string text)

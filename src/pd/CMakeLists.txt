@@ -1,7 +1,6 @@
 set(EXECUTABLE_CGIs_with_PD_PI_LIBS
     admin.cgi
     index.cgi
-    book.cgi
     company.cgi
     event.cgi
     gift.cgi
@@ -76,7 +75,6 @@ endforeach()
 # --- Install part
 
 install(TARGETS index.cgi			DESTINATION		${CGIDIR})
-install(TARGETS book.cgi    		DESTINATION		${CGIDIR})
 install(TARGETS company.cgi			DESTINATION		${CGIDIR})
 install(TARGETS event.cgi	        DESTINATION		${CGIDIR})
 install(TARGETS gift.cgi            DESTINATION     ${CGIDIR})

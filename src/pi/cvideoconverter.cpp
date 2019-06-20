@@ -510,14 +510,14 @@ bool    CVideoConverter::VideoConvert(int dstIndex, char **argv)
     del = signal(SIGINT, SIG_IGN); quit = signal(SIGQUIT, SIG_IGN);
     if( ! (pid = fork()))
     {   
-        /* ветвление */
-        /* порожденный процесс (сын) */
-        signal(SIGINT, SIG_DFL); /* восстановить реакции */
-        signal(SIGQUIT,SIG_DFL); /* по умолчанию         */
+        /* РІРµС‚РІР»РµРЅРёРµ */
+        /* РїРѕСЂРѕР¶РґРµРЅРЅС‹Р№ РїСЂРѕС†РµСЃСЃ (СЃС‹РЅ) */
+        signal(SIGINT, SIG_DFL); /* РІРѕСЃСЃС‚Р°РЅРѕРІРёС‚СЊ СЂРµР°РєС†РёРё */
+        signal(SIGQUIT,SIG_DFL); /* РїРѕ СѓРјРѕР»С‡Р°РЅРёСЋ         */
         {
             CLog        log;
 
-            /* getpid() выдает номер (идентификатор) данного процесса */
+            /* getpid() РІС‹РґР°РµС‚ РЅРѕРјРµСЂ (РёРґРµРЅС‚РёС„РёРєР°С‚РѕСЂ) РґР°РЅРЅРѕРіРѕ РїСЂРѕС†РµСЃСЃР° */
             pid = getpid();
             log.Write(DEBUG, "CVideoConverter::" + string(__func__) + "[" + to_string(__LINE__) + "]: child process: pid=" + to_string(pid) + " run");
         }
@@ -538,7 +538,7 @@ bool    CVideoConverter::VideoConvert(int dstIndex, char **argv)
             }
         }
 
-        /* Перенаправить ввод-вывод */
+        /* РџРµСЂРµРЅР°РїСЂР°РІРёС‚СЊ РІРІРѕРґ-РІС‹РІРѕРґ */
         if(RedirStderrToFile(GetStderrFullFilename(dstIndex)) && RedirStdoutToFile(GetStdoutFullFilename(dstIndex)))
         {
             string  tmpDestFile = GetPreFinalFullFilename(dstIndex);
@@ -555,22 +555,22 @@ bool    CVideoConverter::VideoConvert(int dstIndex, char **argv)
         // --- execvp completely replace run-time environment to new process
 
         // we get here just in case Input return false 
-        // при неудаче печатаем причину и завершаем порожденный процесс 
+        // РїСЂРё РЅРµСѓРґР°С‡Рµ РїРµС‡Р°С‚Р°РµРј РїСЂРёС‡РёРЅСѓ Рё Р·Р°РІРµСЂС€Р°РµРј РїРѕСЂРѕР¶РґРµРЅРЅС‹Р№ РїСЂРѕС†РµСЃСЃ 
         {
             CLog    log;
             log.Write(ERROR, "CVideoConverter::" + string(__func__) + "[" + to_string(__LINE__) + "]:ERROR: redirecting input: ", strerror(errno));
         }
-        /* Мы не делаем free(firstfound),firstfound = NULL
-        * потому что данный процесс завершается (поэтому ВСЯ его
-        * память освобождается) :
+        /* РњС‹ РЅРµ РґРµР»Р°РµРј free(firstfound),firstfound = NULL
+        * РїРѕС‚РѕРјСѓ С‡С‚Рѕ РґР°РЅРЅС‹Р№ РїСЂРѕС†РµСЃСЃ Р·Р°РІРµСЂС€Р°РµС‚СЃСЏ (РїРѕСЌС‚РѕРјСѓ Р’РЎРЇ РµРіРѕ
+        * РїР°РјСЏС‚СЊ РѕСЃРІРѕР±РѕР¶РґР°РµС‚СЃСЏ) :
         */
         exit(1); //--- exit with error code 1
     }
-    /* процесс - отец */
-    /* Сейчас сигналы игнорируются, wait не может быть оборван
-    * прерыванием с клавиатуры */
+    /* РїСЂРѕС†РµСЃСЃ - РѕС‚РµС† */
+    /* РЎРµР№С‡Р°СЃ СЃРёРіРЅР°Р»С‹ РёРіРЅРѕСЂРёСЂСѓСЋС‚СЃСЏ, wait РЅРµ РјРѕР¶РµС‚ Р±С‹С‚СЊ РѕР±РѕСЂРІР°РЅ
+    * РїСЂРµСЂС‹РІР°РЅРёРµРј СЃ РєР»Р°РІРёР°С‚СѓСЂС‹ */
 
-    // ожидание завершения дочернего процесса
+    // РѕР¶РёРґР°РЅРёРµ Р·Р°РІРµСЂС€РµРЅРёСЏ РґРѕС‡РµСЂРЅРµРіРѕ РїСЂРѕС†РµСЃСЃР°
     {
         int ws;
         int pid;
@@ -600,7 +600,7 @@ bool    CVideoConverter::VideoConvert(int dstIndex, char **argv)
         }
     }
 
-    /* восстановить реакции на сигналы от клавиатуры */
+    /* РІРѕСЃСЃС‚Р°РЅРѕРІРёС‚СЊ СЂРµР°РєС†РёРё РЅР° СЃРёРіРЅР°Р»С‹ РѕС‚ РєР»Р°РІРёР°С‚СѓСЂС‹ */
     signal(SIGINT, del); signal(SIGQUIT, quit);
 
     {

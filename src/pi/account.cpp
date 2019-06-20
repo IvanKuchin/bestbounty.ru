@@ -106,7 +106,7 @@ int main()
 			if(loginFromUser.length() >= 8)
 			{
 
-				if(loginFromUser.find_first_of(" \\/%?абвгдеёжзийклмнопрстуфхцчшщьыъэюяАБВГДЕЁЖЗИЙКЛМНОПРСТУФХЦЧШЩЬЫЪЭЮЯ") == string::npos)
+				if(loginFromUser.find_first_of(" \\/%?Р°Р±РІРіРґРµС‘Р¶Р·РёР№РєР»РјРЅРѕРїСЂСЃС‚СѓС„С…С†С‡С€С‰СЊС‹СЉСЌСЋСЏРђР‘Р’Р“Р”Р•РЃР–Р—РР™РљР›РњРќРћРџР РЎРўРЈР¤РҐР¦Р§РЁР©Р¬Р«РЄР­Р®РЇ") == string::npos)
 				{
 
 					if(db.Query("SELECT `id` FROM `users` WHERE `login`=\"" + loginFromUser + "\" AND `id`!=\"" + user.GetID() + "\";"))
@@ -118,7 +118,7 @@ int main()
 
 						ostResult << "{" 
 								  << "\"result\":\"error\","
-								  << "\"description\":\"Имя уже занято\""
+								  << "\"description\":\"РРјСЏ СѓР¶Рµ Р·Р°РЅСЏС‚Рѕ\""
 								  << "}";
 					}
 					else
@@ -141,7 +141,7 @@ int main()
 
 							ostResult << "{" 
 									  << "\"result\":\"error\","
-									  << "\"description\":\"Внутренняя ошибка БД\""
+									  << "\"description\":\"Р’РЅСѓС‚СЂРµРЅРЅСЏСЏ РѕС€РёР±РєР° Р‘Р”\""
 									  << "}";
 						}
 					}
@@ -156,7 +156,7 @@ int main()
 
 					ostResult << "{" 
 							  << "\"result\":\"error\","
-							  << "\"description\":\"Нельзя использовать: русские буквы, пробел или символы /%?\""
+							  << "\"description\":\"РќРµР»СЊР·СЏ РёСЃРїРѕР»СЊР·РѕРІР°С‚СЊ: СЂСѓСЃСЃРєРёРµ Р±СѓРєРІС‹, РїСЂРѕР±РµР» РёР»Рё СЃРёРјРІРѕР»С‹ /%?\""
 							  << "}";
 				}
 			}
@@ -170,7 +170,7 @@ int main()
 
 				ostResult << "{" 
 						  << "\"result\":\"error\","
-						  << "\"description\":\"Должен быть 8 и более символов\""
+						  << "\"description\":\"Р”РѕР»Р¶РµРЅ Р±С‹С‚СЊ 8 Рё Р±РѕР»РµРµ СЃРёРјРІРѕР»РѕРІ\""
 						  << "}";
 			}
 
@@ -238,7 +238,7 @@ int main()
 
 					ostResult << "{" 
 							  << "\"result\":\"error\","
-							  << "\"description\":\"Внутренняя ошибка БД\""
+							  << "\"description\":\"Р’РЅСѓС‚СЂРµРЅРЅСЏСЏ РѕС€РёР±РєР° Р‘Р”\""
 							  << "}";
 				}
 
@@ -253,7 +253,7 @@ int main()
 
 				ostResult << "{" 
 						  << "\"result\":\"error\","
-						  << "\"description\":\"некорректный параметер\""
+						  << "\"description\":\"РЅРµРєРѕСЂСЂРµРєС‚РЅС‹Р№ РїР°СЂР°РјРµС‚РµСЂ\""
 						  << "}";
 			}
 
@@ -321,7 +321,7 @@ int main()
 
 					ostResult << "{" 
 							  << "\"result\":\"error\","
-							  << "\"description\":\"Внутренняя ошибка БД\""
+							  << "\"description\":\"Р’РЅСѓС‚СЂРµРЅРЅСЏСЏ РѕС€РёР±РєР° Р‘Р”\""
 							  << "}";
 				}
 
@@ -336,7 +336,7 @@ int main()
 
 				ostResult << "{" 
 						  << "\"result\":\"error\","
-						  << "\"description\":\"некорректный формат даты\""
+						  << "\"description\":\"РЅРµРєРѕСЂСЂРµРєС‚РЅС‹Р№ С„РѕСЂРјР°С‚ РґР°С‚С‹\""
 						  << "}";
 			}
 
@@ -417,7 +417,7 @@ int main()
 
 					ostResult << "{" 
 							  << "\"result\":\"error\","
-							  << "\"description\":\"Внутренняя ошибка БД\""
+							  << "\"description\":\"Р’РЅСѓС‚СЂРµРЅРЅСЏСЏ РѕС€РёР±РєР° Р‘Р”\""
 							  << "}";
 				}
 
@@ -432,7 +432,7 @@ int main()
 
 				ostResult << "{" 
 						  << "\"result\":\"error\","
-						  << "\"description\":\"город не указан\""
+						  << "\"description\":\"РіРѕСЂРѕРґ РЅРµ СѓРєР°Р·Р°РЅ\""
 						  << "}";
 			}
 
@@ -495,7 +495,7 @@ int main()
 
 				ostResult << "{" 
 						  << "\"result\":\"error\","
-						  << "\"description\":\"Внутренняя ошибка БД\""
+						  << "\"description\":\"Р’РЅСѓС‚СЂРµРЅРЅСЏСЏ РѕС€РёР±РєР° Р‘Р”\""
 						  << "}";
 			}
 		} // --- if(user.GetLogin() == "Guest")
@@ -552,7 +552,7 @@ int main()
 
 				if(phone_confirmation_id)
 				{
-					auto	ret = smsc.send_sms(country_code + phone_number, "Код для привязки телефона " + confirmation_code, 0, "", 0, 0, DOMAIN_NAME, "", "");
+					auto	ret = smsc.send_sms(country_code + phone_number, "РљРѕРґ РґР»СЏ РїСЂРёРІСЏР·РєРё С‚РµР»РµС„РѕРЅР° " + confirmation_code, 0, "", 0, 0, DOMAIN_NAME, "", "");
 				}
 				else
 				{

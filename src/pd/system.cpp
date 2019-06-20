@@ -238,26 +238,9 @@ int main()
 			}
 			else
 			{
-				userID = indexPage.GetVarsHandler()->Get("userID");
+				userID = CheckHTTPParam_Text(indexPage.GetVarsHandler()->Get("userID"));
 
-				convertBuffer = new char[1024];
-				memset(convertBuffer, 0, 1024);
-				convert_utf8_to_windows1251(userID.c_str(), convertBuffer, 1024);
-				userID = convertBuffer;
-				trim(userID);
-
-				delete[] convertBuffer;
-
-				// --- Clean-up the text
-				userID = ReplaceDoubleQuoteToQuote(userID);
-				userID = DeleteHTML(userID);
-				userID = SymbolReplace(userID, "\r\n", "");
-				userID = SymbolReplace(userID, "\r", "");
-				userID = SymbolReplace(userID, "\n", "");
-
-				ost << "select * from `users` where `isActivated`='Y' and `isblocked`='N' and `id` in (" << userID << ") ;";
-
-				userList = GetUserListInJSONFormat(ost.str(), &db, &user);
+				userList = GetUserListInJSONFormat("select * from `users` where `isActivated`='Y' and `isblocked`='N' and `id` in (" + userID + ") ;", &db, &user);
 
 				ostFinal.str("");
 				ostFinal << "[" << std::endl << userList << std::endl << "]" << std::endl;

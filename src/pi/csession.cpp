@@ -121,30 +121,41 @@ string CSession::DetectItem(string MMDB_itemName) {
 	string		item = "";
 
 #ifndef MAXMIND_DISABLE
+    MESSAGE_DEBUG("", "", "start (detectItem " + MMDB_itemName + " by IP)");
+
 	if(MMDB_usage)
 	{
         MMDB_entry_data_s       MMDB_entryDataS;
 
 		if(MMDB_get_value(&MMDB_result.entry, &MMDB_entryDataS, MMDB_itemName.c_str(), "names", "en", NULL) == MMDB_SUCCESS)
 		{
-			if(MMDB_entryDataS.has_data)
+			if(MMDB_entryDataS.has_data && (MMDB_entryDataS.type == MMDB_DATA_TYPE_UTF8_STRING))
 			{
-				char    itemName[1024] = {0};
+				char	buffer[1024];
 
-				if(convert_utf8_to_windows1251(MMDB_entryDataS.utf8_string, itemName, MMDB_entryDataS.data_size))
+				if(MMDB_entryDataS.data_size < sizeof(buffer))
 				{
-					 MESSAGE_DEBUG("", "", "result is " + itemName + ". ");
-
-					item = itemName;
+				    memcpy(buffer, MMDB_entryDataS.utf8_string, MMDB_entryDataS.data_size);
+				    buffer[MMDB_entryDataS.data_size] = 0;
+				    item = buffer;
 				}
 				else
 				{
-					MESSAGE_ERROR("", "", "fail in conversion from UTF8 to CP1251");
+				    MESSAGE_ERROR("", "", "mmdb result is too long");
 				}
 			}
+			else
+			{
+				MESSAGE_DEBUG("", "", "MMDB_entry has no data");
+			}
+		}
+		else
+		{
+			MESSAGE_ERROR("", "", "MMDB_get_value returned error");
 		}
 	}
 
+    MESSAGE_DEBUG("", "", "finish (" + item + ")");
 #endif
 	return	item;
 }

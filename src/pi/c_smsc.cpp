@@ -170,7 +170,7 @@ string c_smsc::TrackSMS(string phones, string sms_id, string sms_cost, string sm
 
 string c_smsc::get_balance(void)
 {
-    return _smsc_send_cmd("balance", "", ""); // (balance) или (0, -error)
+    return _smsc_send_cmd("balance", "", ""); // (balance) РёР»Рё (0, -error)
 }
 
 string c_smsc::get_status(string id, string phone, int all)
@@ -219,7 +219,7 @@ string c_smsc::_smsc_send_cmd(string cmd, string arg, string files)
             if (post) 
             {
             	MESSAGE_DEBUG("", "", "sending HTTP POST-request (NOT TESTED)");
-                // разбираем строку параметров
+                // СЂР°Р·Р±РёСЂР°РµРј СЃС‚СЂРѕРєСѓ РїР°СЂР°РјРµС‚СЂРѕРІ
 
             	auto current_pos = _arg.find_first_of("=&"); // --- init only for type deduction
                 current_pos = 0;
@@ -289,7 +289,7 @@ string c_smsc::_smsc_send_cmd(string cmd, string arg, string files)
     return(result);
 }
 
-// кодирование параметра в http-запросе
+// РєРѕРґРёСЂРѕРІР°РЅРёРµ РїР°СЂР°РјРµС‚СЂР° РІ http-Р·Р°РїСЂРѕСЃРµ
 string c_smsc::urlencode(string str) {
     auto output = ""s;
     CURL *curl;
@@ -315,7 +315,7 @@ string c_smsc::urlencode(string str) {
     return output;
 }
 
-// декодирование параметра в http-запросе
+// РґРµРєРѕРґРёСЂРѕРІР°РЅРёРµ РїР°СЂР°РјРµС‚СЂР° РІ http-Р·Р°РїСЂРѕСЃРµ
 string c_smsc::urldecode(string str) {
     auto output = ""s;
     CURL *curl;

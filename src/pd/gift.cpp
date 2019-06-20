@@ -316,7 +316,7 @@ int main()
 					log.Write(DEBUG, string(__func__) + string("[") + to_string(__LINE__) + "]:action == " + action + ": title should not be ampty");
 				}
 
-				ostResult << "{\"result\":\"error\",\"description\":\"óêàæèòå íàçâàíèå ïîäàðêà\"}";
+				ostResult << "{\"result\":\"error\",\"description\":\"ÑƒÐºÐ°Ð¶Ð¸Ñ‚Ðµ Ð½Ð°Ð·Ð²Ð°Ð½Ð¸Ðµ Ð¿Ð¾Ð´Ð°Ñ€ÐºÐ°\"}";
 			}
 			else
 			{
@@ -343,7 +343,7 @@ int main()
 						CLog	log;
 						log.Write(ERROR, string(__func__) + string("[") + to_string(__LINE__) + "]:action == " + action + ":ERROR: insertion into `gift` table");
 					}
-					ostResult << "{\"result\":\"error\",\"description\":\"îøèáêà ÁÄ\"}";
+					ostResult << "{\"result\":\"error\",\"description\":\"Ð¾ÑˆÐ¸Ð±ÐºÐ° Ð‘Ð”\"}";
 				}
 			}
 		}
@@ -396,7 +396,7 @@ int main()
 					log.Write(DEBUG, string(__func__) + string("[") + to_string(__LINE__) + "]:action == " + action + ": id should not be ampty");
 				}
 
-				ostResult << "{\"result\":\"error\",\"description\":\"îøèáêà ïåðåäà÷è ïàðàìåòðîâ\"}";
+				ostResult << "{\"result\":\"error\",\"description\":\"Ð¾ÑˆÐ¸Ð±ÐºÐ° Ð¿ÐµÑ€ÐµÐ´Ð°Ñ‡Ð¸ Ð¿Ð°Ñ€Ð°Ð¼ÐµÑ‚Ñ€Ð¾Ð²\"}";
 			}
 			else
 			{
@@ -429,7 +429,7 @@ int main()
 											CLog		log;
 											log.Write(ERROR, string(__func__) + "[" + to_string(__LINE__) + "]:ERROR: removing form `gifts` table (" + db.GetErrorMessage() + ")");
 										}
-										ostResult << "{\"result\":\"error\",\"description\":\"îøèáêà ÁÄ\"}";
+										ostResult << "{\"result\":\"error\",\"description\":\"Ð¾ÑˆÐ¸Ð±ÐºÐ° Ð‘Ð”\"}";
 									}
 									else
 									{
@@ -442,7 +442,7 @@ int main()
 										CLog	log;
 										log.Write(DEBUG, string(__func__) + string("[") + to_string(__LINE__) + "]:action == " + action + ": requested_quantity_new MUST be greater than gained_quantity");
 									}
-									ostResult << "{\"result\":\"error\",\"description\":\"ÎØÈÁÊÀ: Âàì óæå ïîäàðèëè áîëüøå ÷åì íóæíî\"}";
+									ostResult << "{\"result\":\"error\",\"description\":\"ÐžÐ¨Ð˜Ð‘ÐšÐ: Ð’Ð°Ð¼ ÑƒÐ¶Ðµ Ð¿Ð¾Ð´Ð°Ñ€Ð¸Ð»Ð¸ Ð±Ð¾Ð»ÑŒÑˆÐµ Ñ‡ÐµÐ¼ Ð½ÑƒÐ¶Ð½Ð¾\"}";
 								}
 							}
 							catch(...)
@@ -451,7 +451,7 @@ int main()
 									CLog	log;
 									log.Write(DEBUG, string(__func__) + string("[") + to_string(__LINE__) + "]:action == " + action + ": caught exception on stol(" + value + ")");
 								}
-								ostResult << "{\"result\":\"error\",\"description\":\"ÎØÈÁÊÀ: ïàðàìåòð äîëæåí áûòü ÷èñëîì\"}";
+								ostResult << "{\"result\":\"error\",\"description\":\"ÐžÐ¨Ð˜Ð‘ÐšÐ: Ð¿Ð°Ñ€Ð°Ð¼ÐµÑ‚Ñ€ Ð´Ð¾Ð»Ð¶ÐµÐ½ Ð±Ñ‹Ñ‚ÑŒ Ñ‡Ð¸ÑÐ»Ð¾Ð¼\"}";
 							}
 						}
 						else
@@ -460,7 +460,7 @@ int main()
 								CLog	log;
 								log.Write(DEBUG, string(__func__) + string("[") + to_string(__LINE__) + "]:action == " + action + ": quantity(" + value + ") longer than 11 symbols");
 							}
-							ostResult << "{\"result\":\"error\",\"description\":\"ÎØÈÁÊÀ: ñëèøêîì äëèííîå ÷èñëî\"}";
+							ostResult << "{\"result\":\"error\",\"description\":\"ÐžÐ¨Ð˜Ð‘ÐšÐ: ÑÐ»Ð¸ÑˆÐºÐ¾Ð¼ Ð´Ð»Ð¸Ð½Ð½Ð¾Ðµ Ñ‡Ð¸ÑÐ»Ð¾\"}";
 						}
 					}
 
@@ -471,7 +471,7 @@ int main()
 						CLog	log;
 						log.Write(ERROR, string(__func__) + string("[") + to_string(__LINE__) + "]:action == " + action + ":ERROR: gift(" + giftID + ") not found or doesn't belongs to user(" + user.GetID() + ")");
 					}
-					ostResult << "{\"result\":\"error\",\"description\":\"ïîäàðîê îòñóòñòâóåò â ÁÄ\"}";
+					ostResult << "{\"result\":\"error\",\"description\":\"Ð¿Ð¾Ð´Ð°Ñ€Ð¾Ðº Ð¾Ñ‚ÑÑƒÑ‚ÑÑ‚Ð²ÑƒÐµÑ‚ Ð² Ð‘Ð”\"}";
 				}
 			}
 		}
@@ -551,7 +551,7 @@ int main()
 							ostResult << "{"
 											"\"result\":\"success\","
 											"\"status\":\"reserved\","
-											"\"description\":\"çàðåçåðâèðîâàíî íà 30 äíåé\","
+											"\"description\":\"Ð·Ð°Ñ€ÐµÐ·ÐµÑ€Ð²Ð¸Ñ€Ð¾Ð²Ð°Ð½Ð¾ Ð½Ð° 30 Ð´Ð½ÐµÐ¹\","
 											"\"recipient_user_id\":\"" + giftOwnerID + "\","
 											"\"gifts_to_give\": [" << GetGiftToGiveListInJSONFormat("SELECT * FROM `gifts_to_give` WHERE `gift_id` in (SELECT `id` FROM `gifts` WHERE `user_id`=\"" + giftOwnerID + "\");", &db, &user) << "]"
 											"}";
@@ -562,7 +562,7 @@ int main()
 								CLog	log;
 								log.Write(ERROR, string(__func__) + string("[") + to_string(__LINE__) + "]:action == " + action + ":ERROR: insertion into `gift` table");
 							}
-							ostResult << "{\"result\":\"error\",\"description\":\"îøèáêà ÁÄ\"}";
+							ostResult << "{\"result\":\"error\",\"description\":\"Ð¾ÑˆÐ¸Ð±ÐºÐ° Ð‘Ð”\"}";
 						}
 					}
 					else
@@ -571,7 +571,7 @@ int main()
 							CLog	log;
 							log.Write(ERROR, string(__func__) + string("[") + to_string(__LINE__) + "]:action == " + action + ": user(" + giftOwnerID + ") doesn't need so many instances of this gift(" + gift_id + ")");
 						}
-						ostResult << "{\"result\":\"error\",\"description\":\"óæå ïîäàðåíî äîñòàòî÷íîå êîëè÷åñòâî\"}";
+						ostResult << "{\"result\":\"error\",\"description\":\"ÑƒÐ¶Ðµ Ð¿Ð¾Ð´Ð°Ñ€ÐµÐ½Ð¾ Ð´Ð¾ÑÑ‚Ð°Ñ‚Ð¾Ñ‡Ð½Ð¾Ðµ ÐºÐ¾Ð»Ð¸Ñ‡ÐµÑÑ‚Ð²Ð¾\"}";
 					}
 
 				}
@@ -582,7 +582,7 @@ int main()
 					ostResult << "{"
 								"\"result\":\"success\","
 								"\"status\":\"canceled\","
-								"\"description\":\"ðåçåðâ ñíÿò\","
+								"\"description\":\"Ñ€ÐµÐ·ÐµÑ€Ð² ÑÐ½ÑÑ‚\","
 								"\"recipient_user_id\":\"" + giftOwnerID + "\","
 								"\"gifts_to_give\": [" << GetGiftToGiveListInJSONFormat("SELECT * FROM `gifts_to_give` WHERE `gift_id` in (SELECT `id` FROM `gifts` WHERE `user_id`=\"" + giftOwnerID + "\");", &db, &user) << "]"
 								"}";
@@ -595,7 +595,7 @@ int main()
 					log.Write(DEBUG, string(__func__) + string("[") + to_string(__LINE__) + "]:action == " + action + ": id should not be ampty");
 				}
 
-				ostResult << "{\"result\":\"error\",\"description\":\"óêàæèòå íàçâàíèå ïîäàðêà\"}";
+				ostResult << "{\"result\":\"error\",\"description\":\"ÑƒÐºÐ°Ð¶Ð¸Ñ‚Ðµ Ð½Ð°Ð·Ð²Ð°Ð½Ð¸Ðµ Ð¿Ð¾Ð´Ð°Ñ€ÐºÐ°\"}";
 			}
 		}
 
@@ -657,7 +657,7 @@ int main()
 					ostFinal.str("");
 					ostFinal << "{" << std::endl;
 					ostFinal << "\"result\" : \"error\"," << std::endl;
-					ostFinal << "\"description\" : \"ññûëêà ïóñòàÿ èëè ñëèøêîì äëèííàÿ\"" << std::endl;
+					ostFinal << "\"description\" : \"ÑÑÑ‹Ð»ÐºÐ° Ð¿ÑƒÑÑ‚Ð°Ñ Ð¸Ð»Ð¸ ÑÐ»Ð¸ÑˆÐºÐ¾Ð¼ Ð´Ð»Ð¸Ð½Ð½Ð°Ñ\"" << std::endl;
 					ostFinal << "}" << std::endl;
 				}
 			}
@@ -810,7 +810,7 @@ int main()
 						ostFinal.str("");
 						ostFinal << "{";
 						ostFinal << "\"result\" : \"error\",";
-						ostFinal << "\"description\" : \"Íå óäàëîñü ïîëó÷èòü äàííûå ñ ñàéòà, ïðîâåðüòå êîððåêòíîñòü ññûëêè\"";
+						ostFinal << "\"description\" : \"ÐÐµ ÑƒÐ´Ð°Ð»Ð¾ÑÑŒ Ð¿Ð¾Ð»ÑƒÑ‡Ð¸Ñ‚ÑŒ Ð´Ð°Ð½Ð½Ñ‹Ðµ Ñ ÑÐ°Ð¹Ñ‚Ð°, Ð¿Ñ€Ð¾Ð²ÐµÑ€ÑŒÑ‚Ðµ ÐºÐ¾Ñ€Ñ€ÐµÐºÑ‚Ð½Ð¾ÑÑ‚ÑŒ ÑÑÑ‹Ð»ÐºÐ¸\"";
 						ostFinal << "}";
 					} // --- if curl.PerformRequest()
 				} // --- scoping
@@ -864,7 +864,7 @@ int main()
 					log.Write(DEBUG, string(__func__) + string("[") + to_string(__LINE__) + "]:action == " + action + ": id should not be ampty");
 				}
 
-				ostResult << "{\"result\":\"error\",\"description\":\"îøèáêà ïåðåäà÷è ïàðàìåòðîâ\"}";
+				ostResult << "{\"result\":\"error\",\"description\":\"Ð¾ÑˆÐ¸Ð±ÐºÐ° Ð¿ÐµÑ€ÐµÐ´Ð°Ñ‡Ð¸ Ð¿Ð°Ñ€Ð°Ð¼ÐµÑ‚Ñ€Ð¾Ð²\"}";
 			}
 			else
 			{
@@ -887,7 +887,7 @@ int main()
 								log.Write(ERROR, string(__func__) + "[" + to_string(__LINE__) + "]:ERROR: updating `gifts` table (" + db.GetErrorMessage() + ")");
 							}
 
-							ostResult << "{\"result\":\"error\",\"description\":\"îøèáêà ÁÄ\"}";
+							ostResult << "{\"result\":\"error\",\"description\":\"Ð¾ÑˆÐ¸Ð±ÐºÐ° Ð‘Ð”\"}";
 						}
 						else
 						{
@@ -909,7 +909,7 @@ int main()
 					}
 					else
 					{
-						ostResult << "{\"result\":\"error\",\"description\":\"Âàì óæå ïîäàðèëè, âñå ÷òî âû õîòåëè\"}";
+						ostResult << "{\"result\":\"error\",\"description\":\"Ð’Ð°Ð¼ ÑƒÐ¶Ðµ Ð¿Ð¾Ð´Ð°Ñ€Ð¸Ð»Ð¸, Ð²ÑÐµ Ñ‡Ñ‚Ð¾ Ð²Ñ‹ Ñ…Ð¾Ñ‚ÐµÐ»Ð¸\"}";
 					}
 
 				}
@@ -919,7 +919,7 @@ int main()
 						CLog	log;
 						log.Write(ERROR, string(__func__) + string("[") + to_string(__LINE__) + "]:action == " + action + ":ERROR: gift(" + giftID + ") not found or doesn't belongs to user(" + user.GetID() + ")");
 					}
-					ostResult << "{\"result\":\"error\",\"description\":\"ïîäàðîê îòñóòñòâóåò â ÁÄ\"}";
+					ostResult << "{\"result\":\"error\",\"description\":\"Ð¿Ð¾Ð´Ð°Ñ€Ð¾Ðº Ð¾Ñ‚ÑÑƒÑ‚ÑÑ‚Ð²ÑƒÐµÑ‚ Ð² Ð‘Ð”\"}";
 				}
 			}
 		}
@@ -973,7 +973,7 @@ int main()
 					log.Write(DEBUG, string(__func__) + string("[") + to_string(__LINE__) + "]:action == " + action + ": giftID(" + giftID + ") and grantorUserID(" + grantorUserID + ") should not be empty");
 				}
 
-				ostResult << "{\"result\":\"error\",\"description\":\"îøèáêà ïåðåäà÷è ïàðàìåòðîâ\"}";
+				ostResult << "{\"result\":\"error\",\"description\":\"Ð¾ÑˆÐ¸Ð±ÐºÐ° Ð¿ÐµÑ€ÐµÐ´Ð°Ñ‡Ð¸ Ð¿Ð°Ñ€Ð°Ð¼ÐµÑ‚Ñ€Ð¾Ð²\"}";
 			}
 			else
 			{
@@ -993,7 +993,7 @@ int main()
 							CLog	log;
 							log.Write(ERROR, string(__func__) + "[" + to_string(__LINE__) + "]:" + action + ":ERROR: inserting into users_notification table");
 						}
-						ostResult << "{\"result\":\"error\",\"description\":\"îøèáêà ÁÄ\"}";
+						ostResult << "{\"result\":\"error\",\"description\":\"Ð¾ÑˆÐ¸Ð±ÐºÐ° Ð‘Ð”\"}";
 					}
 				}
 				else
@@ -1002,7 +1002,7 @@ int main()
 						CLog	log;
 						log.Write(ERROR, string(__func__) + string("[") + to_string(__LINE__) + "]:action == " + action + ":ERROR: gift(" + giftID + ") not found or doesn't belongs to user(" + user.GetID() + ")");
 					}
-					ostResult << "{\"result\":\"error\",\"description\":\"ïîäàðîê îòñóòñòâóåò â ÁÄ\"}";
+					ostResult << "{\"result\":\"error\",\"description\":\"Ð¿Ð¾Ð´Ð°Ñ€Ð¾Ðº Ð¾Ñ‚ÑÑƒÑ‚ÑÑ‚Ð²ÑƒÐµÑ‚ Ð² Ð‘Ð”\"}";
 				}
 			}
 		}
@@ -1054,7 +1054,7 @@ int main()
 					log.Write(DEBUG, string(__func__) + string("[") + to_string(__LINE__) + "]:action == " + action + ": id should not be ampty");
 				}
 
-				ostResult << "{\"result\":\"error\",\"description\":\"îøèáêà ïåðåäà÷è ïàðàìåòðîâ\"}";
+				ostResult << "{\"result\":\"error\",\"description\":\"Ð¾ÑˆÐ¸Ð±ÐºÐ° Ð¿ÐµÑ€ÐµÐ´Ð°Ñ‡Ð¸ Ð¿Ð°Ñ€Ð°Ð¼ÐµÑ‚Ñ€Ð¾Ð²\"}";
 			}
 			else
 			{
@@ -1086,7 +1086,7 @@ int main()
 							log.Write(ERROR, string(__func__) + "[" + to_string(__LINE__) + "]:ERROR: removing form `gifts` table (" + db.GetErrorMessage() + ")");
 						}
 
-						ostResult << "{\"result\":\"error\",\"description\":\"îøèáêà ÁÄ\"}";
+						ostResult << "{\"result\":\"error\",\"description\":\"Ð¾ÑˆÐ¸Ð±ÐºÐ° Ð‘Ð”\"}";
 					}
 					else
 					{
@@ -1117,7 +1117,7 @@ int main()
 						CLog	log;
 						log.Write(ERROR, string(__func__) + string("[") + to_string(__LINE__) + "]:action == " + action + ":ERROR: gift(" + giftID + ") not found or doesn't belongs to user(" + user.GetID() + ")");
 					}
-					ostResult << "{\"result\":\"error\",\"description\":\"ïîäàðîê îòñóòñòâóåò â ÁÄ\"}";
+					ostResult << "{\"result\":\"error\",\"description\":\"Ð¿Ð¾Ð´Ð°Ñ€Ð¾Ðº Ð¾Ñ‚ÑÑƒÑ‚ÑÑ‚Ð²ÑƒÐµÑ‚ Ð² Ð‘Ð”\"}";
 				}
 			}
 		}

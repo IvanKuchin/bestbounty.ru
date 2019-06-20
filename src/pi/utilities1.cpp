@@ -65,73 +65,73 @@ string  toLower(string src)
 	using namespace std::regex_constants;
 
 	string  result = src;
-	regex	r1("А");
-	regex	r2("Б");
-	regex	r3("В");
-	regex	r4("Г");
-	regex	r5("Д");
-	regex	r6("Е");
-	regex	r7("Ё");
-	regex	r8("Ж");
-	regex	r9("З");
-	regex	r10("И");
-	regex	r11("Й");
-	regex	r12("К");
-	regex	r13("Л");
-	regex	r14("М");
-	regex	r15("Н");
-	regex	r16("О");
-	regex	r17("П");
-	regex	r18("Р");
-	regex	r19("С");
-	regex	r20("Т");
-	regex	r21("У");
-	regex	r22("Ф");
-	regex	r23("Х");
-	regex	r24("Ц");
-	regex	r25("Ч");
-	regex	r26("Ш");
-	regex	r27("Щ");
-	regex	r28("Ь");
-	regex	r29("Ы");
-	regex	r30("Ъ");
-	regex	r31("Э");
-	regex	r32("Ю");
-	regex	r33("Я");
+	regex	r1("Рђ");
+	regex	r2("Р‘");
+	regex	r3("Р’");
+	regex	r4("Р“");
+	regex	r5("Р”");
+	regex	r6("Р•");
+	regex	r7("РЃ");
+	regex	r8("Р–");
+	regex	r9("Р—");
+	regex	r10("Р");
+	regex	r11("Р™");
+	regex	r12("Рљ");
+	regex	r13("Р›");
+	regex	r14("Рњ");
+	regex	r15("Рќ");
+	regex	r16("Рћ");
+	regex	r17("Рџ");
+	regex	r18("Р ");
+	regex	r19("РЎ");
+	regex	r20("Рў");
+	regex	r21("РЈ");
+	regex	r22("Р¤");
+	regex	r23("РҐ");
+	regex	r24("Р¦");
+	regex	r25("Р§");
+	regex	r26("РЁ");
+	regex	r27("Р©");
+	regex	r28("Р¬");
+	regex	r29("Р«");
+	regex	r30("РЄ");
+	regex	r31("Р­");
+	regex	r32("Р®");
+	regex	r33("РЇ");
 
-	src = regex_replace(src, r1, "а");
-	src = regex_replace(src, r2, "б");
-	src = regex_replace(src, r3, "в");
-	src = regex_replace(src, r4, "г");
-	src = regex_replace(src, r5, "д");
-	src = regex_replace(src, r6, "е");
-	src = regex_replace(src, r7, "ё");
-	src = regex_replace(src, r8, "ж");
-	src = regex_replace(src, r9, "з");
-	src = regex_replace(src, r10, "и");
-	src = regex_replace(src, r11, "й");
-	src = regex_replace(src, r12, "к");
-	src = regex_replace(src, r13, "л");
-	src = regex_replace(src, r14, "м");
-	src = regex_replace(src, r15, "н");
-	src = regex_replace(src, r16, "о");
-	src = regex_replace(src, r17, "п");
-	src = regex_replace(src, r18, "р");
-	src = regex_replace(src, r19, "с");
-	src = regex_replace(src, r20, "т");
-	src = regex_replace(src, r21, "у");
-	src = regex_replace(src, r22, "ф");
-	src = regex_replace(src, r23, "х");
-	src = regex_replace(src, r24, "ц");
-	src = regex_replace(src, r25, "ч");
-	src = regex_replace(src, r26, "ш");
-	src = regex_replace(src, r27, "щ");
-	src = regex_replace(src, r28, "ь");
-	src = regex_replace(src, r29, "ы");
-	src = regex_replace(src, r30, "ъ");
-	src = regex_replace(src, r31, "э");
-	src = regex_replace(src, r32, "ю");
-	src = regex_replace(src, r33, "я");
+	src = regex_replace(src, r1, "Р°");
+	src = regex_replace(src, r2, "Р±");
+	src = regex_replace(src, r3, "РІ");
+	src = regex_replace(src, r4, "Рі");
+	src = regex_replace(src, r5, "Рґ");
+	src = regex_replace(src, r6, "Рµ");
+	src = regex_replace(src, r7, "С‘");
+	src = regex_replace(src, r8, "Р¶");
+	src = regex_replace(src, r9, "Р·");
+	src = regex_replace(src, r10, "Рё");
+	src = regex_replace(src, r11, "Р№");
+	src = regex_replace(src, r12, "Рє");
+	src = regex_replace(src, r13, "Р»");
+	src = regex_replace(src, r14, "Рј");
+	src = regex_replace(src, r15, "РЅ");
+	src = regex_replace(src, r16, "Рѕ");
+	src = regex_replace(src, r17, "Рї");
+	src = regex_replace(src, r18, "СЂ");
+	src = regex_replace(src, r19, "СЃ");
+	src = regex_replace(src, r20, "С‚");
+	src = regex_replace(src, r21, "Сѓ");
+	src = regex_replace(src, r22, "С„");
+	src = regex_replace(src, r23, "С…");
+	src = regex_replace(src, r24, "С†");
+	src = regex_replace(src, r25, "С‡");
+	src = regex_replace(src, r26, "С€");
+	src = regex_replace(src, r27, "С‰");
+	src = regex_replace(src, r28, "СЊ");
+	src = regex_replace(src, r29, "С‹");
+	src = regex_replace(src, r30, "СЉ");
+	src = regex_replace(src, r31, "СЌ");
+	src = regex_replace(src, r32, "СЋ");
+	src = regex_replace(src, r33, "СЏ");
 
 	transform(src.begin(), src.end(), result.begin(), (int(*)(int))tolower);
 
@@ -364,14 +364,14 @@ string RemoveSpecialSymbols(string src)
 	}
 
 	pos = 0;
-	while((pos = result.find("№", pos)) != string::npos)
+	while((pos = result.find("в„–", pos)) != string::npos)
 	{
 		result.replace(pos, 1, "N");
 		pos += 1;
 	}
 
 	pos = 0;
-	while((pos = result.find("—", pos)) != string::npos)
+	while((pos = result.find("вЂ”", pos)) != string::npos)
 	{
 		result.replace(pos, 1, "-");
 		pos += 1;
@@ -427,13 +427,13 @@ string RemoveSpecialHTMLSymbols(string src)
 	}
 
 	pos = 0;
-	while((pos = result.find("№", pos)) != string::npos)
+	while((pos = result.find("в„–", pos)) != string::npos)
 	{
 		result.replace(pos, 1, "&#35;");
 	}
 
 	pos = 0;
-	while((pos = result.find("—", pos)) != string::npos)
+	while((pos = result.find("вЂ”", pos)) != string::npos)
 	{
 		result.replace(pos, 1, "-");
 	}
@@ -605,13 +605,13 @@ string RemoveAllNonAlphabetSymbols(string src)
 	}
 
 	pos = 0;
-	while((pos = result.find("№", pos)) != string::npos)
+	while((pos = result.find("в„–", pos)) != string::npos)
 	{
 		result.replace(pos, 1, "");
 	}
 
 	pos = 0;
-	while((pos = result.find("—", pos)) != string::npos)
+	while((pos = result.find("вЂ”", pos)) != string::npos)
 	{
 		result.replace(pos, 1, "");
 	}
@@ -708,24 +708,7 @@ string ConvertTextToHTML(const string messageBody)
 
 string CheckHTTPParam_Text(string srcText)
 {
-	char	convertBuffer[16384];
-	string	result = "";
-
-	{
-		CLog	log;
-		log.Write(DEBUG, string(__func__) + string("[") + to_string(__LINE__) + string("]: start param(" + srcText + ")"));
-	}
-
-	memset(convertBuffer, 0, sizeof(convertBuffer));
-	convert_utf8_to_windows1251(srcText.c_str(), convertBuffer, sizeof(convertBuffer) - 1);
-	result = ConvertTextToHTML(convertBuffer);
-
-	{
-		CLog	log;
-		log.Write(DEBUG, string(__func__) + string("[") + to_string(__LINE__) + string("]: end ( result length = " + to_string(result.length()) + ")"));
-	}
-	
-	return	result;
+	return	ConvertTextToHTML(srcText);
 }
 
 string CheckHTTPParam_Number(string srcText)
@@ -857,20 +840,13 @@ string CheckHTTPParam_Date(const string &srcText)
 
 string CheckHTTPParam_Email(string srcText)
 {
-	char		convertBuffer[16384];
+	MESSAGE_DEBUG("", "", "start param(" + srcText + ")");
+	
 	string		result = "";
-
     regex       positionRegex(".*([+-][[:digit:]]+\\.[[:digit:]]+)([+-][[:digit:]]+\\.[[:digit:]]+)([+-][[:digit:]]+\\.[[:digit:]]+).*");
     smatch      matchResult;
 
-	{
-		CLog	log;
-		log.Write(DEBUG, string(__func__) + string("[") + to_string(__LINE__) + string("]: start param(" + srcText + ")"));
-	}
-
-	memset(convertBuffer, 0, sizeof(convertBuffer));
-	convert_utf8_to_windows1251(srcText.c_str(), convertBuffer, sizeof(convertBuffer) - 1);
-	result = ConvertTextToHTML(convertBuffer);
+	result = ConvertTextToHTML(srcText);
 
 	if(regex_match(srcText, regex("^[._!&#*[:alnum:]]+@[.[:alnum:]]+.[[:alnum:]]{2,5}$") ))
     {
@@ -894,103 +870,42 @@ string CheckHTTPParam_Email(string srcText)
 	return	result;
 }
 
-string CheckIfFurtherThanNow(string occupationStart_cp1251) 
+string CheckIfFurtherThanNow(string timestamp_to_check) 
 {
 	time_t	  now_t, checked_t;
 	// char		utc_str[100];
 	struct tm   *local_tm, check_tm;
 	ostringstream	ost;
 
-	{
-		CLog	log;
-		ostringstream	ost;
-
-		ost.str("");
-		ost << "CheckIfFurtherThanNow(" << occupationStart_cp1251 << "): start";
-		log.Write(DEBUG, ost.str());
-	}
-
+	MESSAGE_DEBUG("", "", "start (date: " + timestamp_to_check + ")");
 
 	now_t = time(NULL);
 	local_tm = localtime(&now_t);
 	if(local_tm == NULL) 
 	{
-		CLog	log;
-		ostringstream	ost;
-
-		ost.str("");
-		ost << "CheckIfFurtherThanNow(now): ERROR in running localtime(&t)";
-		log.Write(ERROR, ost.str());
+		MESSAGE_ERROR("", "", "ERROR in running localtime(&t)");
 	}
 
-	{
-		CLog	log;
-		ostringstream	ost;
+	sscanf(timestamp_to_check.c_str(), "%4d-%2d-%2d", &check_tm.tm_year, &check_tm.tm_mon, &check_tm.tm_mday);
 
-		ost.str("");
-		ost << "CheckIfFurtherThanNow(now): now_t = " << now_t;
-		log.Write(DEBUG, ost.str());
-	}
+	MESSAGE_DEBUG("", "", "checked year = " + to_string(check_tm.tm_year) + " checked month = " + to_string(check_tm.tm_mon) + " checked day = " + to_string(check_tm.tm_mday) + "");
 
-
-	// now2_t = time(NULL);
-	// check_tm = localtime(&now2_t);
-	sscanf(occupationStart_cp1251.c_str(), "%4d-%2d-%2d", &check_tm.tm_year, &check_tm.tm_mon, &check_tm.tm_mday);
 	check_tm.tm_year -= 1900;
 	check_tm.tm_mon -= 1;
 	check_tm.tm_hour = 23;
 	check_tm.tm_min = 59;
 	check_tm.tm_isdst = 0;	// --- Summer time is OFF. Be carefull with it.
 
-	{
-		CLog	log;
-		ostringstream	ost;
-
-		ost.str("");
-		ost << "CheckIfFurtherThanNow(" << occupationStart_cp1251 << "): checked year = " << check_tm.tm_year << " checked month = " << check_tm.tm_mon << " checked day = " << check_tm.tm_mday << "";
-		log.Write(DEBUG, ost.str());
-	}
-
 	checked_t = mktime(&check_tm);
-
-	{
-		CLog	log;
-		ostringstream	ost;
-		char	buffer[80];
-
-		ost.str("");
-		strftime(buffer,80,"check_tm: date regenerated: %02d-%b-%Y %T %Z  %I:%M%p.", &check_tm);
-		ost << "CheckIfFurtherThanNow(" << occupationStart_cp1251 << "): " << buffer << "";
-		log.Write(DEBUG, ost.str());
-
-		memset(buffer, 0, 80);
-		strftime(buffer,80,"local_tm: date regenerated: %02d-%b-%Y %T %Z  %I:%M%p.", local_tm);
-		ost.str("");
-		ost << "CheckIfFurtherThanNow(" << occupationStart_cp1251 << "): " << buffer << "";
-		log.Write(DEBUG, ost.str());
-
-		ost.str("");
-		ost << "CheckIfFurtherThanNow(" << occupationStart_cp1251 << "): difftime( now_t=" << now_t << ", checked_t=" << checked_t << ")";
-		log.Write(DEBUG, ost.str());
-
-		ost.str("");
-		ost << "CheckIfFurtherThanNow(" << occupationStart_cp1251 << "): difference = " << difftime(now_t, checked_t);
-		log.Write(DEBUG, ost.str());
-	}
 
 	if(difftime(now_t, checked_t) <= 0)
 	{
-		CLog	log;
-		ostringstream	ost;
-
-		ost.str("");
-		ost << "CheckIfFurtherThanNow(" << occupationStart_cp1251 << "): clicked date further in futer than now, therefore considered as a 0000-00-00";
-		log.Write(DEBUG, ost.str());
+		MESSAGE_DEBUG("", "", "clicked date further in futer than now, therefore considered as a 0000-00-00");
 
 		return "0000-00-00";
 	}
 
-	return occupationStart_cp1251;
+	return timestamp_to_check;
 }
 
 string	GetDefaultActionFromUserType(string role, CMysql *db)
@@ -1170,9 +1085,9 @@ double GetTimeDifferenceFromNow(const string timeAgo)
 string GetMinutesDeclension(const int value)
 {
 	map<int, string> 	mapDeclension = {
-		{1, "минуту"},
-		{2, "минуты"},
-		{3, "минут"}
+		{1, "РјРёРЅСѓС‚Сѓ"},
+		{2, "РјРёРЅСѓС‚С‹"},
+		{3, "РјРёРЅСѓС‚"}
 	};
 
 	string				result;
@@ -1189,9 +1104,9 @@ string GetMinutesDeclension(const int value)
 string GetHoursDeclension(const int value)
 {
 	map<int, string> 	mapDeclension = {
-		{1, "час"},
-		{2, "часа"},
-		{3, "часов"}
+		{1, "С‡Р°СЃ"},
+		{2, "С‡Р°СЃР°"},
+		{3, "С‡Р°СЃРѕРІ"}
 	};
 	string				result;
 
@@ -1206,9 +1121,9 @@ string GetHoursDeclension(const int value)
 string GetDaysDeclension(const int value)
 {
 	map<int, string> 	mapDeclension = {
-		{1, "день"},
-		{2, "дня"},
-		{3, "дней"}
+		{1, "РґРµРЅСЊ"},
+		{2, "РґРЅСЏ"},
+		{3, "РґРЅРµР№"}
 	};
 	string				result;
 
@@ -1223,9 +1138,9 @@ string GetDaysDeclension(const int value)
 string GetMonthsDeclension(const int value)
 {
 	map<int, string> 	mapDeclension = {
-		{1, "месяц"},
-		{2, "месяца"},
-		{3, "месяцев"}
+		{1, "РјРµСЃСЏС†"},
+		{2, "РјРµСЃСЏС†Р°"},
+		{3, "РјРµСЃСЏС†РµРІ"}
 	};
 	string				result;
 
@@ -1240,9 +1155,9 @@ string GetMonthsDeclension(const int value)
 string GetYearsDeclension(const int value)
 {
 	map<int, string> 	mapDeclension = {
-		{1, "год"},
-		{2, "года"},
-		{3, "лет"}
+		{1, "РіРѕРґ"},
+		{2, "РіРѕРґР°"},
+		{3, "Р»РµС‚"}
 	};
 	string				result;
 
@@ -1288,7 +1203,7 @@ string GetHumanReadableTimeDifferenceFromNow (const string timeAgo)
 		ost << (int)minutes << " " << GetMinutesDeclension(minutes);
 	}
 
-	ost << " назад.";
+	ost << " РЅР°Р·Р°Рґ.";
 
 
 	// --- commented to reduce logs flooding

@@ -45,30 +45,6 @@ CHTML::CHTML(string _type_): type(_type_)
 	MESSAGE_DEBUG("", "", "finish");
 }
 
-string CHTML::ConvertUTF8ToCP1251(const string &param)
-{
-	auto	result = param;
-
-	MESSAGE_DEBUG("", "", "start (input length is " + to_string(result.length()) + ")");
-
-	unique_ptr<char[]>      tempSmartPointer(new char[result.length() * 4]);
-	char    *tmpMessage = tempSmartPointer.get();
-
-	memset(tmpMessage, 0, result.length() * 4);
-	if(convert_utf8_to_windows1251(result.c_str(), tmpMessage, result.length() * 4 - 1))
-	{
-	        result = tmpMessage;
-	}
-	else
-	{
-		MESSAGE_ERROR("", "", "fail to convert utf8->cp1251, most probably src string is non-UTF8");
-	}
-
-	MESSAGE_DEBUG("", "", "finish (result length is " + to_string(result.length()) + ")");
-
-	return result;
-}
-
 string CHTML::GetTagContent(string tag_name)
 {
 	MESSAGE_DEBUG("", "", "start(" + tag_name + ")");
@@ -78,7 +54,7 @@ string CHTML::GetTagContent(string tag_name)
 
     if(regex_search(headTag, sm1, regex("<" + tag_name + ".*>(.*)</" + tag_name + ">")) )
     {
-        result = ConvertUTF8ToCP1251(sm1[1]);
+        result = sm1[1];
     }
     else
     {
@@ -125,7 +101,7 @@ string CHTML::GetAttributeValue(string tag_name, string attr_name, string name_c
                             
                             if(content_end_pos != string::npos)
                             {
-                                result = ConvertUTF8ToCP1251(tag_attrs.substr(content_start + 1, content_end_pos - (content_start + 2) + 1));
+                                result = tag_attrs.substr(content_start + 1, content_end_pos - (content_start + 2) + 1);
                             }
                             else
                             {

@@ -158,21 +158,8 @@ int main()
 
 		if((user.GetID().length()) && (user.GetName() != "Guest"))
 		{
-			string	  itemID = indexPage.GetVarsHandler()->Get("id");
-			string	  itemType = indexPage.GetVarsHandler()->Get("type");
-
-			{
-				char	*convertBuffer = new char[ 1024 * 1024];
-
-				// --- Convert from UTF-8 to cp1251
-				memset(convertBuffer, 0, 1024*1024);
-				convert_utf8_to_windows1251(itemID.c_str(), convertBuffer, 1024*1024-1);
-				itemID = ConvertTextToHTML(convertBuffer);
-
-				memset(convertBuffer, 0, 1024*1024);
-				convert_utf8_to_windows1251(itemType.c_str(), convertBuffer, 1024*1024-1);
-				itemType = ConvertTextToHTML(convertBuffer);
-			}
+			auto	  itemID = CheckHTTPParam_Number(indexPage.GetVarsHandler()->Get("id"));
+			auto	  itemType = CheckHTTPParam_Text(indexPage.GetVarsHandler()->Get("type"));
 
 			if(itemID.length() && itemType.length())
 			{
@@ -356,7 +343,7 @@ int main()
 					ostJSONResult.str("");
 					ostJSONResult << "{";
 					ostJSONResult << "\"result\": \"error\",";
-					ostJSONResult << "\"textStatus\": \"Ó Âàñ íåò äîñòóïà\",";
+					ostJSONResult << "\"textStatus\": \"Ð£ Ð’Ð°Ñ Ð½ÐµÑ‚ Ð´Ð¾ÑÑ‚ÑƒÐ¿Ð°\",";
 					ostJSONResult << "\"fileName\": \"\" ,";
 					ostJSONResult << "\"jqXHR\": \"\"";
 					ostJSONResult << "}";

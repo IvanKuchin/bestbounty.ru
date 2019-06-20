@@ -766,7 +766,7 @@ int main()
 						ostFinal.str("");
 						ostFinal << "{";
 						ostFinal << "\"result\" : \"error\",";
-						ostFinal << "\"description\" : \"Ошибка: Не получилось определить владельца сообщения\"";
+						ostFinal << "\"description\" : \"РћС€РёР±РєР°: РќРµ РїРѕР»СѓС‡РёР»РѕСЃСЊ РѕРїСЂРµРґРµР»РёС‚СЊ РІР»Р°РґРµР»СЊС†Р° СЃРѕРѕР±С‰РµРЅРёСЏ\"";
 						ostFinal << "}";
 					}
 				}
@@ -779,7 +779,7 @@ int main()
 					ostFinal.str("");
 					ostFinal << "{";
 					ostFinal << "\"result\" : \"error\",";
-					ostFinal << "\"description\" : \"Ошибка: Вы не можете удалить чужое сообщение.\"";
+					ostFinal << "\"description\" : \"РћС€РёР±РєР°: Р’С‹ РЅРµ РјРѕР¶РµС‚Рµ СѓРґР°Р»РёС‚СЊ С‡СѓР¶РѕРµ СЃРѕРѕР±С‰РµРЅРёРµ.\"";
 					ostFinal << "}";
 				}
 			}
@@ -1063,7 +1063,7 @@ int main()
 					ostFinal.str("");
 					ostFinal << "{" << std::endl;
 					ostFinal << "\"result\" : \"error\"," << std::endl;
-					ostFinal << "\"description\" : \"проблема с выбором imageTempSet\"" << std::endl;
+					ostFinal << "\"description\" : \"РїСЂРѕР±Р»РµРјР° СЃ РІС‹Р±РѕСЂРѕРј imageTempSet\"" << std::endl;
 					ostFinal << "}" << std::endl;
 				}
 				else
@@ -1073,7 +1073,7 @@ int main()
 					ostFinal.str("");
 					ostFinal << "{" << std::endl;
 					ostFinal << "\"result\" : \"error\"," << std::endl;
-					ostFinal << "\"description\" : \"ссылка пустая или слишком длинная\"" << std::endl;
+					ostFinal << "\"description\" : \"СЃСЃС‹Р»РєР° РїСѓСЃС‚Р°СЏ РёР»Рё СЃР»РёС€РєРѕРј РґР»РёРЅРЅР°СЏ\"" << std::endl;
 					ostFinal << "}" << std::endl;
 				}
 			}
@@ -1090,7 +1090,7 @@ int main()
 					ostFinal.str("");
 					ostFinal << "{" << std::endl;
 					ostFinal << "\"result\" : \"error\"," << std::endl;
-					ostFinal << "\"description\" : \"Ваша сессия истекла. Необходимо выйти и повторно зайти.\"" << std::endl;
+					ostFinal << "\"description\" : \"Р’Р°С€Р° СЃРµСЃСЃРёСЏ РёСЃС‚РµРєР»Р°. РќРµРѕР±С…РѕРґРёРјРѕ РІС‹Р№С‚Рё Рё РїРѕРІС‚РѕСЂРЅРѕ Р·Р°Р№С‚Рё.\"" << std::endl;
 					ostFinal << "}" << std::endl;
 				}
 
@@ -1277,7 +1277,7 @@ int main()
 						ostFinal.str("");
 						ostFinal << "{";
 						ostFinal << "\"result\" : \"error\",";
-						ostFinal << "\"description\" : \"Не удалось получить данные с сайта, проверьте корректность ссылки\"";
+						ostFinal << "\"description\" : \"РќРµ СѓРґР°Р»РѕСЃСЊ РїРѕР»СѓС‡РёС‚СЊ РґР°РЅРЅС‹Рµ СЃ СЃР°Р№С‚Р°, РїСЂРѕРІРµСЂСЊС‚Рµ РєРѕСЂСЂРµРєС‚РЅРѕСЃС‚СЊ СЃСЃС‹Р»РєРё\"";
 						ostFinal << "}";
 					}
 				}
@@ -1967,7 +1967,6 @@ int main()
 		{
 			ostringstream	ost, ostFinal;
 			string			sessid, lookForKey, userList;
-			char			*convertBuffer;
 			CMysql			db1;
 
 			MESSAGE_DEBUG("", "", "start");
@@ -1987,15 +1986,7 @@ int main()
 				return(1);
 			}
 
-			lookForKey = indexPage.GetVarsHandler()->Get("lookForKey");
-
-			convertBuffer = new char[1024];
-			memset(convertBuffer, 0, 1024);
-			convert_utf8_to_windows1251(lookForKey.c_str(), convertBuffer, 1024);
-			lookForKey = convertBuffer;
-			trim(lookForKey);
-
-			delete[] convertBuffer;
+			lookForKey = CheckHTTPParam_Text(indexPage.GetVarsHandler()->Get("lookForKey"));
 
 			// --- Clean-up the text
 			lookForKey = ReplaceDoubleQuoteToQuote(lookForKey);
@@ -2029,7 +2020,6 @@ int main()
 		{
 			ostringstream	ost, ostFinal;
 			string			sessid, lookForKey, userList;
-			char			*convertBuffer = new char[1024];
 			vector<string>	searchWords;
 
 			MESSAGE_DEBUG("", "", "start");
@@ -2047,22 +2037,8 @@ int main()
 */
 			{
 
-				lookForKey = indexPage.GetVarsHandler()->Get("lookForKey");
+				lookForKey = CheckHTTPParam_Text(indexPage.GetVarsHandler()->Get("lookForKey"));
 
-
-				memset(convertBuffer, 0, 1024);
-				convert_utf8_to_windows1251(lookForKey.c_str(), convertBuffer, 1024);
-				lookForKey = convertBuffer;
-				trim(lookForKey);
-
-				delete[] convertBuffer;
-
-				// --- Clean-up the text
-				lookForKey = ReplaceDoubleQuoteToQuote(lookForKey);
-				lookForKey = DeleteHTML(lookForKey);
-				lookForKey = SymbolReplace(lookForKey, "\r\n", "");
-				lookForKey = SymbolReplace(lookForKey, "\r", "");
-				lookForKey = SymbolReplace(lookForKey, "\n", "");
 				if(qw(lookForKey, searchWords))
 				{
 
@@ -2315,7 +2291,7 @@ int main()
 			string		  sessid, lookForKey, industriesList;
 			vector<string>  searchWords;
 
-			MESSAGE_DEBUG("", "", "start");
+			MESSAGE_DEBUG("", action, "start");
 
 			// --- Initialization
 			ostFinal.str("");
@@ -2325,29 +2301,20 @@ int main()
 				ostringstream   ost;
 
 				{
+					
 					MESSAGE_DEBUG("", action, "re-login required");
 				}
 
 				indexPage.Redirect("/" + GUEST_USER_DEFAULT_ACTION + "?rand=" + GetRandom(10));
 			}
 
-			lookForKey = indexPage.GetVarsHandler()->Get("lookForKey");
+			lookForKey = CheckHTTPParam_Text(indexPage.GetVarsHandler()->Get("lookForKey"));
 
-			if(lookForKey.length() >= 2) 
 			{
-				ostringstream   ost;
-				string		  tmpStr = "";
-				char			convertBuffer[1024];
+				auto			tmpStr = ""s;
+				auto			affected = db.Query("SELECT * FROM `company_industry` WHERE `name` LIKE \"%" + lookForKey + "%\" LIMIT 0, 20;");
 
-				memset(convertBuffer, 0, sizeof(convertBuffer));
-				convert_utf8_to_windows1251(lookForKey.c_str(), convertBuffer, sizeof(convertBuffer));
-				lookForKey = ConvertTextToHTML(convertBuffer);
-
-				// --- Looking through company name
-				ost.str("");
-				ost << "SELECT * FROM `company_industry` WHERE `name` LIKE \"%" << lookForKey << "%\";";
-
-				for(int i = 0; i < db.Query(ost.str()); ++i)
+				for(int i = 0; i < affected; ++i)
 				{
 					if(i) tmpStr += ",";
 					tmpStr += string("{\"id\":\"") + string(db.Get(i, "id")) + "\",";
@@ -2357,27 +2324,16 @@ int main()
 				ostFinal << "{\"status\":\"success\",\"industries\":[" << tmpStr << "]}";
 
 			}
-			else
-			{
-				{
-					MESSAGE_DEBUG("", action, "searching key is empty or less than 2");
-				}
-				ostFinal << "{\"status\":\"error\",\"description\":\"searching key is empty or less then 2\", \"industries\":[]}";
-			}
 
 			indexPage.RegisterVariableForce("result", ostFinal.str());
 
 			if(!indexPage.SetTemplate("json_response.htmlt"))
 			{
-				MESSAGE_ERROR("", action, " template file json_response.htmlt was missing");
+				MESSAGE_ERROR("", action, "template file json_response.htmlt was missing");
 				throw CException("Template file was missing");
 			}
 
-			{
-				CLog	log;
-
-				MESSAGE_DEBUG("", action, "final response [" + ostFinal.str() + "]");
-			}
+			MESSAGE_DEBUG("", action, "final response [" + ostFinal.str() + "]");
 		}
 
 		// --- JSON get list of my friends
@@ -2694,263 +2650,16 @@ int main()
 			}
 		}
 
-		if(action == "AJAX_chatPostMessage")
-		{
-			ostringstream	ost, ostFinal;
-			string			sessid, message = "", toID = "";
-
-			MESSAGE_DEBUG("", "", "start");
-
-			if(user.GetLogin() == "Guest")
-			{
-				MESSAGE_DEBUG("", action, "re-login required");
-
-				ostFinal << "result: fail";
-			}
-			else
-			{
-				char			*convertBuffer = new char[ 1024 * 1024];
-
-				message = indexPage.GetVarsHandler()->Get("message");
-				toID = indexPage.GetVarsHandler()->Get("toID");
-				
-
-				// --- clean-up message parameter
-				// --- Convert FROM UTF-8 to cp1251
-				memset(convertBuffer, 0, 1024*1024);
-				convert_utf8_to_windows1251(message.c_str(), convertBuffer, 1024*1024-1);
-				message = convertBuffer;
-				delete[] convertBuffer;
-
-				message = ReplaceDoubleQuoteToQuote(message);
-				message = RemoveSpecialSymbols(message);
-				message = DeleteHTML(message);
-				message = SymbolReplace(message, "\r\n", "<br>");
-				message = SymbolReplace(message, "\r", "");
-				message = SymbolReplace(message, "\n", "<br>");
-				trim(message);
-
-				// --- clean-up recipient parameter
-				toID = ReplaceDoubleQuoteToQuote(toID);
-				toID = DeleteHTML(toID);
-				trim(toID);
-
-				{
-					MESSAGE_DEBUG("", action, "message [" + message + "]");
-				}
-
-				if(message.length() && toID.length())
-				{
-					int				affected;
-					
-					ost.str("");
-					ost << "insert into `chat_messages` (`message`, `fromType`, `fromID`, `toType`, `toID`, `messageStatus`, `eventTimestamp`) \
-							VALUES (\
-							\"" << message << "\", \
-							\"fromUser\", \
-							\"" << user.GetID() << "\", \
-							\"toUser\", \
-							\"" << toID << "\", \
-							\"unread\", \
-							NOW() \
-							);";
-
-					db.Query(ost.str());
-
-					ost.str("");
-					ost << "SELECT * FROM `chat_messages` WHERE `fromID`='" << user.GetID() << "' and `toID`='" << toID << "' and `messageStatus`='unread' ORDER BY `id` DESC LIMIT 0,1;";
-					affected = db.Query(ost.str());
-					if(affected)
-					{
-						string		tempMessage = db.Get(0, "message");
-
-						if(tempMessage == message)
-						{
-							ostringstream	chatMessageQuery;
-							string			messageObj;
-
-							chatMessageQuery.str("");
-							chatMessageQuery << "SELECT * FROM `chat_messages` WHERE `id`='" << db.Get(0, "id") << "';";
-							messageObj = GetChatMessagesInJSONFormat(chatMessageQuery.str(), &db);
-
-							if(messageObj.length())
-							{
-								ostFinal.str("");
-								ostFinal << "\"result\": \"success\"," << std::endl;
-								ostFinal << "\"messageObj\": " << messageObj << std::endl;
-
-							}
-							else
-							{
-								{
-									CLog			log;
-									ostringstream	ost;
-
-									ost.str("");
-									ost << string(__func__) + "[" + to_string(__LINE__) + "]" + action + ": in getting chat message by ID FROM DB (" << db.Get(0, "id") << ")";
-									log.Write(ERROR, ost.str());
-								}
-								ostFinal.str("");
-								ostFinal << "\"result\": \"error\"," << std::endl;
-								ostFinal << "\"description\": \"проблема с базой данных (сообщите администрации)\"" << std::endl;
-							}
-						}
-
-						else
-						{
-							{
-								CLog			log;
-								ostringstream	ost;
-
-								ost.str("");
-								ost << string(__func__) + "[" + to_string(__LINE__) + "]" + action + ": can't find message after inserting into DB (original message: [" << message << "], DB message: [" << tempMessage << "])";
-								log.Write(ERROR, ost.str());
-							}
-							ostFinal.str("");
-							ostFinal << "\"result\": \"error\"," << std::endl;
-							ostFinal << "\"description\": \"проблема с базой данных (сообщите администрации)\"" << std::endl;
-						}
-
-					}
-					else
-					{
-						{
-							CLog	log;
-							log.Write(ERROR, string(__func__) + "[" + to_string(__LINE__) + "]" + action + ": can't find message after inserting into DB");
-						}
-						ostFinal.str("");
-						ostFinal << "\"result\": \"error\"," << std::endl;
-						ostFinal << "\"description\": \"проблема с базой данных (сообщите администрации)\"" << std::endl;
-					}
-
-
-				}
-				else
-				{
-					{
-						MESSAGE_DEBUG("", action, "message_body or message_recipient is empty");
-					}
-					ostFinal.str("");
-					ostFinal << "\"result\": \"error\"," << std::endl;
-					ostFinal << "\"description\": \"сообщение должно содержать текст\"" << std::endl;
-				}
-
-
-
-
-
-			}
-
-
-			indexPage.RegisterVariableForce("result", "{" + ostFinal.str() + "}");
-
-			if(!indexPage.SetTemplate("json_response.htmlt"))
-			{
-				MESSAGE_ERROR("", action, " template file json_response.htmlt was missing");
-				throw CException("Template file was missing");
-			}
-
-			{
-				MESSAGE_DEBUG("", action, "end");
-			}
-		}
-
-		if(action == "AJAX_chatMarkMessageReadByMessageID")
-		{
-			ostringstream	ost, ostFinal;
-			string			messageID = "";
-
-			MESSAGE_DEBUG("", "", "start");
-
-			if(user.GetLogin() == "Guest")
-			{
-				MESSAGE_DEBUG("", action, "re-login required");
-
-				indexPage.RegisterVariableForce("result", "{"
-															"\"result\":\"error\","
-															"\"description\":\"re-login required\","
-															"\"location\":\"/login?rand=" + GetRandom(10) + "\""
-															"}");
-			}
-			else
-			{
-				char			*convertBuffer = new char[ 1024 * 1024];
-
-				messageID = indexPage.GetVarsHandler()->Get("messageid");
-
-				// --- clean-up message parameter
-				// --- Convert FROM UTF-8 to cp1251
-				memset(convertBuffer, 0, 1024*1024);
-				convert_utf8_to_windows1251(messageID.c_str(), convertBuffer, 1024*1024-1);
-				messageID = convertBuffer;
-				delete[] convertBuffer;
-
-				messageID = ReplaceDoubleQuoteToQuote(messageID);
-				messageID = RemoveSpecialSymbols(messageID);
-				messageID = DeleteHTML(messageID);
-				messageID = SymbolReplace(messageID, "\r\n", "<br>");
-				messageID = SymbolReplace(messageID, "\r", "");
-				messageID = SymbolReplace(messageID, "\n", "<br>");
-				trim(messageID);
-
-				{
-					MESSAGE_DEBUG("", action, "message [" + messageID + "]");
-				}
-
-				if(messageID.length())
-				{
-					ost.str("");
-					ost << "UPDATE `chat_messages` SET `messageStatus`=\"read\" \
-							WHERE `toID`='" << user.GetID() << "' and `id`='" << messageID << "';";
-
-					db.Query(ost.str());
-
-					{
-						ostFinal.str("");
-						ostFinal << "\"result\": \"success\"" << std::endl;
-					}
-				}
-				else
-				{
-					{
-						CLog	log;
-						log.Write(ERROR, string(__func__) + "[" + to_string(__LINE__) + "]" + action + ": messageID is empty");
-					}
-					ostFinal.str("");
-					ostFinal << "\"result\": \"error\"," << std::endl;
-					ostFinal << "\"description\": \"messageID is empty\"" << std::endl;
-				}
-
-				indexPage.RegisterVariableForce("result", "{" + ostFinal.str() + "}");
-			}
-
-
-			if(!indexPage.SetTemplate("json_response.htmlt"))
-			{
-				MESSAGE_ERROR("", action, " template file json_response.htmlt was missing");
-				throw CException("Template file was missing");
-			}
-
-			{
-				MESSAGE_DEBUG("", action, "end");
-			}
-		}
-
 		if(action == "AJAX_notificationMarkMessageReadByMessageID")
 		{
 			ostringstream	ost, ostFinal;
 			string			notificationID = "";
 
-			MESSAGE_DEBUG("", "", "start");
+			MESSAGE_DEBUG("", action, "start");
 
 			if(user.GetLogin() == "Guest")
 			{
-				ostringstream	ost;
-
-				{
-					CLog	log;
-					log.Write(ERROR, string(__func__) + "[" + to_string(__LINE__) + "]" + action + ": re-login required");
-				}
+				MESSAGE_ERROR("", action, "re-login required");
 
 				indexPage.RegisterVariableForce("result", "{"
 															"\"result\":\"error\","
@@ -2960,36 +2669,11 @@ int main()
 			}
 			else
 			{
-				char			*convertBuffer = new char[ 1024 * 1024];
-
-				notificationID = indexPage.GetVarsHandler()->Get("notificationID");
-
-				// --- clean-up message parameter
-				// --- Convert FROM UTF-8 to cp1251
-				memset(convertBuffer, 0, 1024*1024);
-				convert_utf8_to_windows1251(notificationID.c_str(), convertBuffer, 1024*1024-1);
-				notificationID = convertBuffer;
-				delete[] convertBuffer;
-
-				notificationID = ReplaceDoubleQuoteToQuote(notificationID);
-				notificationID = RemoveSpecialSymbols(notificationID);
-				notificationID = DeleteHTML(notificationID);
-				notificationID = SymbolReplace(notificationID, "\r\n", "<br>");
-				notificationID = SymbolReplace(notificationID, "\r", "");
-				notificationID = SymbolReplace(notificationID, "\n", "<br>");
-				trim(notificationID);
-
-				{
-					MESSAGE_DEBUG("", action, "message [" + notificationID + "]");
-				}
+				notificationID = CheckHTTPParam_Number(indexPage.GetVarsHandler()->Get("notificationID"));
 
 				if(notificationID.length())
 				{
-					ost.str("");
-					ost << "UPDATE `users_notification` SET `notificationStatus`=\"read\" \
-							WHERE `userId`='" << user.GetID() << "' and `id`='" << notificationID << "';";
-
-					db.Query(ost.str());
+					db.Query("UPDATE `users_notification` SET `notificationStatus`=\"read\" WHERE `userId`='" + user.GetID() + "' and `id`='" + notificationID + "';");
 
 					if(!db.isError())
 					{
@@ -2999,8 +2683,7 @@ int main()
 					else
 					{
 						{
-							CLog	log;
-							log.Write(ERROR, string(__func__) + "[" + to_string(__LINE__) + "]" + action + ": updating users_notification table");
+							MESSAGE_ERROR("", action, "updating users_notification table");
 						}
 
 						ostFinal.str("");
@@ -3010,8 +2693,7 @@ int main()
 				else
 				{
 					{
-						CLog	log;
-						log.Write(ERROR, string(__func__) + "[" + to_string(__LINE__) + "]" + action + ": notificationID is empty");
+						MESSAGE_ERROR("", action, "notificationID is empty");
 					}
 					ostFinal.str("");
 					ostFinal << "\"result\": \"error\"," << std::endl;
@@ -3024,96 +2706,15 @@ int main()
 
 			if(!indexPage.SetTemplate("json_response.htmlt"))
 			{
-				MESSAGE_ERROR("", action, " template file json_response.htmlt was missing");
+				MESSAGE_ERROR("", action, "template file json_response.htmlt was missing");
 				throw CException("Template file was missing");
 			}
 
 			{
-				MESSAGE_DEBUG("", action, "end");
+				
+				MESSAGE_DEBUG("", action, "finish");
 			}
 		}
-
-		if(action == "AJAX_chatMarkMessageReadByUserID")
-		{
-			ostringstream	ost, ostFinal;
-			string			userID = "";
-
-			MESSAGE_DEBUG("", "", "start");
-
-			if(user.GetLogin() == "Guest")
-			{
-				MESSAGE_DEBUG("", action, "re-login required");
-
-				indexPage.RegisterVariableForce("result", "{"
-															"\"result\":\"error\","
-															"\"description\":\"re-login required\","
-															"\"location\":\"/login?rand=" + GetRandom(10) + "\""
-															"}");
-			}
-			else
-			{
-				char			*convertBuffer = new char[ 1024 * 1024];
-
-				userID = indexPage.GetVarsHandler()->Get("userID");
-
-				// --- clean-up message parameter
-				// --- Convert FROM UTF-8 to cp1251
-				memset(convertBuffer, 0, 1024*1024);
-				convert_utf8_to_windows1251(userID.c_str(), convertBuffer, 1024*1024-1);
-				userID = convertBuffer;
-				delete[] convertBuffer;
-
-				userID = ReplaceDoubleQuoteToQuote(userID);
-				userID = RemoveSpecialSymbols(userID);
-				userID = DeleteHTML(userID);
-				userID = SymbolReplace(userID, "\r\n", "<br>");
-				userID = SymbolReplace(userID, "\r", "");
-				userID = SymbolReplace(userID, "\n", "<br>");
-				trim(userID);
-
-				{
-					MESSAGE_DEBUG("", action, "message [" + userID + "]");
-				}
-
-				if(userID.length())
-				{
-					ost.str("");
-					ost << "UPDATE `chat_messages` SET `messageStatus`=\"read\" \
-							WHERE `fromID`='" << userID << "' AND `toID`='" << user.GetID() << "' AND `messageStatus`='unread';";
-
-					db.Query(ost.str());
-
-					{
-						ostFinal.str("");
-						ostFinal << "\"result\": \"success\"," << std::endl;
-					}
-				}
-				else
-				{
-					{
-						CLog	log;
-						log.Write(ERROR, string(__func__) + "[" + to_string(__LINE__) + "]" + action + ": userID is empty");
-					}
-					ostFinal.str("");
-					ostFinal << "\"result\": \"error\"," << std::endl;
-					ostFinal << "\"description\": \"userID is empty\"" << std::endl;
-				}
-
-				indexPage.RegisterVariableForce("result", "{" + ostFinal.str() + "}");
-			}
-
-
-			if(!indexPage.SetTemplate("json_response.htmlt"))
-			{
-				MESSAGE_ERROR("", action, " template file json_response.htmlt was missing");
-				throw CException("Template file was missing");
-			}
-
-			{
-				MESSAGE_DEBUG("", action, "end");
-			}
-		}
-
 
 		// --- cleanup news feed image after closing the modal window 
 		if((action == "AJAX_cleanupFeedImages") || (action == "AJAX_editCleanupFeedImages"))
@@ -3278,7 +2879,7 @@ int main()
 							ost.str("");
 							ost << "{";
 							ost << "\"result\" : \"error\",";
-							ost << "\"description\" : \"Ошибка: Не получилось определить владельца сообщения\"";
+							ost << "\"description\" : \"РћС€РёР±РєР°: РќРµ РїРѕР»СѓС‡РёР»РѕСЃСЊ РѕРїСЂРµРґРµР»РёС‚СЊ РІР»Р°РґРµР»СЊС†Р° СЃРѕРѕР±С‰РµРЅРёСЏ\"";
 							ost << "}";
 						}
 					}
@@ -3288,7 +2889,7 @@ int main()
 							CLog	log;
 							log.Write(ERROR, string(__func__) + "[" + to_string(__LINE__) + "]" + action + ": message.id(" + messageID + ") doesn't belongs to user.id(" + user.GetID() + ") or his companies");
 						}
-						indexPage.RegisterVariableForce("result", "{\"result\" : \"error\", \"description\" : \"вы не можете редактировать сообщение\"}");
+						indexPage.RegisterVariableForce("result", "{\"result\" : \"error\", \"description\" : \"РІС‹ РЅРµ РјРѕР¶РµС‚Рµ СЂРµРґР°РєС‚РёСЂРѕРІР°С‚СЊ СЃРѕРѕР±С‰РµРЅРёРµ\"}");
 					}
 				}
 				else
@@ -3738,7 +3339,7 @@ int main()
 							ost << "[";
 							ost << "{";
 							ost << "\"result\": \"error\",";
-							ost << "\"description\": \"присутствуют запрещенные слова\"";
+							ost << "\"description\": \"РїСЂРёСЃСѓС‚СЃС‚РІСѓСЋС‚ Р·Р°РїСЂРµС‰РµРЅРЅС‹Рµ СЃР»РѕРІР°\"";
 							ost << "}";
 							ost << "]";
 
@@ -3756,7 +3357,7 @@ int main()
 						ost.str("");
 						ost << "{";
 						ost << "\"result\" : \"error\",";
-						ost << "\"description\" : \"Ошибка: Не получилось определить владельца сообщения\"";
+						ost << "\"description\" : \"РћС€РёР±РєР°: РќРµ РїРѕР»СѓС‡РёР»РѕСЃСЊ РѕРїСЂРµРґРµР»РёС‚СЊ РІР»Р°РґРµР»СЊС†Р° СЃРѕРѕР±С‰РµРЅРёСЏ\"";
 						ost << "}";
 					}
 		
@@ -3768,7 +3369,7 @@ int main()
 					ost << "[";
 					ost << "{";
 					ost << "\"result\": \"error\",";
-					ost << "\"description\": \"Ошибка: сообщение не найдено или не ваше\"";
+					ost << "\"description\": \"РћС€РёР±РєР°: СЃРѕРѕР±С‰РµРЅРёРµ РЅРµ РЅР°Р№РґРµРЅРѕ РёР»Рё РЅРµ РІР°С€Рµ\"";
 					ost << "}";
 					ost << "]";
 
@@ -4168,56 +3769,38 @@ int main()
 
 			if(user.GetLogin() == "Guest")
 			{
-				MESSAGE_DEBUG("", action, "re-login required");
+				ostringstream	ost;
 
-				indexPage.RegisterVariableForce("result", "{\"result\": \"error\", \"description\": \"re-login required\"}");
+				{
+					
+					MESSAGE_DEBUG("", action, "re-login required");
+				}
+
+				ost.str("");
+				ost << "{\"result\": \"error\", \"description\": \"session lost. Need to relogin\"}";
+
+				indexPage.RegisterVariableForce("result", ost.str());
 
 				if(!indexPage.SetTemplate("json_response.htmlt"))
 				{
-					MESSAGE_ERROR("", action, " can't find template json_response.htmlt");
+					MESSAGE_ERROR("", action, "can't find template json_response.htmlt");
 					throw CExceptionHTML("user not activated");
 				} // if(!indexPage.SetTemplate("json_response.htmlt"))
 			}
 			else
 			{
-				// --- "new" used due to possibility of drop "standard exception"
-				char			*convertBuffer = new char[ 1024 * 1024];
-
-				// --- This line will not be reached in case of error in memory allocation 
-				// --- To avoid throw std exception use char *a = new(std::nothrow) char[ 0x7FFFFFFF ];
-				if(!convertBuffer)
-				{
-					MESSAGE_ERROR("", action, " can't allocate memory");
-				}
-
 				// --- Authorized user
 				newPassword = indexPage.GetVarsHandler()->Get("password");
-
-				// --- Convert FROM UTF-8 to cp1251
-				memset(convertBuffer, 0, 1024*1024);
-				convert_utf8_to_windows1251(newPassword.c_str(), convertBuffer, 1024*1024-1);
-				newPassword = convertBuffer;
-				cleanedPassword = newPassword;
-
-				trim(cleanedPassword);
-
-				delete[] convertBuffer;
-
-				// --- Clean-up the text
-				cleanedPassword = ReplaceDoubleQuoteToQuote(cleanedPassword);
-				cleanedPassword = DeleteHTML(cleanedPassword);
-				cleanedPassword = SymbolReplace(cleanedPassword, "\r\n", "<br>");
-				cleanedPassword = SymbolReplace(cleanedPassword, "\r", "<br>");
-				cleanedPassword = SymbolReplace(cleanedPassword, "\n", "<br>");
+				cleanedPassword = CheckHTTPParam_Text(newPassword);
 
 				if(cleanedPassword != newPassword)
 				{
-					MESSAGE_DEBUG("", action, "password having wrong symbols change the password to a new one [" + newPassword + "] <> [" + cleanedPassword + "]");
+					MESSAGE_DEBUG("", action, "" + action + ": password having wrong symbols change the password to a new one [" + newPassword + "] <> [" + cleanedPassword + "]");
 
 					ostResult.str("");
 					ostResult << "{";
 					ostResult << "\"result\": \"error\",";
-					ostResult << "\"description\": \"Пароль не должен содержать символов [(кавычки), (перевод строки), '<>] \"";
+					ostResult << "\"description\": \"РџР°СЂРѕР»СЊ РЅРµ РґРѕР»Р¶РµРЅ СЃРѕРґРµСЂР¶Р°С‚СЊ СЃРёРјРІРѕР»РѕРІ [(РєР°РІС‹С‡РєРё), (РїРµСЂРµРІРѕРґ СЃС‚СЂРѕРєРё), '<>] \"";
 					ostResult << "}";
 				}
 				else
@@ -4232,13 +3815,12 @@ int main()
 						if(db.Query(ost.str()))
 						{
 
-							CLog			log;
-							MESSAGE_DEBUG("", action, "new password is the same as earlier");
+							MESSAGE_DEBUG("", action, "" + action + ": new password is the same as earlier");
 
 							ostResult.str("");
 							ostResult << "{";
 							ostResult << "\"result\": \"error\",";
-							ostResult << "\"description\": \"Пароль не должен совпадать с одним из прошлых паролей\"";
+							ostResult << "\"description\": \"РџР°СЂРѕР»СЊ РЅРµ РґРѕР»Р¶РµРЅ СЃРѕРІРїР°РґР°С‚СЊ СЃ РѕРґРЅРёРј РёР· РїСЂРѕС€Р»С‹С… РїР°СЂРѕР»РµР№\"";
 							ostResult << "}";
 						}
 						else
@@ -4263,16 +3845,15 @@ int main()
 							}
 							else
 							{
-								CLog			log;
-								log.Write(ERROR, string(__func__) + "[" + to_string(__LINE__) + "]" + action + ": insert into users_passwd");
+								MESSAGE_ERROR("", action, "insert into users_passwd");
 
 								ostResult.str("");
 								ostResult << "{";
 								ostResult << "\"result\": \"error\",";
-								ostResult << "\"description\": \"Ошибка БД\"";
+								ostResult << "\"description\": \"РћС€РёР±РєР° Р‘Р”\"";
 								ostResult << "}";
 							}
-								
+							
 							MESSAGE_DEBUG("", action, "password has been changed successfully");
 						}
 					} // if(newPassword.length() > 0)
@@ -4285,6 +3866,7 @@ int main()
 						ostResult << "\"description\": \"can't change to empty password\"";
 						ostResult << "}";
 
+						
 						MESSAGE_DEBUG("", action, "can't change to empty password");
 					}
 
@@ -4297,7 +3879,7 @@ int main()
 
 			if(!indexPage.SetTemplate("json_response.htmlt"))
 			{
-				MESSAGE_ERROR("", action, " can't find template json_response.htmlt");
+				MESSAGE_ERROR("", action, "can't find template json_response.htmlt");
 				throw CExceptionHTML("Template file was missing");
 			}
 
@@ -4425,7 +4007,7 @@ int main()
 
 					if(GetTimeDifferenceFromNow(friendLastOnline) < 60)
 					{
-						indexPage.RegisterVariableForce("friendLastOnlineStatement", "менее минуты назад");
+						indexPage.RegisterVariableForce("friendLastOnlineStatement", "РјРµРЅРµРµ РјРёРЅСѓС‚С‹ РЅР°Р·Р°Рґ");
 					}
 					else
 					{
@@ -4478,15 +4060,15 @@ int main()
 
 								ost1 << "<div class='row'>\n";
 								ost1 << "<div class='col-md-4'>";
-								ost1 << "<p" << (current_company == "1" ? " class=\"current_company\"" : "") << ">с ";
-								ost1 << "<span data-id='" << db.Get(i, "users_company_id") << "' data-action='update_occupation_start' class='occupation_start datePick'>" << db.Get(i, "occupation_start") << "</span> по ";
-								ost1 << "<span data-id='" << db.Get(i, "users_company_id") << "' data-action='update_occupation_finish' class='occupation_finish editableSpan'>" << (occupationFinish == "0000-00-00" ? "настоящее время" : occupationFinish)  << "</span></p>";
+								ost1 << "<p" << (current_company == "1" ? " class=\"current_company\"" : "") << ">СЃ ";
+								ost1 << "<span data-id='" << db.Get(i, "users_company_id") << "' data-action='update_occupation_start' class='occupation_start datePick'>" << db.Get(i, "occupation_start") << "</span> РїРѕ ";
+								ost1 << "<span data-id='" << db.Get(i, "users_company_id") << "' data-action='update_occupation_finish' class='occupation_finish editableSpan'>" << (occupationFinish == "0000-00-00" ? "РЅР°СЃС‚РѕСЏС‰РµРµ РІСЂРµРјСЏ" : occupationFinish)  << "</span></p>";
 								ost1 << "</div>\n";
 								ost1 << "<div class='col-md-8'>";
 								ost1 << "<p" << (current_company == "1" ? " class=\"current_company\" " : "") << "> \
-								<span data-id='" << db.Get(i, "users_company_id") << "' data-action='updateJobTitle' class='jobTitle editableSpan'>"  << db.Get(i, "title") << "</span> в \
+								<span data-id='" << db.Get(i, "users_company_id") << "' data-action='updateJobTitle' class='jobTitle editableSpan'>"  << db.Get(i, "title") << "</span> РІ \
 								<span data-id='" << db.Get(i, "users_company_id") << "' data-action='updateCompanyName' class='companyName editableSpan'>" << db.Get(i, "company_name") << "</span>";
-								// ost1 << (current_company == "1" ? " (текущее место работы)" : "") << "</p>";
+								// ost1 << (current_company == "1" ? " (С‚РµРєСѓС‰РµРµ РјРµСЃС‚Рѕ СЂР°Р±РѕС‚С‹)" : "") << "</p>";
 								ost1 << "</div>\n";
 								ost1 << "</div> <!-- row -->\n\n";
 								ost1 << "<div class='row'>\n";
@@ -4503,7 +4085,7 @@ int main()
 					}
 					else 
 					{
-						indexPage.RegisterVariableForce("carrierPath", "Нет данных");
+						indexPage.RegisterVariableForce("carrierPath", "РќРµС‚ РґР°РЅРЅС‹С…");
 					}
 				}
 				else
@@ -4695,7 +4277,7 @@ int main()
 				indexPage.RegisterVariableForce("noun_list", GetPasswordNounsList(&db));
 				indexPage.RegisterVariableForce("adjectives_list", GetPasswordAdjectivesList(&db));
 
-				indexPage.RegisterVariableForce("title", "Добро пожаловать");
+				indexPage.RegisterVariableForce("title", "Р”РѕР±СЂРѕ РїРѕР¶Р°Р»РѕРІР°С‚СЊ");
 				indexPage.RegisterVariable("regEmail_checked", "0");
 
 
@@ -4808,7 +4390,7 @@ int main()
 					ostResult.str("");
 					ostResult << "{";
 					ostResult << "\"result\": \"error\",";
-					ostResult << "\"description\": \"Проверьте свой e-mail\"";
+					ostResult << "\"description\": \"РџСЂРѕРІРµСЂСЊС‚Рµ СЃРІРѕР№ e-mail\"";
 					ostResult << "}";
 				}
 				else
@@ -4821,7 +4403,7 @@ int main()
 						ostResult.str("");
 						ostResult << "{";
 						ostResult << "\"result\": \"error\",";
-						ostResult << "\"description\": \"пользователь неактивирован. Проверьте e-mail и активируйте аккаунт.\"";
+						ostResult << "\"description\": \"РїРѕР»СЊР·РѕРІР°С‚РµР»СЊ РЅРµР°РєС‚РёРІРёСЂРѕРІР°РЅ. РџСЂРѕРІРµСЂСЊС‚Рµ e-mail Рё Р°РєС‚РёРІРёСЂСѓР№С‚Рµ Р°РєРєР°СѓРЅС‚.\"";
 						ostResult << "}";
 					}
 					else
@@ -4842,7 +4424,7 @@ int main()
 							ostResult.str("");
 							ostResult << "{";
 							ostResult << "\"result\": \"error\",";
-							ostResult << "\"description\": \"Ошибка БД. Мы исправим ее в течение 24 часов.\"";
+							ostResult << "\"description\": \"РћС€РёР±РєР° Р‘Р”. РњС‹ РёСЃРїСЂР°РІРёРј РµРµ РІ С‚РµС‡РµРЅРёРµ 24 С‡Р°СЃРѕРІ.\"";
 							ostResult << "}";
 						}
 						else
@@ -4895,7 +4477,7 @@ int main()
 			sessid = indexPage.GetCookie("sessid");
 			if(sessid.length() < 5)
 			{
-				error_message = "Устаревшая сессия";
+				error_message = "РЈСЃС‚Р°СЂРµРІС€Р°СЏ СЃРµСЃСЃРёСЏ";
 				redirect_url = "/login?rand=" + GetRandom(10) + "\"";
 				MESSAGE_ERROR("", action, "with session id derived FROM cookies");
 			}
@@ -4918,7 +4500,7 @@ int main()
 							{
 								string timestamp = db.Get(0, "eventTimestamp");
 
-								error_message = "этот пароль использовался " + GetHumanReadableTimeDifferenceFromNow(timestamp) + ". Выберите другой.";
+								error_message = "СЌС‚РѕС‚ РїР°СЂРѕР»СЊ РёСЃРїРѕР»СЊР·РѕРІР°Р»СЃСЏ " + GetHumanReadableTimeDifferenceFromNow(timestamp) + ". Р’С‹Р±РµСЂРёС‚Рµ РґСЂСѓРіРѕР№.";
 								MESSAGE_DEBUG("", action, "user.id(" + user_id + ") not allowd to re-use old password(" + timestamp + ").");
 							}
 							else
@@ -4926,7 +4508,7 @@ int main()
 								db.Query("UPDATE `users_passwd` SET `isActive`=\"false\" WHERE `userID`=\"" + user_id + "\";");
 								if(db.isError())
 								{
-									error_message = "Ошибка обновления пароля";
+									error_message = "РћС€РёР±РєР° РѕР±РЅРѕРІР»РµРЅРёСЏ РїР°СЂРѕР»СЏ";
 									MESSAGE_ERROR("", action, "fail to update users_passwd table user.id(" + user_id + ")");
 								}
 								else
@@ -4945,7 +4527,7 @@ int main()
 									}
 									else
 									{
-										error_message = "Ошибка обновления пароля";
+										error_message = "РћС€РёР±РєР° РѕР±РЅРѕРІР»РµРЅРёСЏ РїР°СЂРѕР»СЏ";
 										MESSAGE_ERROR("", action, "fail to insert new passwd to users_passwd table");
 									}
 								}
@@ -4953,19 +4535,19 @@ int main()
 						}
 						else
 						{
-							error_message = "Неизвестный пользователь";
+							error_message = "РќРµРёР·РІРµСЃС‚РЅС‹Р№ РїРѕР»СЊР·РѕРІР°С‚РµР»СЊ";
 							MESSAGE_ERROR("", action, "user_email(" + user_email + ") not found in the users table");
 						}
 					}
 					else
 					{
-						error_message = "Неизвестный токен активации";
+						error_message = "РќРµРёР·РІРµСЃС‚РЅС‹Р№ С‚РѕРєРµРЅ Р°РєС‚РёРІР°С†РёРё";
 						MESSAGE_ERROR("", action, "activator_id(" + activator_id + ") with type(password_recovery) not found in the activator table");
 					}
 				}
 				else
 				{
-					error_message = "Токен активации пустой";
+					error_message = "РўРѕРєРµРЅ Р°РєС‚РёРІР°С†РёРё РїСѓСЃС‚РѕР№";
 					MESSAGE_ERROR("", action, "activator_id is empty");
 				}
 			} // if(sessid.length() < 5)
@@ -5015,7 +4597,7 @@ int main()
 			if(sessid.length() < 5)
 			{
 				MESSAGE_DEBUG("", action, "cookie is not enabled or session didn't created");
-				error_message = "Разрешите cookie в браузере";
+				error_message = "Р Р°Р·СЂРµС€РёС‚Рµ cookie РІ Р±СЂР°СѓР·РµСЂРµ";
 			}
 			else
 			{
@@ -5028,7 +4610,7 @@ int main()
 				if(!user.GetFromDBbyEmail(login))
 				{
 					MESSAGE_DEBUG("", action, "user [" + user.GetLogin() + "] not found");
-					error_message = "Имя пользователя или пароль некорректны";
+					error_message = "РРјСЏ РїРѕР»СЊР·РѕРІР°С‚РµР»СЏ РёР»Рё РїР°СЂРѕР»СЊ РЅРµРєРѕСЂСЂРµРєС‚РЅС‹";
 				}
 				else
 				{
@@ -5036,14 +4618,14 @@ int main()
 					if(!user.isActive())
 					{
 						MESSAGE_ERROR("", action, "user [" + user.GetLogin() + "] not activated");
-						error_message = "Пользоатель не активирован. Проверьте email и нажмите на ссылку.";
+						error_message = "РџРѕР»СЊР·РѕР°С‚РµР»СЊ РЅРµ Р°РєС‚РёРІРёСЂРѕРІР°РЅ. РџСЂРѕРІРµСЂСЊС‚Рµ email Рё РЅР°Р¶РјРёС‚Рµ РЅР° СЃСЃС‹Р»РєСѓ.";
 					}
 					else
 					{
 						if((password != user.GetPasswd()) || (user.GetPasswd() == ""))
 						{
 							MESSAGE_DEBUG("", action, "password incorrect for user [" + user.GetLogin() + "]");
-							error_message = "Имя пользователя или пароль некорректны";
+							error_message = "РРјСЏ РїРѕР»СЊР·РѕРІР°С‚РµР»СЏ РёР»Рё РїР°СЂРѕР»СЊ РЅРµРєРѕСЂСЂРµРєС‚РЅС‹";
 						}
 						else
 						{
@@ -5055,7 +4637,7 @@ int main()
 							if(db.isError())
 							{
 								MESSAGE_DEBUG("", action, "fail to updte DB sessions`");
-								error_message = "Ошибка БД";
+								error_message = "РћС€РёР±РєР° Р‘Р”";
 							}
 							else
 							{
@@ -5143,7 +4725,7 @@ int main()
 					ostResult.str("");
 					ostResult << "{";
 					ostResult << "\"result\": \"error\",";
-					ostResult << "\"description\": \"Почта или Пароль указаны не верно.\"";
+					ostResult << "\"description\": \"РџРѕС‡С‚Р° РёР»Рё РџР°СЂРѕР»СЊ СѓРєР°Р·Р°РЅС‹ РЅРµ РІРµСЂРЅРѕ.\"";
 					ostResult << "}";
 				}
 				else 
@@ -5157,7 +4739,7 @@ int main()
 						ostResult.str("");
 						ostResult << "{";
 						ostResult << "\"result\": \"error\",";
-						ostResult << "\"description\": \"пользователь неактивирован, необходима активация\"";
+						ostResult << "\"description\": \"РїРѕР»СЊР·РѕРІР°С‚РµР»СЊ РЅРµР°РєС‚РёРІРёСЂРѕРІР°РЅ, РЅРµРѕР±С…РѕРґРёРјР° Р°РєС‚РёРІР°С†РёСЏ\"";
 						ostResult << "}";
 					}
 					else 
@@ -5176,7 +4758,7 @@ int main()
 								ostResult.str("");
 								ostResult << "{";
 								ostResult << "\"result\": \"error\",";
-								ostResult << "\"description\": \"этот пароль был изменен " << GetHumanReadableTimeDifferenceFromNow(db.Get(0, "eventTimestamp")) << "\"";
+								ostResult << "\"description\": \"СЌС‚РѕС‚ РїР°СЂРѕР»СЊ Р±С‹Р» РёР·РјРµРЅРµРЅ " << GetHumanReadableTimeDifferenceFromNow(db.Get(0, "eventTimestamp")) << "\"";
 								ostResult << "}";
 							}						
 							else
@@ -5191,7 +4773,7 @@ int main()
 								ostResult.str("");
 								ostResult << "{";
 								ostResult << "\"result\": \"error\",";
-								ostResult << "\"description\": \"логин или пароль указаны не верно\"";
+								ostResult << "\"description\": \"Р»РѕРіРёРЅ РёР»Рё РїР°СЂРѕР»СЊ СѓРєР°Р·Р°РЅС‹ РЅРµ РІРµСЂРЅРѕ\"";
 								ostResult << "}";
 							}
 
@@ -5215,7 +4797,7 @@ int main()
 								ostResult.str("");
 								ostResult << "{";
 								ostResult << "\"result\": \"error\",";
-								ostResult << "\"description\": \"ошибка БД\"";
+								ostResult << "\"description\": \"РѕС€РёР±РєР° Р‘Р”\"";
 								ostResult << "}";
 							}
 							else
@@ -5279,7 +4861,7 @@ int main()
 			if(sessid.length() < 5)
 			{
 				MESSAGE_ERROR("", action, "in session id [" + sessid + "]");
-				error_message = "Разрешите cookie в браузере";
+				error_message = "Р Р°Р·СЂРµС€РёС‚Рµ cookie РІ Р±СЂР°СѓР·РµСЂРµ";
 			}
 			else
 			{
@@ -5292,14 +4874,14 @@ int main()
 					if(regEmail.length() <= 3)
 					{
 						MESSAGE_DEBUG("", action, "email is incorrect [" + regEmail + "]");
-						error_message = "Введен некорректный email";
+						error_message = "Р’РІРµРґРµРЅ РЅРµРєРѕСЂСЂРµРєС‚РЅС‹Р№ email";
 					}
 					else
 					{
 						if(CheckUserEmailExisting(regEmail, &db))
 						{
 							MESSAGE_DEBUG("", action, "login or email already registered");
-							error_message = "Пользователь с этим адресом уже зарегистрирован";
+							error_message = "РџРѕР»СЊР·РѕРІР°С‚РµР»СЊ СЃ СЌС‚РёРј Р°РґСЂРµСЃРѕРј СѓР¶Рµ Р·Р°СЂРµРіРёСЃС‚СЂРёСЂРѕРІР°РЅ";
 						}
 						else
 						{
@@ -5310,7 +4892,7 @@ int main()
 									MESSAGE_DEBUG("", action, "check captcha fail");
 								}
 
-								error_message = "Некорректный код с картинки";
+								error_message = "РќРµРєРѕСЂСЂРµРєС‚РЅС‹Р№ РєРѕРґ СЃ РєР°СЂС‚РёРЅРєРё";
 								redirect_url = "/cgi-bin/index.cgi?action=weberror_captcha_template&regEmail=" + regEmail + "&rand=" + GetRandom(10);
 							}
 							else
@@ -5573,11 +5155,11 @@ int main()
 
 				if(isBlocked == "Y")
 				{
-					indexPage.RegisterVariableForce("isblocked", "<button type=\"button\" class=\"btn btn-danger user-account-properties-visible form-control\" id=\"ButtonAccountEnable1\">Аккаунт заблокирован</button> <button type=\"button\" class=\"btn btn-success user-account-properties-hidden form-control\" id=\"ButtonAccountBlock1\">Аккаунт активен</button>");
+					indexPage.RegisterVariableForce("isblocked", "<button type=\"button\" class=\"btn btn-danger user-account-properties-visible form-control\" id=\"ButtonAccountEnable1\">РђРєРєР°СѓРЅС‚ Р·Р°Р±Р»РѕРєРёСЂРѕРІР°РЅ</button> <button type=\"button\" class=\"btn btn-success user-account-properties-hidden form-control\" id=\"ButtonAccountBlock1\">РђРєРєР°СѓРЅС‚ Р°РєС‚РёРІРµРЅ</button>");
 				}
 				else
 				{
-					indexPage.RegisterVariableForce("isblocked", "<button type=\"button\" class=\"btn btn-danger user-account-properties-hidden form-control\" id=\"ButtonAccountEnable1\">Аккаунт заблокирован</button> <button type=\"button\" class=\"btn btn-success user-account-properties-visible form-control\" id=\"ButtonAccountBlock1\">Аккаунт активен</button>");
+					indexPage.RegisterVariableForce("isblocked", "<button type=\"button\" class=\"btn btn-danger user-account-properties-hidden form-control\" id=\"ButtonAccountEnable1\">РђРєРєР°СѓРЅС‚ Р·Р°Р±Р»РѕРєРёСЂРѕРІР°РЅ</button> <button type=\"button\" class=\"btn btn-success user-account-properties-visible form-control\" id=\"ButtonAccountBlock1\">РђРєРєР°СѓРЅС‚ Р°РєС‚РёРІРµРЅ</button>");
 				}
 
 				{ 
@@ -5640,7 +5222,7 @@ int main()
 				nameLast = db.Get(0, "users_nameLast"); indexPage.RegisterVariableForce("nameLast", nameLast);
 														indexPage.RegisterVariableForce("myLastName", nameLast);
 				cv = db.Get(0, "users_cv");				
-				if(cv == "") cv = "Напишите несколько слов о себе";
+				if(cv == "") cv = "РќР°РїРёС€РёС‚Рµ РЅРµСЃРєРѕР»СЊРєРѕ СЃР»РѕРІ Рѕ СЃРµР±Рµ";
 														indexPage.RegisterVariableForce("cv", cv);
 				pass = db.Get(0, "users_passwd_passwd");indexPage.RegisterVariableForce("pass", pass);
 				address = db.Get(0, "users_address");	indexPage.RegisterVariableForce("address", address);
@@ -5681,15 +5263,15 @@ int main()
 
 							ost1 << "<div class='row'>\n";
 							ost1 << "<div class='col-xs-4'>";
-							ost1 << "<p" << (current_company == "1" ? " class=\"current_company\"" : "") << ">с ";
-							ost1 << "<span data-id='" << db.Get(i, "users_company_id") << "' data-action='update_occupation_start' class='occupation_start datePick'>" << db.Get(i, "occupation_start") << "</span> по ";
-							ost1 << "<span data-id='" << db.Get(i, "users_company_id") << "' data-action='update_occupation_finish' class='occupation_finish editableSpan'>" << (occupationFinish == "0000-00-00" ? "настоящее время" : occupationFinish)  << "</span></p>";
+							ost1 << "<p" << (current_company == "1" ? " class=\"current_company\"" : "") << ">СЃ ";
+							ost1 << "<span data-id='" << db.Get(i, "users_company_id") << "' data-action='update_occupation_start' class='occupation_start datePick'>" << db.Get(i, "occupation_start") << "</span> РїРѕ ";
+							ost1 << "<span data-id='" << db.Get(i, "users_company_id") << "' data-action='update_occupation_finish' class='occupation_finish editableSpan'>" << (occupationFinish == "0000-00-00" ? "РЅР°СЃС‚РѕСЏС‰РµРµ РІСЂРµРјСЏ" : occupationFinish)  << "</span></p>";
 							ost1 << "</div>\n";
 							ost1 << "<div class='col-xs-6'>";
 							ost1 << "<p" << (current_company == "1" ? " class=\"current_company\" " : "") << "> \
-							<span data-id='" << db.Get(i, "users_company_id") << "' data-action='updateJobTitle' class='jobTitle editableSpan'>"  << db.Get(i, "title") << "</span> в \
+							<span data-id='" << db.Get(i, "users_company_id") << "' data-action='updateJobTitle' class='jobTitle editableSpan'>"  << db.Get(i, "title") << "</span> РІ \
 							<span data-id='" << db.Get(i, "users_company_id") << "' data-action='updateCompanyName' class='companyName editableSpan'>" << db.Get(i, "company_name") << "</span>";
-							// ost1 << (current_company == "1" ? " (текущее место работы)" : "") << "</p>";
+							// ost1 << (current_company == "1" ? " (С‚РµРєСѓС‰РµРµ РјРµСЃС‚Рѕ СЂР°Р±РѕС‚С‹)" : "") << "</p>";
 							ost1 << "</div>\n";
 							ost1 << "<div class='col-xs-1'>";
 							ost1 << "<span class=\"glyphicon glyphicon-remove animateClass removeCompanyExperience\" aria-hidden=\"true\" data-id='" << db.Get(i, "users_company_id") << "' data-action='AJAX_removeCompanyExperience'></span>";
@@ -5703,7 +5285,7 @@ int main()
 							if(db.Get(i,"responsibilities").length())
 								ost1 << db.Get(i,"responsibilities");
 							else
-								ost1 << "Опишите круг своих обязанностей работы в компании";
+								ost1 << "РћРїРёС€РёС‚Рµ РєСЂСѓРі СЃРІРѕРёС… РѕР±СЏР·Р°РЅРЅРѕСЃС‚РµР№ СЂР°Р±РѕС‚С‹ РІ РєРѕРјРїР°РЅРёРё";
 							ost1 << "</p>";
 							ost1 << "</div>\n";
 							ost1 << "<div class='col-xs-1'>";
@@ -5714,7 +5296,7 @@ int main()
 				}
 				else 
 				{
-					indexPage.RegisterVariableForce("carrierPath", "Вы не заполнили опыт работы");
+					indexPage.RegisterVariableForce("carrierPath", "Р’С‹ РЅРµ Р·Р°РїРѕР»РЅРёР»Рё РѕРїС‹С‚ СЂР°Р±РѕС‚С‹");
 				}
 			}
 			else
@@ -5726,7 +5308,7 @@ int main()
 				CExceptionHTML("no user");
 			}
 
-			indexPage.RegisterVariableForce("title", "Моя страница");
+			indexPage.RegisterVariableForce("title", "РњРѕСЏ СЃС‚СЂР°РЅРёС†Р°");
 
 			if(!indexPage.SetTemplate("edit_profile.htmlt"))
 			{
@@ -5754,7 +5336,7 @@ int main()
 				indexPage.Redirect("/" + GUEST_USER_DEFAULT_ACTION + "?rand=" + GetRandom(10));
 			}
 
-			indexPage.RegisterVariableForce("title", "Редактирование данных компании");
+			indexPage.RegisterVariableForce("title", "Р РµРґР°РєС‚РёСЂРѕРІР°РЅРёРµ РґР°РЅРЅС‹С… РєРѕРјРїР°РЅРёРё");
 
 			if(!indexPage.SetTemplate("edit_company.htmlt"))
 			{
@@ -5820,7 +5402,7 @@ int main()
 				name = db.Get(0, "users_name");
 				nameLast = db.Get(0, "users_nameLast");
 				cv = db.Get(0, "users_cv");
-				if(cv == "") cv = "Напишите несколько слов о себе";
+				if(cv == "") cv = "РќР°РїРёС€РёС‚Рµ РЅРµСЃРєРѕР»СЊРєРѕ СЃР»РѕРІ Рѕ СЃРµР±Рµ";
 				geo_locality_id = db.Get(0, "users_geo_locality_id");
 				pass = db.Get(0, "users_passwd_passwd");
 				address = db.Get(0, "users_address");
@@ -6030,7 +5612,7 @@ int main()
 					ostFinal.str("");
 					ostFinal << "{";
 					ostFinal << "\"result\" : \"error\",";
-					ostFinal << "\"description\" : \"Вам запрещено редактировать это сообщение\"";
+					ostFinal << "\"description\" : \"Р’Р°Рј Р·Р°РїСЂРµС‰РµРЅРѕ СЂРµРґР°РєС‚РёСЂРѕРІР°С‚СЊ СЌС‚Рѕ СЃРѕРѕР±С‰РµРЅРёРµ\"";
 					ostFinal << "}";
 				}
 
@@ -6073,7 +5655,7 @@ int main()
 			string			firstName;
 			ostringstream	ostFinal;
 
-			MESSAGE_DEBUG("", "", "start");
+			MESSAGE_DEBUG("", action, "start");
 
 			if(user.GetLogin() == "Guest")
 			{
@@ -6082,38 +5664,27 @@ int main()
 				indexPage.Redirect("/" + GUEST_USER_DEFAULT_ACTION + "?rand=" + GetRandom(10));
 			}
 
-			firstName = indexPage.GetVarsHandler()->Get("value");
+			firstName = CheckHTTPParam_Text(indexPage.GetVarsHandler()->Get("value"));
+
 			ostFinal.str("");
 
-			if((firstName.length() > 0)) 
+			if((firstName.length() > 0))
 			{
 				ostringstream	ost;
-				char			firstName_cp1251_char[1024];
-				string			firstName_cp1251;
-
-				memset(firstName_cp1251_char, 0, sizeof(firstName_cp1251_char));
-				convert_utf8_to_windows1251(firstName.c_str(), firstName_cp1251_char, sizeof(firstName_cp1251_char));
-				firstName_cp1251 = firstName_cp1251_char;
-				trim(firstName_cp1251);
-				firstName_cp1251 = ReplaceDoubleQuoteToQuote(firstName_cp1251);
 
 				{
 					CLog	log;
 					ostringstream	ost;
 
 					ost.str("");
-					ost << string(__func__) + "[" + to_string(__LINE__) + "]" + action + ": name [" << firstName_cp1251 << "]";
+					ost << string(__func__) + "[" + to_string(__LINE__) + "]" + action + ": name [" << firstName << "]";
 					log.Write(DEBUG, ost.str());
 				}
 
-				ost.str("");
-				ost << "update `users` set `name`=\"" << firstName_cp1251 << "\" , `sex`=\"" << AutodetectSexByName(firstName_cp1251, &db) << "\"  WHERE `id`=\"" << user.GetID() << "\";";
-				db.Query(ost.str());
+				db.Query("update `users` set `name`=\"" + firstName + "\" , `sex`=\"" + AutodetectSexByName(firstName, &db) + "\"  WHERE `id`=\"" + user.GetID() + "\";");
 
 				// --- Update live feed
-				ost.str("");
-				ost << "INSERT INTO `feed` (`title`, `userId`, `actionTypeId`, `actionId`, `eventTimestamp`) values(\"\",\"" << user.GetID() << "\", \"5\", \"0\", NOW())";
-				if(db.InsertQuery(ost.str()))
+				if(db.InsertQuery("INSERT INTO `feed` (`title`, `userId`, `actionTypeId`, `actionId`, `eventTimestamp`) values(\"\",\"" + user.GetID() + "\", \"5\", \"0\", NOW())"))
 				{
 					ostFinal.str("");
 					ostFinal << "{" << std::endl;
@@ -6145,7 +5716,6 @@ int main()
 				ostringstream	ost;
 				{
 					CLog	log;
-
 					ost.str("");
 					ost << string(__func__) + "[" + to_string(__LINE__) + "]" + action + ": firstName [" << firstName << "] is empty";
 					log.Write(DEBUG, ost.str());
@@ -6190,12 +5760,13 @@ int main()
 
 			if(!indexPage.SetTemplate("json_response.htmlt"))
 			{
-				MESSAGE_ERROR("", action, " template file json_response.htmlt was missing");
+				MESSAGE_ERROR("", action, "template file json_response.htmlt was missing");
 				throw CException("Template file was missing");
 			}
 
 			{
-				MESSAGE_DEBUG("", action, "end");
+				
+				MESSAGE_DEBUG("", action, "finish");
 			}
 
 		}
@@ -6206,7 +5777,7 @@ int main()
 			string			lastName;
 			ostringstream	ostFinal;
 
-			MESSAGE_DEBUG("", "", "start");
+			MESSAGE_DEBUG("", action, "start");
 
 			if(user.GetLogin() == "Guest")
 			{
@@ -6215,37 +5786,14 @@ int main()
 				indexPage.Redirect("/" + GUEST_USER_DEFAULT_ACTION + "?rand=" + GetRandom(10));
 			}
 
-			lastName = indexPage.GetVarsHandler()->Get("value");
+			lastName = CheckHTTPParam_Text(indexPage.GetVarsHandler()->Get("value"));
 
-			if((lastName.length() > 0)) 
+			if((lastName.length() > 0))
 			{
-				ostringstream	ost;
-				char			lastName_cp1251_char[1024];
-				string			lastName_cp1251;
-
-				memset(lastName_cp1251_char, 0, sizeof(lastName_cp1251_char));
-				convert_utf8_to_windows1251(lastName.c_str(), lastName_cp1251_char, sizeof(lastName_cp1251_char));
-				lastName_cp1251 = lastName_cp1251_char;
-				trim(lastName_cp1251);
-				lastName_cp1251 = ReplaceDoubleQuoteToQuote(lastName_cp1251);
-
-				{
-					CLog	log;
-					ostringstream	ost;
-
-					ost.str("");
-					ost << string(__func__) + "[" + to_string(__LINE__) + "]" + action + ": name [" << lastName_cp1251 << "]";
-					log.Write(DEBUG, ost.str());
-				}
-
-				ost.str("");
-				ost << "update users set `nameLast`=\"" << lastName_cp1251 << "\" WHERE `id`='" << user.GetID() << "'";
-				db.Query(ost.str());
+				db.Query("update users set `nameLast`=\"" + lastName + "\" WHERE `id`='" + user.GetID() + "'");
 
 				// --- Update live feed
-				ost.str("");
-				ost << "INSERT INTO `feed` (`title`, `userId`, `actionTypeId`, `actionId`, `eventTimestamp`) values(\"\",\"" << user.GetID() << "\", \"4\", \"0\", NOW())";
-				if(db.InsertQuery(ost.str()))
+				if(db.InsertQuery("INSERT INTO `feed` (`title`, `userId`, `actionTypeId`, `actionId`, `eventTimestamp`) values(\"\",\"" + user.GetID() + "\", \"4\", \"0\", NOW())"))
 				{
 					ostFinal.str("");
 					ostFinal << "{" << std::endl;
@@ -6255,15 +5803,7 @@ int main()
 				}
 				else
 				{
-
-					{
-						CLog			log;
-						ostringstream	ostTmp;
-
-						ostTmp.str("");
-						ostTmp << string(__func__) + "[" + to_string(__LINE__) + "]" + action + ": inserting into DB (" << ost.str() << ")";
-						log.Write(ERROR, ostTmp.str());
-					}
+					MESSAGE_ERROR("", "", "fail insert to DB");
 
 					ostFinal.str("");
 					ostFinal << "{" << std::endl;
@@ -6274,23 +5814,9 @@ int main()
 			}
 			else
 			{
-				ostringstream	ost;
-				{
-					CLog	log;
+				db.Query("update users set `nameLast`=\"\" WHERE `id`='" + user.GetID() + "'");
 
-					ost.str("");
-					ost << string(__func__) + "[" + to_string(__LINE__) + "]" + action + ": lastName [" << lastName << "] is empty";
-					log.Write(DEBUG, ost.str());
-				}
-
-				ost.str("");
-				ost << "update users set `nameLast`=\"\" WHERE `id`='" << user.GetID() << "'";
-				db.Query(ost.str());
-
-				// --- Update live feed
-				ost.str("");
-				ost << "INSERT INTO `feed` (`title`, `userId`, `actionTypeId`, `actionId`, `eventTimestamp`) values(\"\",\"" << user.GetID() << "\", \"7\", \"0\", NOW())";
-				if(db.InsertQuery(ost.str()))
+				if(db.InsertQuery("INSERT INTO `feed` (`title`, `userId`, `actionTypeId`, `actionId`, `eventTimestamp`) values(\"\",\"" + user.GetID() + "\", \"7\", \"0\", NOW())"))
 				{
 					ostFinal.str("");
 					ostFinal << "{" << std::endl;
@@ -6300,15 +5826,7 @@ int main()
 				}
 				else
 				{
-
-					{
-						CLog			log;
-						ostringstream	ostTmp;
-
-						ostTmp.str("");
-						ostTmp << string(__func__) + "[" + to_string(__LINE__) + "]" + action + ": inserting into DB (" << ost.str() << ")";
-						log.Write(ERROR, ostTmp.str());
-					}
+					MESSAGE_ERROR("", "", "fail insert to DB");
 
 					ostFinal.str("");
 					ostFinal << "{" << std::endl;
@@ -6323,12 +5841,13 @@ int main()
 
 			if(!indexPage.SetTemplate("json_response.htmlt"))
 			{
-				MESSAGE_ERROR("", action, " template file json_response.htmlt was missing");
+				MESSAGE_ERROR("", action, "template file json_response.htmlt was missing");
 				throw CException("Template file was missing");
 			}
 
 			{
-				MESSAGE_DEBUG("", action, "end");
+				
+				MESSAGE_DEBUG("", action, "finish");
 			}
 		}
 
@@ -6338,7 +5857,7 @@ int main()
 			ostringstream	ostFinal;
 			string			firstName, lastName;
 
-			MESSAGE_DEBUG("", "", "start");
+			MESSAGE_DEBUG("", action, "start");
 
 			if(user.GetLogin() == "Guest")
 			{
@@ -6347,116 +5866,40 @@ int main()
 				indexPage.Redirect("/" + GUEST_USER_DEFAULT_ACTION + "?rand=" + GetRandom(10));
 			}
 
-			firstName = indexPage.GetVarsHandler()->Get("firstName");
-			lastName = indexPage.GetVarsHandler()->Get("lastName");
+			firstName = CheckHTTPParam_Text(indexPage.GetVarsHandler()->Get("firstName"));
+			lastName = CheckHTTPParam_Text(indexPage.GetVarsHandler()->Get("lastName"));
 
-			if((lastName.length() > 0)) 
+			if((lastName.length() > 0))
 			{
-				ostringstream	ost;
-				char			lastName_cp1251_char[1024];
-				string			lastName_cp1251;
+				db.Query("update users set `nameLast`=\"" + lastName + "\" WHERE `id`='" + user.GetID() + "'");
 
-				memset(lastName_cp1251_char, 0, sizeof(lastName_cp1251_char));
-				convert_utf8_to_windows1251(lastName.c_str(), lastName_cp1251_char, sizeof(lastName_cp1251_char));
-				lastName_cp1251 = lastName_cp1251_char;
-				trim(lastName_cp1251);
-				lastName_cp1251 = ReplaceDoubleQuoteToQuote(lastName_cp1251);
-
-				{
-					CLog	log;
-					ostringstream	ost;
-
-					ost.str("");
-					ost << string(__func__) + "[" + to_string(__LINE__) + "]" + action + ": name [" << lastName_cp1251 << "]";
-					log.Write(DEBUG, ost.str());
-				}
-
-				ost.str("");
-				ost << "update users set `nameLast`=\"" << lastName_cp1251 << "\" WHERE `id`='" << user.GetID() << "'";
-				db.Query(ost.str());
-
-				// --- Update live feed
-				ost.str("");
-				ost << "INSERT INTO `feed` (`title`, `userId`, `actionTypeId`, `actionId`, `eventTimestamp`) values(\"\",\"" << user.GetID() << "\", \"4\", \"0\", NOW())";
-				if(db.InsertQuery(ost.str()))
+				if(db.InsertQuery("INSERT INTO `feed` (`title`, `userId`, `actionTypeId`, `actionId`, `eventTimestamp`) values(\"\",\"" + user.GetID() + "\", \"4\", \"0\", NOW())"))
 				{
 				}
 				else
 				{
-					{
-						CLog			log;
-						ostringstream	ostTmp;
-
-						ostTmp.str("");
-						ostTmp << string(__func__) + "[" + to_string(__LINE__) + "]" + action + ": inserting into DB (" << ost.str() << ")";
-						log.Write(ERROR, ostTmp.str());
-					}
+					MESSAGE_ERROR("", "", "fail insert to DB");
 				}
 			}
 			else
 			{
-				ostringstream	ost;
-				{
-					CLog	log;
+				db.Query("update users set `nameLast`=\"\" WHERE `id`='" + user.GetID() + "'");
 
-					ost.str("");
-					ost << string(__func__) + "[" + to_string(__LINE__) + "]" + action + ": lastName [" << lastName << "] is empty";
-					log.Write(DEBUG, ost.str());
-				}
-
-				ost.str("");
-				ost << "update users set `nameLast`=\"\" WHERE `id`='" << user.GetID() << "'";
-				db.Query(ost.str());
-
-				// --- Update live feed
-				ost.str("");
-				ost << "INSERT INTO `feed` (`title`, `userId`, `actionTypeId`, `actionId`, `eventTimestamp`) values(\"\",\"" << user.GetID() << "\", \"7\", \"0\", NOW())";
-				if(db.InsertQuery(ost.str()))
+				if(db.InsertQuery("INSERT INTO `feed` (`title`, `userId`, `actionTypeId`, `actionId`, `eventTimestamp`) values(\"\",\"" + user.GetID() + "\", \"7\", \"0\", NOW())"))
 				{
 				}
 				else
 				{
-					{
-						CLog			log;
-						ostringstream	ostTmp;
-
-						ostTmp.str("");
-						ostTmp << string(__func__) + "[" + to_string(__LINE__) + "]" + action + ": inserting into DB (" << ost.str() << ")";
-						log.Write(ERROR, ostTmp.str());
-					}
+					MESSAGE_ERROR("", "", "fail insert to DB");
 				}
 
 			}
 
-			if((firstName.length() > 0)) 
+			if((firstName.length() > 0))
 			{
-				ostringstream	ost;
-				char			firstName_cp1251_char[1024];
-				string			firstName_cp1251;
+				db.Query("update `users` set `name`=\"" + firstName + "\", `sex`=\"" + AutodetectSexByName(firstName, &db) + "\" WHERE `id`='" + user.GetID() + "'");
 
-				memset(firstName_cp1251_char, 0, sizeof(firstName_cp1251_char));
-				convert_utf8_to_windows1251(firstName.c_str(), firstName_cp1251_char, sizeof(firstName_cp1251_char));
-				firstName_cp1251 = firstName_cp1251_char;
-				trim(firstName_cp1251);
-				firstName_cp1251 = ReplaceDoubleQuoteToQuote(firstName_cp1251);
-
-				{
-					CLog	log;
-					ostringstream	ost;
-
-					ost.str("");
-					ost << string(__func__) + "[" + to_string(__LINE__) + "]" + action + ": name [" << firstName_cp1251 << "]";
-					log.Write(DEBUG, ost.str());
-				}
-
-				ost.str("");
-				ost << "update `users` set `name`=\"" << firstName_cp1251 << "\", `sex`=\"" << AutodetectSexByName(firstName_cp1251, &db) << "\" WHERE `id`='" << user.GetID() << "'";
-				db.Query(ost.str());
-
-				// --- Update live feed
-				ost.str("");
-				ost << "INSERT INTO `feed` (`title`, `userId`, `actionTypeId`, `actionId`, `eventTimestamp`) values(\"\",\"" << user.GetID() << "\", \"5\", \"0\", NOW())";
-				if(db.InsertQuery(ost.str()))
+				if(db.InsertQuery("INSERT INTO `feed` (`title`, `userId`, `actionTypeId`, `actionId`, `eventTimestamp`) values(\"\",\"" + user.GetID() + "\", \"5\", \"0\", NOW())"))
 				{
 					ostFinal.str("");
 					ostFinal << "{" << std::endl;
@@ -6467,14 +5910,7 @@ int main()
 				else
 				{
 
-					{
-						CLog			log;
-						ostringstream	ostTmp;
-
-						ostTmp.str("");
-						ostTmp << string(__func__) + "[" + to_string(__LINE__) + "]" + action + ": inserting into DB (" << ost.str() << ")";
-						log.Write(ERROR, ostTmp.str());
-					}
+					MESSAGE_ERROR("", "", "fail insert to DB");
 
 					ostFinal.str("");
 					ostFinal << "{" << std::endl;
@@ -6485,23 +5921,9 @@ int main()
 			}
 			else
 			{
-				ostringstream	ost;
-				{
-					CLog	log;
+				db.Query("update `users` set `name`=\"\" WHERE `id`='" + user.GetID() + "'");
 
-					ost.str("");
-					ost << string(__func__) + "[" + to_string(__LINE__) + "]" + action + ": firstName [" << firstName << "] is empty";
-					log.Write(DEBUG, ost.str());
-				}
-
-				ost.str("");
-				ost << "update `users` set `name`=\"\" WHERE `id`='" << user.GetID() << "'";
-				db.Query(ost.str());
-
-				// --- Update live feed
-				ost.str("");
-				ost << "INSERT INTO `feed` (`title`, `userId`, `actionTypeId`, `actionId`, `eventTimestamp`) values(\"\",\"" << user.GetID() << "\", \"6\", \"0\", NOW())";
-				if(db.InsertQuery(ost.str()))
+				if(db.InsertQuery("INSERT INTO `feed` (`title`, `userId`, `actionTypeId`, `actionId`, `eventTimestamp`) values(\"\",\"" + user.GetID() + "\", \"6\", \"0\", NOW())"))
 				{
 					ostFinal.str("");
 					ostFinal << "{" << std::endl;
@@ -6511,15 +5933,7 @@ int main()
 				}
 				else
 				{
-
-					{
-						CLog			log;
-						ostringstream	ostTmp;
-
-						ostTmp.str("");
-						ostTmp << string(__func__) + "[" + to_string(__LINE__) + "]" + action + ": inserting into DB (" << ost.str() << ")";
-						log.Write(ERROR, ostTmp.str());
-					}
+					MESSAGE_ERROR("", "", "fail insert to DB");
 
 					ostFinal.str("");
 					ostFinal << "{" << std::endl;
@@ -6535,13 +5949,11 @@ int main()
 
 			if(!indexPage.SetTemplate("json_response.htmlt"))
 			{
-				MESSAGE_ERROR("", action, " template file json_response.htmlt was missing");
+				MESSAGE_ERROR("", action, "template file json_response.htmlt was missing");
 				throw CException("Template file was missing");
 			}
 
-			{
-				MESSAGE_DEBUG("", action, "end");
-			}
+			MESSAGE_DEBUG("", action, "finish");
 		}
 
 		// --- AJAX_updateActiveAvatar
@@ -6550,9 +5962,7 @@ int main()
 			string			avatarID, companyId;
 			ostringstream	ostFinal;
 
-			{
-				MESSAGE_DEBUG("", action, "start");
-			}
+			MESSAGE_DEBUG("", action, "start");
 
 			if(user.GetLogin() == "Guest")
 			{
@@ -6561,36 +5971,15 @@ int main()
 				indexPage.Redirect("/" + GUEST_USER_DEFAULT_ACTION + "?rand=" + GetRandom(10));
 			}
 
-			avatarID = indexPage.GetVarsHandler()->Get("id");
+			avatarID = CheckHTTPParam_Number(indexPage.GetVarsHandler()->Get("id"));
 
 			if((avatarID.length() > 0)) 
 			{
-				ostringstream	ost;
-				char			avatarID_cp1251_char[1024];
-				string			avatarID_cp1251;
-
-				memset(avatarID_cp1251_char, 0, sizeof(avatarID_cp1251_char));
-				convert_utf8_to_windows1251(avatarID.c_str(), avatarID_cp1251_char, sizeof(avatarID_cp1251_char));
-				avatarID_cp1251 = avatarID_cp1251_char;
-				trim(avatarID_cp1251);
-				avatarID_cp1251 = ReplaceDoubleQuoteToQuote(avatarID_cp1251);
-
-				{
-					CLog	log;
-					ostringstream	ost;
-
-					ost.str("");
-					ost << string(__func__) + "[" + to_string(__LINE__) + "]" + action + ": new avatar id [" << avatarID_cp1251 << "]";
-					log.Write(DEBUG, ost.str());
-				}
-
 				db.Query("update `users_avatars` set `isActive`=\"0\" WHERE `userid`='" + user.GetID() + "';");
-				db.Query("update `users_avatars` set `isActive`=\"1\" WHERE `id`=\"" + avatarID_cp1251 + "\" and `userid`=\"" + user.GetID() + "\";");
+				db.Query("update `users_avatars` set `isActive`=\"1\" WHERE `id`=\"" + avatarID + "\" and `userid`=\"" + user.GetID() + "\";");
 
 				// --- Update live feed
-				ost.str("");
-				ost << "INSERT INTO `feed` (`title`, `userId`, `actionTypeId`, `actionId`, `eventTimestamp`) values(\"\",\"" << user.GetID() << "\", \"8\", \"" << avatarID_cp1251 << "\", NOW())";
-				db.Query(ost.str());
+				db.Query("INSERT INTO `feed` (`title`, `userId`, `actionTypeId`, `actionId`, `eventTimestamp`) values(\"\",\"" + user.GetID() + "\", \"8\", \"" + avatarID + "\", NOW())");
 
 				ostFinal.str("");
 				ostFinal << "{" << std::endl;
@@ -6686,9 +6075,9 @@ int main()
 				indexPage.Redirect("/" + GUEST_USER_DEFAULT_ACTION + "?rand=" + GetRandom(10));
 			}
 
-			if(action == "my_network") indexPage.RegisterVariableForce("title_head", "Мои друзья");
-			if(action == "who_watched_on_me") indexPage.RegisterVariableForce("title_head", "Кто просматривал мой профиль");
-			if(action == "companies_i_own_list") indexPage.RegisterVariableForce("title_head", "Мои компании");
+			if(action == "my_network") indexPage.RegisterVariableForce("title_head", "РњРѕРё РґСЂСѓР·СЊСЏ");
+			if(action == "who_watched_on_me") indexPage.RegisterVariableForce("title_head", "РљС‚Рѕ РїСЂРѕСЃРјР°С‚СЂРёРІР°Р» РјРѕР№ РїСЂРѕС„РёР»СЊ");
+			if(action == "companies_i_own_list") indexPage.RegisterVariableForce("title_head", "РњРѕРё РєРѕРјРїР°РЅРёРё");
 
 			strFriendsOnSinglePage	= indexPage.GetVarsHandler()->Get("FriendsOnSinglePage");
 			strPageToGet 			= indexPage.GetVarsHandler()->Get("page");
@@ -6725,7 +6114,7 @@ int main()
 			}
 */
 
-			indexPage.RegisterVariableForce("title_head", "Поиск друзей");
+			indexPage.RegisterVariableForce("title_head", "РџРѕРёСЃРє РґСЂСѓР·РµР№");
 			strFriendsOnSinglePage	= indexPage.GetVarsHandler()->Get("FriendsOnSinglePage");
 			strPageToGet 			= indexPage.GetVarsHandler()->Get("page");
 			if(strPageToGet.empty()) strPageToGet = "0";
@@ -6748,7 +6137,7 @@ int main()
 		{
 			if(user.GetLogin() == "Guest")
 			{
-				indexPage.RegisterVariableForce("title", "Добро пожаловать");
+				indexPage.RegisterVariableForce("title", "Р”РѕР±СЂРѕ РїРѕР¶Р°Р»РѕРІР°С‚СЊ");
 				if(!indexPage.SetTemplate("main.htmlt"))
 				{
 					MESSAGE_ERROR("", action, "template main.htmlt not found");
@@ -6802,7 +6191,7 @@ int main()
 				}
 			}
 
-			indexPage.RegisterVariableForce("content", "На ваш почтовый ящик выслан пароль !");
+			indexPage.RegisterVariableForce("content", "РќР° РІР°С€ РїРѕС‡С‚РѕРІС‹Р№ СЏС‰РёРє РІС‹СЃР»Р°РЅ РїР°СЂРѕР»СЊ !");
 		}
 
 

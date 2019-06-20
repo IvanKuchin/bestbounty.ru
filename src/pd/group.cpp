@@ -277,7 +277,7 @@ int main()
 			}
 			else
 			{
-				indexPage.RegisterVariableForce("title_head", "Ìîè ãðóïïû");
+				indexPage.RegisterVariableForce("title_head", "ÐœÐ¾Ð¸ Ð³Ñ€ÑƒÐ¿Ð¿Ñ‹");
 
 				strFriendsOnSinglePage	= indexPage.GetVarsHandler()->Get("FriendsOnSinglePage");
 				strPageToGet 			= indexPage.GetVarsHandler()->Get("page");
@@ -416,7 +416,7 @@ int main()
 					log.Write(DEBUG, string(__func__) + string("[") + to_string(__LINE__) + "]:action == " + action + ": re-login required");
 				}
 
-				ostResult << "{\"result\":\"error\",\"description\":\"ñåññèÿ çàêîí÷èëàñü, íåîáõîäèìî âíîâü çàéòè íà ñàéò\"}";
+				ostResult << "{\"result\":\"error\",\"description\":\"ÑÐµÑÑÐ¸Ñ Ð·Ð°ÐºÐ¾Ð½Ñ‡Ð¸Ð»Ð°ÑÑŒ, Ð½ÐµÐ¾Ð±Ñ…Ð¾Ð´Ð¸Ð¼Ð¾ Ð²Ð½Ð¾Ð²ÑŒ Ð·Ð°Ð¹Ñ‚Ð¸ Ð½Ð° ÑÐ°Ð¹Ñ‚\"}";
 			}
 			else
 			{
@@ -518,7 +518,7 @@ int main()
 							ostResult.str("");
 							ostResult << "{";
 							ostResult << "\"result\" : \"error\",";
-							ostResult << "\"description\" : \"îøèáêà ÁÄ\"";
+							ostResult << "\"description\" : \"Ð¾ÑˆÐ¸Ð±ÐºÐ° Ð‘Ð”\"";
 							ostResult << "}";
 						}
 					}
@@ -527,7 +527,7 @@ int main()
 						CLog	log;
 						log.Write(ERROR, string(__func__) + "[" + to_string(__LINE__) + "]:AJAX_blockGroup:ERROR: groupID [" + groupID + "] doesn't belongs to you");
 
-						ostResult << "{\"result\":\"error\",\"description\":\"âû íå ìîæåòå ðåäàêòèðîâàòü ãðóïïó\",\"groups\":[]}";
+						ostResult << "{\"result\":\"error\",\"description\":\"Ð²Ñ‹ Ð½Ðµ Ð¼Ð¾Ð¶ÐµÑ‚Ðµ Ñ€ÐµÐ´Ð°ÐºÑ‚Ð¸Ñ€Ð¾Ð²Ð°Ñ‚ÑŒ Ð³Ñ€ÑƒÐ¿Ð¿Ñƒ\",\"groups\":[]}";
 					}
 
 				}
@@ -647,7 +647,7 @@ int main()
 					log.Write(DEBUG, string(__func__) + string("[") + to_string(__LINE__) + "]:action == " + action + ": re-login required");
 				}
 
-				ostResult << "{\"result\":\"error\",\"description\":\"ñåññèÿ çàêîí÷èëàñü, íåîáõîäèìî âíîâü çàéòè íà ñàéò\"}";
+				ostResult << "{\"result\":\"error\",\"description\":\"ÑÐµÑÑÐ¸Ñ Ð·Ð°ÐºÐ¾Ð½Ñ‡Ð¸Ð»Ð°ÑÑŒ, Ð½ÐµÐ¾Ð±Ñ…Ð¾Ð´Ð¸Ð¼Ð¾ Ð²Ð½Ð¾Ð²ÑŒ Ð·Ð°Ð¹Ñ‚Ð¸ Ð½Ð° ÑÐ°Ð¹Ñ‚\"}";
 			}
 			else
 */
@@ -794,7 +794,7 @@ int main()
 					log.Write(DEBUG, string(__func__) + string("[") + to_string(__LINE__) + "]: action == " + action + ": re-login required");
 				}
 
-				ostResult << "{\"result\":\"error\",\"description\":\"ñåññèÿ çàêîí÷èëàñü, íåîáõîäèìî âíîâü çàéòè íà ñàéò\"}";
+				ostResult << "{\"result\":\"error\",\"description\":\"ÑÐµÑÑÐ¸Ñ Ð·Ð°ÐºÐ¾Ð½Ñ‡Ð¸Ð»Ð°ÑÑŒ, Ð½ÐµÐ¾Ð±Ñ…Ð¾Ð´Ð¸Ð¼Ð¾ Ð²Ð½Ð¾Ð²ÑŒ Ð·Ð°Ð¹Ñ‚Ð¸ Ð½Ð° ÑÐ°Ð¹Ñ‚\"}";
 			}
 			else
 			{
@@ -841,7 +841,7 @@ int main()
 				indexPage.Redirect(ost.str());
 			}
 
-			indexPage.RegisterVariableForce("title", "Ðåäàêòèðîâàíèå ãðóïïû");
+			indexPage.RegisterVariableForce("title", "Ð ÐµÐ´Ð°ÐºÑ‚Ð¸Ñ€Ð¾Ð²Ð°Ð½Ð¸Ðµ Ð³Ñ€ÑƒÐ¿Ð¿Ñ‹");
 
 			if(!indexPage.SetTemplate("edit_group.htmlt"))
 			{
@@ -880,7 +880,7 @@ int main()
 				indexPage.Redirect(ost.str());
 			}
 
-			indexPage.RegisterVariableForce("title", "Íîâàÿ ãðóïïà");
+			indexPage.RegisterVariableForce("title", "ÐÐ¾Ð²Ð°Ñ Ð³Ñ€ÑƒÐ¿Ð¿Ð°");
 
 			if(!indexPage.SetTemplate("create_group.htmlt"))
 			{
@@ -963,7 +963,7 @@ int main()
 					ostFinal.str("");
 					ostFinal << "{";
 					ostFinal << "\"result\" : \"error\",";
-					ostFinal << "\"description\" : \"âû íå ìîæåòå èçìåíèòü äàííûå ãðóïïû\"";
+					ostFinal << "\"description\" : \"Ð²Ñ‹ Ð½Ðµ Ð¼Ð¾Ð¶ÐµÑ‚Ðµ Ð¸Ð·Ð¼ÐµÐ½Ð¸Ñ‚ÑŒ Ð´Ð°Ð½Ð½Ñ‹Ðµ Ð³Ñ€ÑƒÐ¿Ð¿Ñ‹\"";
 					ostFinal << "}";
 				}
 			}
@@ -978,7 +978,7 @@ int main()
 				ostFinal.str("");
 				ostFinal << "{";
 				ostFinal << "\"result\" : \"error\",";
-				ostFinal << "\"description\" : \"ïóñòûå ïàðàìåòðû id èëè value\"";
+				ostFinal << "\"description\" : \"Ð¿ÑƒÑÑ‚Ñ‹Ðµ Ð¿Ð°Ñ€Ð°Ð¼ÐµÑ‚Ñ€Ñ‹ id Ð¸Ð»Ð¸ value\"";
 				ostFinal << "}";
 			}
 
@@ -1066,7 +1066,7 @@ int main()
 					ostFinal.str("");
 					ostFinal << "{";
 					ostFinal << "\"result\" : \"error\",";
-					ostFinal << "\"description\" : \"âû íå ìîæåòå èçìåíèòü äàííûå ãðóïïû\"";
+					ostFinal << "\"description\" : \"Ð²Ñ‹ Ð½Ðµ Ð¼Ð¾Ð¶ÐµÑ‚Ðµ Ð¸Ð·Ð¼ÐµÐ½Ð¸Ñ‚ÑŒ Ð´Ð°Ð½Ð½Ñ‹Ðµ Ð³Ñ€ÑƒÐ¿Ð¿Ñ‹\"";
 					ostFinal << "}";
 				}
 			}
@@ -1081,7 +1081,7 @@ int main()
 				ostFinal.str("");
 				ostFinal << "{";
 				ostFinal << "\"result\" : \"error\",";
-				ostFinal << "\"description\" : \"ïóñòûå ïàðàìåòðû id èëè value\"";
+				ostFinal << "\"description\" : \"Ð¿ÑƒÑÑ‚Ñ‹Ðµ Ð¿Ð°Ñ€Ð°Ð¼ÐµÑ‚Ñ€Ñ‹ id Ð¸Ð»Ð¸ value\"";
 				ostFinal << "}";
 			}
 
@@ -1147,7 +1147,7 @@ int main()
 					ostFinal.str("");
 					ostFinal << "{";
 					ostFinal << "\"result\" : \"error\",";
-					ostFinal << "\"description\" : \"Ãðóïïå íåîáõîäèìî íàçâàíèå\"";
+					ostFinal << "\"description\" : \"Ð“Ñ€ÑƒÐ¿Ð¿Ðµ Ð½ÐµÐ¾Ð±Ñ…Ð¾Ð´Ð¸Ð¼Ð¾ Ð½Ð°Ð·Ð²Ð°Ð½Ð¸Ðµ\"";
 					ostFinal << "}";
 				}
 				else if(link.length() && (link.length() < 12))
@@ -1164,7 +1164,7 @@ int main()
 					ostFinal << "{";
 					ostFinal << "\"result\" : \"error\",";
 					ostFinal << "\"link\" : \"" + link + "\",";
-					ostFinal << "\"description\" : \"ññûëêà äîëæíà áûòü äëèííåå 10 ñèìâîëîâ\"";
+					ostFinal << "\"description\" : \"ÑÑÑ‹Ð»ÐºÐ° Ð´Ð¾Ð»Ð¶Ð½Ð° Ð±Ñ‹Ñ‚ÑŒ Ð´Ð»Ð¸Ð½Ð½ÐµÐµ 10 ÑÐ¸Ð¼Ð²Ð¾Ð»Ð¾Ð²\"";
 					ostFinal << "}";
 				}
 				else if(link.find_first_not_of("abcdefghijklmnopqrstuvwxyz_1234567890") != string::npos)
@@ -1178,7 +1178,7 @@ int main()
 					ostFinal << "{";
 					ostFinal << "\"result\" : \"error\",";
 					ostFinal << "\"link\" : \"" + link + "\",";
-					ostFinal << "\"description\" : \"ññûëêà ìîæåòü ñîäåðæàòü òîëüêî àíãëèéñêèå áóêâû èëè öèôðû\"";
+					ostFinal << "\"description\" : \"ÑÑÑ‹Ð»ÐºÐ° Ð¼Ð¾Ð¶ÐµÑ‚ÑŒ ÑÐ¾Ð´ÐµÑ€Ð¶Ð°Ñ‚ÑŒ Ñ‚Ð¾Ð»ÑŒÐºÐ¾ Ð°Ð½Ð³Ð»Ð¸Ð¹ÑÐºÐ¸Ðµ Ð±ÑƒÐºÐ²Ñ‹ Ð¸Ð»Ð¸ Ñ†Ð¸Ñ„Ñ€Ñ‹\"";
 					ostFinal << "}";
 				}
 				else if(title.length() && db.Query("SELECT `id` FROM `groups` WHERE `title`=\"" + title + "\";"))
@@ -1190,7 +1190,7 @@ int main()
 					ostFinal.str("");
 					ostFinal << "{";
 					ostFinal << "\"result\" : \"error\",";
-					ostFinal << "\"description\" : \"ãðóïïà ñ òàêèì íàçâàíèåì óæå ñóùåñòâóåò\"";
+					ostFinal << "\"description\" : \"Ð³Ñ€ÑƒÐ¿Ð¿Ð° Ñ Ñ‚Ð°ÐºÐ¸Ð¼ Ð½Ð°Ð·Ð²Ð°Ð½Ð¸ÐµÐ¼ ÑƒÐ¶Ðµ ÑÑƒÑ‰ÐµÑÑ‚Ð²ÑƒÐµÑ‚\"";
 					ostFinal << "}";
 				}
 				else if(link.length() && db.Query("SELECT `id` FROM `groups` WHERE `link`=\"" + link + "\";"))
@@ -1202,7 +1202,7 @@ int main()
 					ostFinal.str("");
 					ostFinal << "{";
 					ostFinal << "\"result\" : \"error\",";
-					ostFinal << "\"description\" : \"òàêàÿ ññûëêà óæå ñóùåñòâóåò\"";
+					ostFinal << "\"description\" : \"Ñ‚Ð°ÐºÐ°Ñ ÑÑÑ‹Ð»ÐºÐ° ÑƒÐ¶Ðµ ÑÑƒÑ‰ÐµÑÑ‚Ð²ÑƒÐµÑ‚\"";
 					ostFinal << "}";
 				}
 				else
@@ -1270,7 +1270,7 @@ int main()
 						ostFinal.str("");
 						ostFinal << "{";
 						ostFinal << "\"result\" : \"error\",";
-						ostFinal << "\"description\" : \"îøèáêà ÁÄ\"";
+						ostFinal << "\"description\" : \"Ð¾ÑˆÐ¸Ð±ÐºÐ° Ð‘Ð”\"";
 						ostFinal << "}";
 					}
 				}
@@ -1340,7 +1340,7 @@ int main()
 						ostFinal << "{";
 						ostFinal << "\"result\" : \"error\",";
 						ostFinal << "\"link\" : \"" + originalLink + "\",";
-						ostFinal << "\"description\" : \"ññûëêà äîëæíà áûòü ìèíèìóì 10 ñèìâîëîâ\"";
+						ostFinal << "\"description\" : \"ÑÑÑ‹Ð»ÐºÐ° Ð´Ð¾Ð»Ð¶Ð½Ð° Ð±Ñ‹Ñ‚ÑŒ Ð¼Ð¸Ð½Ð¸Ð¼ÑƒÐ¼ 10 ÑÐ¸Ð¼Ð²Ð¾Ð»Ð¾Ð²\"";
 						ostFinal << "}";
 					}
 					else if(value.find_first_not_of("abcdefghijklmnopqrstuvwxyz_-1234567890") != string::npos)
@@ -1354,7 +1354,7 @@ int main()
 						ostFinal << "{";
 						ostFinal << "\"result\" : \"error\",";
 						ostFinal << "\"link\" : \"" + originalLink + "\",";
-						ostFinal << "\"description\" : \"ññûëêà ìîæåòü ñîäåðæàòü òîëüêî àíãëèéñêèå áóêâû èëè öèôðû\"";
+						ostFinal << "\"description\" : \"ÑÑÑ‹Ð»ÐºÐ° Ð¼Ð¾Ð¶ÐµÑ‚ÑŒ ÑÐ¾Ð´ÐµÑ€Ð¶Ð°Ñ‚ÑŒ Ñ‚Ð¾Ð»ÑŒÐºÐ¾ Ð°Ð½Ð³Ð»Ð¸Ð¹ÑÐºÐ¸Ðµ Ð±ÑƒÐºÐ²Ñ‹ Ð¸Ð»Ð¸ Ñ†Ð¸Ñ„Ñ€Ñ‹\"";
 						ostFinal << "}";
 					}
 					else
@@ -1381,7 +1381,7 @@ int main()
 							ostFinal << "{";
 							ostFinal << "\"result\" : \"error\",";
 							ostFinal << "\"link\" : \"" + originalLink + "\",";
-							ostFinal << "\"description\" : \"îøèáêà ÁÄ\"";
+							ostFinal << "\"description\" : \"Ð¾ÑˆÐ¸Ð±ÐºÐ° Ð‘Ð”\"";
 							ostFinal << "}";
 						}
 					}
@@ -1396,7 +1396,7 @@ int main()
 					ostFinal.str("");
 					ostFinal << "{";
 					ostFinal << "\"result\" : \"error\",";
-					ostFinal << "\"description\" : \"âû íå ìîæåòå èçìåíèòü äàííûå ãðóïïû\"";
+					ostFinal << "\"description\" : \"Ð²Ñ‹ Ð½Ðµ Ð¼Ð¾Ð¶ÐµÑ‚Ðµ Ð¸Ð·Ð¼ÐµÐ½Ð¸Ñ‚ÑŒ Ð´Ð°Ð½Ð½Ñ‹Ðµ Ð³Ñ€ÑƒÐ¿Ð¿Ñ‹\"";
 					ostFinal << "}";
 				}
 			}
@@ -1411,7 +1411,7 @@ int main()
 				ostFinal.str("");
 				ostFinal << "{";
 				ostFinal << "\"result\" : \"error\",";
-				ostFinal << "\"description\" : \"ïóñòûå ïàðàìåòðû id èëè value\"";
+				ostFinal << "\"description\" : \"Ð¿ÑƒÑÑ‚Ñ‹Ðµ Ð¿Ð°Ñ€Ð°Ð¼ÐµÑ‚Ñ€Ñ‹ id Ð¸Ð»Ð¸ value\"";
 				ostFinal << "}";
 			}
 

@@ -101,17 +101,20 @@ string CCgi::GetLanguage()
 }
 
 string CCgi::GetEncoding()
-{
-	string	result, lng;
+{	string	result, lng;
 
 	lng = GetLanguage();
-	if(lng == "ru")
-		return "windows-1251";
-	if(lng == "en")
-		return "windows-1251";
 
-	return "windows-1251";
-}
+	if(lng.empty())
+		return "utf-8";
+	if(lng == "ru")
+		return "utf-8";
+	if(lng == "en")
+		return "utf-8";
+
+	MESSAGE_DEBUG("", "", "unknown language (" + lng + ")");
+
+	return "utf-8"; }
 
 string	CCgi::GetCity()
 {
@@ -277,7 +280,7 @@ void CCgi::InitHeaders()
 		strftime(date, sizeof(date) - 2, "Last-Modified: %a, %d %b %Y %X %Z", localtime(&t));
 		OutString(date);
 
-		OutString("Status-text: powered by Ivan Kuchin");
+		// OutString("Status-text: powered by Ivan Kuchin");
 
 		cook = cookie.GetAll();
 		OutString(cook);

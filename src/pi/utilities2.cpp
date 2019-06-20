@@ -174,7 +174,7 @@ string	SubscribeToCompany(string companyID, CUser *user, CMysql *db)
 				MESSAGE_ERROR("", "", "already subscribed [companyID: " + companyID + ", userID: " + user->GetID() + "]");
 			}
 
-			ostResult << "\"result\": \"success\", \"description\": \"âû óæå ïîäïèñàíû íà íîâîñòè ýòîé êîìïàíèè\"";
+			ostResult << "\"result\": \"success\", \"description\": \"Ð²Ñ‹ ÑƒÐ¶Ðµ Ð¿Ð¾Ð´Ð¿Ð¸ÑÐ°Ð½Ñ‹ Ð½Ð° Ð½Ð¾Ð²Ð¾ÑÑ‚Ð¸ ÑÑ‚Ð¾Ð¹ ÐºÐ¾Ð¼Ð¿Ð°Ð½Ð¸Ð¸\"";
 		}
 		else
 		{
@@ -208,7 +208,7 @@ string	SubscribeToCompany(string companyID, CUser *user, CMysql *db)
 					MESSAGE_ERROR("", "", "error inserting into users subscription [companyID: " + companyID + ", userID: " + user->GetID() + "]");
 				}
 
-				ostResult << "\"result\": \"error\",\"description\": \"Îøèáêà ÁÄ\"";
+				ostResult << "\"result\": \"error\",\"description\": \"ÐžÑˆÐ¸Ð±ÐºÐ° Ð‘Ð”\"";
 			}
 		}
 	}
@@ -218,7 +218,7 @@ string	SubscribeToCompany(string companyID, CUser *user, CMysql *db)
 			MESSAGE_ERROR("", "", "(companyID is empty) || (user == NULL) [companyID: " + companyID + ", userID: " + (user ? "not-NULL" : "NULL") + "]");
 		}
 
-		ostResult << "\"result\": \"error\",\"description\": \"Êîìïàíèÿ íå íàéäåíà èëè ïîëüçîâàòåëü íåîïðåäåëåí\"";
+		ostResult << "\"result\": \"error\",\"description\": \"ÐšÐ¾Ð¼Ð¿Ð°Ð½Ð¸Ñ Ð½Ðµ Ð½Ð°Ð¹Ð´ÐµÐ½Ð° Ð¸Ð»Ð¸ Ð¿Ð¾Ð»ÑŒÐ·Ð¾Ð²Ð°Ñ‚ÐµÐ»ÑŒ Ð½ÐµÐ¾Ð¿Ñ€ÐµÐ´ÐµÐ»ÐµÐ½\"";
 	}
 
 
@@ -251,7 +251,7 @@ string	UnsubscribeFromCompany(string companyID, CUser *user, CMysql *db)
 					MESSAGE_DEBUG("", "", "user can't unsubscribe from own company [companyID: " + companyID + ", userID: " + user->GetID() + "]");
 				}
 
-				ostResult << "\"result\": \"error\",\"description\": \"Âû íå ìîæåòå îòïèñàòüñÿ îò ñîáñòâåííîé êîìïàíèè\"";
+				ostResult << "\"result\": \"error\",\"description\": \"Ð’Ñ‹ Ð½Ðµ Ð¼Ð¾Ð¶ÐµÑ‚Ðµ Ð¾Ñ‚Ð¿Ð¸ÑÐ°Ñ‚ÑŒÑÑ Ð¾Ñ‚ ÑÐ¾Ð±ÑÑ‚Ð²ÐµÐ½Ð½Ð¾Ð¹ ÐºÐ¾Ð¼Ð¿Ð°Ð½Ð¸Ð¸\"";
 			}
 			else
 			{
@@ -280,7 +280,7 @@ string	UnsubscribeFromCompany(string companyID, CUser *user, CMysql *db)
 				MESSAGE_ERROR("", "", "user not subscribed to company [companyID: " + companyID + ", userID: " + user->GetID() + "]");
 			}
 
-			ostResult << "\"result\": \"success\", \"description\": \"Âû íå ïîäïèñàíû\"";
+			ostResult << "\"result\": \"success\", \"description\": \"Ð’Ñ‹ Ð½Ðµ Ð¿Ð¾Ð´Ð¿Ð¸ÑÐ°Ð½Ñ‹\"";
 		}
 	}
 	else
@@ -289,7 +289,7 @@ string	UnsubscribeFromCompany(string companyID, CUser *user, CMysql *db)
 			MESSAGE_ERROR("", "", "(companyID is empty) || (user == NULL) [companyID: " + companyID + ", userID: " + (user ? "not-NULL" : "NULL") + "]");
 		}
 
-		ostResult << "\"result\": \"error\",\"description\": \"Êîìïàíèÿ íå íàéäåíà èëè ïîëüçîâàòåëü íåîïðåäåëåí\"";
+		ostResult << "\"result\": \"error\",\"description\": \"ÐšÐ¾Ð¼Ð¿Ð°Ð½Ð¸Ñ Ð½Ðµ Ð½Ð°Ð¹Ð´ÐµÐ½Ð° Ð¸Ð»Ð¸ Ð¿Ð¾Ð»ÑŒÐ·Ð¾Ð²Ð°Ñ‚ÐµÐ»ÑŒ Ð½ÐµÐ¾Ð¿Ñ€ÐµÐ´ÐµÐ»ÐµÐ½\"";
 	}
 
 
@@ -318,7 +318,7 @@ string	SubscribeToGroup(string groupID, CUser *user, CMysql *db)
 				MESSAGE_ERROR("", "", "already subscribed [groupID: " + groupID + ", userID: " + user->GetID() + "]");
 			}
 
-			ostResult << "\"result\": \"success\", \"description\": \"âû óæå ïîäïèñàíû íà íîâîñòè ýòîé ãðóïïû\"";
+			ostResult << "\"result\": \"success\", \"description\": \"Ð²Ñ‹ ÑƒÐ¶Ðµ Ð¿Ð¾Ð´Ð¿Ð¸ÑÐ°Ð½Ñ‹ Ð½Ð° Ð½Ð¾Ð²Ð¾ÑÑ‚Ð¸ ÑÑ‚Ð¾Ð¹ Ð³Ñ€ÑƒÐ¿Ð¿Ñ‹\"";
 		}
 		else
 		{
@@ -352,7 +352,7 @@ string	SubscribeToGroup(string groupID, CUser *user, CMysql *db)
 					MESSAGE_ERROR("", "", "error inserting into users subscription [groupID: " + groupID + ", userID: " + user->GetID() + "]");
 				}
 
-				ostResult << "\"result\": \"error\",\"description\": \"Îøèáêà ÁÄ\"";
+				ostResult << "\"result\": \"error\",\"description\": \"ÐžÑˆÐ¸Ð±ÐºÐ° Ð‘Ð”\"";
 			}
 		}
 	}
@@ -362,7 +362,7 @@ string	SubscribeToGroup(string groupID, CUser *user, CMysql *db)
 			MESSAGE_ERROR("", "", "(groupID is empty) || (user == NULL) [groupID: " + groupID + ", userID: " + (user ? "not-NULL" : "NULL") + "]");
 		}
 
-		ostResult << "\"result\": \"error\",\"description\": \"Êîìïàíèÿ íå íàéäåíà èëè ïîëüçîâàòåëü íåîïðåäåëåí\"";
+		ostResult << "\"result\": \"error\",\"description\": \"ÐšÐ¾Ð¼Ð¿Ð°Ð½Ð¸Ñ Ð½Ðµ Ð½Ð°Ð¹Ð´ÐµÐ½Ð° Ð¸Ð»Ð¸ Ð¿Ð¾Ð»ÑŒÐ·Ð¾Ð²Ð°Ñ‚ÐµÐ»ÑŒ Ð½ÐµÐ¾Ð¿Ñ€ÐµÐ´ÐµÐ»ÐµÐ½\"";
 	}
 
 
@@ -395,7 +395,7 @@ string	UnsubscribeFromGroup(string groupID, CUser *user, CMysql *db)
 					MESSAGE_DEBUG("", "", "user can't unsubscribe from own group [groupID: " + groupID + ", userID: " + user->GetID() + "]");
 				}
 
-				ostResult << "\"result\": \"error\",\"description\": \"Âû íå ìîæåòå îòïèñàòüñÿ îò ñîáñòâåííîé ãðóïïû\"";
+				ostResult << "\"result\": \"error\",\"description\": \"Ð’Ñ‹ Ð½Ðµ Ð¼Ð¾Ð¶ÐµÑ‚Ðµ Ð¾Ñ‚Ð¿Ð¸ÑÐ°Ñ‚ÑŒÑÑ Ð¾Ñ‚ ÑÐ¾Ð±ÑÑ‚Ð²ÐµÐ½Ð½Ð¾Ð¹ Ð³Ñ€ÑƒÐ¿Ð¿Ñ‹\"";
 			}
 			else
 			{
@@ -423,7 +423,7 @@ string	UnsubscribeFromGroup(string groupID, CUser *user, CMysql *db)
 				MESSAGE_ERROR("", "", "user not subscribed to group [groupID: " + groupID + ", userID: " + user->GetID() + "]");
 			}
 
-			ostResult << "\"result\": \"success\", \"description\": \"Âû íå ïîäïèñàíû\"";
+			ostResult << "\"result\": \"success\", \"description\": \"Ð’Ñ‹ Ð½Ðµ Ð¿Ð¾Ð´Ð¿Ð¸ÑÐ°Ð½Ñ‹\"";
 		}
 	}
 	else
@@ -432,7 +432,7 @@ string	UnsubscribeFromGroup(string groupID, CUser *user, CMysql *db)
 			MESSAGE_ERROR("", "", "(groupID is empty) || (user == NULL) [groupID: " + groupID + ", userID: " + (user ? "not-NULL" : "NULL") + "]");
 		}
 
-		ostResult << "\"result\": \"error\",\"description\": \"Êîìïàíèÿ íå íàéäåíà èëè ïîëüçîâàòåëü íåîïðåäåëåí\"";
+		ostResult << "\"result\": \"error\",\"description\": \"ÐšÐ¾Ð¼Ð¿Ð°Ð½Ð¸Ñ Ð½Ðµ Ð½Ð°Ð¹Ð´ÐµÐ½Ð° Ð¸Ð»Ð¸ Ð¿Ð¾Ð»ÑŒÐ·Ð¾Ð²Ð°Ñ‚ÐµÐ»ÑŒ Ð½ÐµÐ¾Ð¿Ñ€ÐµÐ´ÐµÐ»ÐµÐ½\"";
 	}
 
 

@@ -634,7 +634,7 @@ int main()
 								if(filesCounter  > 0) ostJSONResult << ",";
 								ostJSONResult << "{" << std::endl;
 								ostJSONResult << "\"result\": \"error\"," << std::endl;
-								ostJSONResult << "\"textStatus\": \"некорректное изображение\"," << std::endl;
+								ostJSONResult << "\"textStatus\": \"РЅРµРєРѕСЂСЂРµРєС‚РЅРѕРµ РёР·РѕР±СЂР°Р¶РµРЅРёРµ\"," << std::endl;
 								ostJSONResult << "\"fileName\": \"" << indexPage.GetFilesHandler()->GetName(filesCounter) << "\" ," << std::endl;
 								ostJSONResult << "\"jqXHR\": \"\"" << std::endl;
 								ostJSONResult << "}" << std::endl;
@@ -894,7 +894,7 @@ int main()
 								if(filesCounter  > 0) ostJSONResult << ",";
 								ostJSONResult << "{" << std::endl;
 								ostJSONResult << "\"result\": \"error\"," << std::endl;
-								ostJSONResult << "\"textStatus\": \"некорректное изображение\"," << std::endl;
+								ostJSONResult << "\"textStatus\": \"РЅРµРєРѕСЂСЂРµРєС‚РЅРѕРµ РёР·РѕР±СЂР°Р¶РµРЅРёРµ\"," << std::endl;
 								ostJSONResult << "\"fileName\": \"" << indexPage.GetFilesHandler()->GetName(filesCounter) << "\" ," << std::endl;
 								ostJSONResult << "\"jqXHR\": \"\"" << std::endl;
 								ostJSONResult << "}" << std::endl;
@@ -913,7 +913,7 @@ int main()
 							if(filesCounter  > 0) ostJSONResult << ",";
 							ostJSONResult << "{" << std::endl;
 							ostJSONResult << "\"result\": \"error\"," << std::endl;
-							ostJSONResult << "\"textStatus\": \"<br>картинки, видео, youtube видео - не могут быть в одном сообщении<br>в одном сообщении не может быть больше одного видео\"," << std::endl;
+							ostJSONResult << "\"textStatus\": \"<br>РєР°СЂС‚РёРЅРєРё, РІРёРґРµРѕ, youtube РІРёРґРµРѕ - РЅРµ РјРѕРіСѓС‚ Р±С‹С‚СЊ РІ РѕРґРЅРѕРј СЃРѕРѕР±С‰РµРЅРёРё<br>РІ РѕРґРЅРѕРј СЃРѕРѕР±С‰РµРЅРёРё РЅРµ РјРѕР¶РµС‚ Р±С‹С‚СЊ Р±РѕР»СЊС€Рµ РѕРґРЅРѕРіРѕ РІРёРґРµРѕ\"," << std::endl;
 							ostJSONResult << "\"fileName\": \"" << indexPage.GetFilesHandler()->GetName(filesCounter) << "\" ," << std::endl;
 							ostJSONResult << "\"jqXHR\": \"\"" << std::endl;
 							ostJSONResult << "}" << std::endl;
@@ -932,7 +932,7 @@ int main()
 				ostJSONResult.str("");
 				ostJSONResult << "{";
 				ostJSONResult << "\"result\" : \"error\",";
-				ostJSONResult << "\"description\" : \"Ошибка: Не получилось определить владельца сообщения\"";
+				ostJSONResult << "\"description\" : \"РћС€РёР±РєР°: РќРµ РїРѕР»СѓС‡РёР»РѕСЃСЊ РѕРїСЂРµРґРµР»РёС‚СЊ РІР»Р°РґРµР»СЊС†Р° СЃРѕРѕР±С‰РµРЅРёСЏ\"";
 				ostJSONResult << "}";
 			}
 		}
