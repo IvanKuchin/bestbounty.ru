@@ -632,7 +632,7 @@ auto GetUserListInJSONFormat_BySearchString(const string lookForKey, bool includ
 	return ostFinal.str();
 }
 
-static auto GetCheckistItemInJSONFormat(string dbQuery, CMysql *db, CUser *user) -> string
+static auto GetChecklistItemInJSONFormat(string dbQuery, CMysql *db, CUser *user) -> string
 {
 	MESSAGE_DEBUG("", "", "start");
 
@@ -679,10 +679,13 @@ static auto GetCheckistItemInJSONFormat(string dbQuery, CMysql *db, CUser *user)
 			result += "{";
 			result += "\"id\": \""				  	+ item.id + "\",";
 			result += "\"title\": \""				+ item.title + "\",";
+			result += "\"category\": \""			+ item.category + "\",";
+			result += "\"state\": \""				+ item.state + "\",";
+			result += "\"price\": \""				+ item.price + "\",";
+			result += "\"comment\": \""				+ item.comment + "\",";
+			result += "\"eventTimestamp\": \""		+ item.eventTimestamp + "\"";
 			result += "}";
 		}
-
-
 	}
 	else
 	{
@@ -733,7 +736,7 @@ auto GetEventCheckistInJSONFormat(string dbQuery, CMysql *db, CUser *user) -> st
 			result += "{";
 			result += "\"id\": \""				  	+ checklist.id + "\",";
 			result += "\"title\": \""				+ checklist.title + "\",";
-			result += "\"items\": ["				+ GetCheckistItemInJSONFormat(
+			result += "\"items\": ["				+ GetChecklistItemInJSONFormat(
 															"SELECT * FROM `checklist_items` "
 															"INNER JOIN `checklist_predefined` ON `checklist_predefined`.`id`=`checklist_items`.`checklist_predefined_id` "
 															"WHERE `checklist_items`.`event_checklist_id`=" + quoted(checklist.id) +  " "
