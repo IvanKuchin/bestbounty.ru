@@ -40,7 +40,7 @@ void CMysqlSkel::CloseDB( void )
 // --- Input: string
 // --- Output: 0 - error or no AUTO_INCREMENT_FIELD
 //              >0 - success
-unsigned long CMysqlSkel::InsertQueryDB(string query)
+unsigned long CMysqlSkel::InsertQueryDB(const string &query)
 {
     int             r;
     my_ulonglong    resultAutoIncrement = 0;
@@ -76,7 +76,7 @@ unsigned long CMysqlSkel::InsertQueryDB(string query)
 // --- Output:     NULL - resultSet is empty OR error
 //             not NULL - resultSet
 // --- Remark: no error indication
-MYSQL_RES *CMysqlSkel::QueryDB(string query)
+MYSQL_RES *CMysqlSkel::QueryDB(const string &query)
 {
     MYSQL_RES   *result;
     int         r;
@@ -128,10 +128,19 @@ const char *CMysqlSkel::GetErrorMessage(void)
 
 int CMysqlSkel::FieldsIndex(const char *fieldName )
 {
-    for(auto i = 0; i < numFields; i++ )
+    for(auto i = 0u; i < numFields; i++ )
     	if( strcmp( fieldName, fieldsInfo[i].name ) == 0 )
             return(i);
     return(-1);
+}
+
+auto CMysqlSkel::GetColName(unsigned int idx) -> string
+{
+    auto    result = ""s;
+
+    if(idx < numFields) result = fieldsInfo[idx].name;
+
+    return result;
 }
 
 void CMysqlSkel::FreeResultSet()
@@ -240,7 +249,7 @@ int CMysql::Connect(const char *dbName, const char *login, const char *pass)
     return result;
 }
 
-int CMysql::Query(string query)
+int CMysql::Query(const string &query)
 {
     FreeResultSet();
     resultSet = QueryDB(query);
@@ -250,7 +259,7 @@ int CMysql::Query(string query)
     return 0;
 }
 
-unsigned long CMysql::InsertQuery(string query)
+unsigned long CMysql::InsertQuery(const string &query)
 {
     FreeResultSet();
     return InsertQueryDB(query);

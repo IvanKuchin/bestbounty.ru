@@ -12,5 +12,7 @@ auto 		RegisterInitialVariables(CCgi *, CMysql *, CUser *) -> bool;
 auto 		SetLocale(string locale) -> bool;
 auto 		GenerateSession(string action, CCgi *, CMysql *, CUser *) -> string;
 auto 		LogoutIfGuest(string action, CCgi *, CMysql *, CUser *) -> string;
+auto		AJAX_ResponseTemplate(CCgi *indexPage, const string &success_message, const string &error_message) -> string;
+auto		AJAX_ResponseTemplate(CCgi *indexPage, const string &success_message, const vector<pair<string, string>> &error_messages) -> string;
 
 #endif

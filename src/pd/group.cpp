@@ -23,7 +23,6 @@ int main()
 	{
 
 		indexPage.ParseURL();
-		indexPage.AddCookie("lng", "ru", "", "", "/");
 
 		if(!indexPage.SetTemplate("index.htmlt"))
 		{
@@ -51,197 +50,18 @@ int main()
 
 		// --- generate common parts
 		{
-			ostringstream		query, ost1, ost2;
-			string				partNum;
-			string				content;
-			// Menu				m;
-
-			indexPage.RegisterVariableForce("rand", GetRandom(10));
-			indexPage.RegisterVariableForce("random", GetRandom(10));
-			indexPage.RegisterVariableForce("style", "style.css");
-
-			// --- Generate session
-			{
-				string			lng, sessidHTTP;
-				ostringstream	ost;
-
-
-				sessidHTTP = indexPage.SessID_Get_FromHTTP();
-				if(sessidHTTP.length() < 5) {
-					{
-						CLog	log;
-						log.Write(DEBUG, string(__func__) + ": session cookie is not exist, generating new session.");
-					}
-					sessidHTTP = indexPage.SessID_Create_HTTP_DB();
-					if(sessidHTTP.length() < 5) {
-						CLog	log;
-						log.Write(ERROR, string(__func__) + ": error in generating session ID");
-						throw CExceptionHTML("session can't be created");
-					}
-				} 
-				else {
-					if(indexPage.SessID_Load_FromDB(sessidHTTP)) 
-					{
-						if(indexPage.SessID_CheckConsistency()) 
-						{
-							if(indexPage.SessID_Update_HTTP_DB()) 
-							{
-								indexPage.RegisterVariableForce("loginUser", "");
-								indexPage.RegisterVariableForce("loginUserID", "");
-
-								if(indexPage.SessID_Get_UserFromDB() != "Guest") {
-									user.SetDB(&db);
-									// --- place 2change user from user.email to user.id 
-									if(user.GetFromDBbyEmail(indexPage.SessID_Get_UserFromDB()))
-									{
-										ostringstream	ost1;
-										string			avatarPath;
-
-										indexPage.RegisterVariableForce("loginUser", indexPage.SessID_Get_UserFromDB());
-										indexPage.RegisterVariableForce("loginUserID", user.GetID());
-										indexPage.RegisterVariableForce("myFirstName", user.GetName());
-										indexPage.RegisterVariableForce("myLastName", user.GetNameLast());
-
-										// --- Get user avatars
-										ost1.str("");
-										ost1 << "select * from `users_avatars` where `userid`='" << user.GetID() << "' and `isActive`='1';";
-										avatarPath = "empty";
-										if(db.Query(ost1.str()))
-										{
-											ost1.str("");
-											ost1 << "/images/avatars/avatars" << db.Get(0, "folder") << "/" << db.Get(0, "filename");
-											avatarPath = ost1.str();
-										}
-										indexPage.RegisterVariableForce("myUserAvatar", avatarPath);
-
-
-										{
-											CLog	log;
-											ostringstream	ost;
-
-											ost << __func__ << "[" << __LINE__ << "]: user [" << user.GetLogin() << "] logged in";
-											log.Write(DEBUG, ost.str());
-										}
-									}
-									else
-									{
-										// --- enforce to close session
-										action = "logout";
-
-										{
-											CLog	log;
-											ostringstream	ost;
-
-											ost << __func__ << "[" << __LINE__ << "]: ERROR user [" << indexPage.SessID_Get_UserFromDB() << "] session exists on client device, but not in the DB. Change the [action = logout].";
-											log.Write(ERROR, ost.str());
-										}
-
-									}
-								}
-							
-
-							}
-							else
-							{
-								CLog	log;
-								log.Write(ERROR, string(__func__) + "[" + to_string(__LINE__) + "]:ERROR: update session in HTTP or DB failed");
-							}
-						}
-						else {
-							CLog	log;
-							log.Write(ERROR, string(__func__) + "[" + to_string(__LINE__) + "]:ERROR: session consistency check failed");
-						}
-					}
-					else 
-					{
-						ostringstream	ost;
-
-						{
-							CLog	log;
-							log.Write(DEBUG, string(__func__) + ": cookie session and DB session is not equal. Need to recreate session");
-						}
-
-						ost.str("");
-						ost << "/?rand=" << GetRandom(10);
-
-						if(!indexPage.Cookie_Expire()) {
-							CLog	log;
-							log.Write(ERROR, string(__func__) + ": Error in session expiration");			
-						} // --- if(!indexPage.Cookie_Expire())
-						indexPage.Redirect(ost.str());
-					} // --- if(indexPage.SessID_Load_FromDB(sessidHTTP)) 
-				} // --- if(sessidHTTP.length() < 5)
-			}
-	//------- End generate session
-
-
-	//------- Register html META-tags
-			if(db.Query("select `value` from `settings_default` where `setting`=\"keywords_head\"") > 0)
-				indexPage.RegisterVariable("keywords_head", db.Get(0, "value"));
+			// --- it has to be run before session, because session relay upon Apache environment variable
+			if(RegisterInitialVariables(&indexPage, &db, &user)) {}
 			else
 			{
-				CLog	log;
-				log.Write(ERROR, string(__func__) + "[" + to_string(__LINE__) + "]:ERROR: getting keywords_head from settings_default");
+				MESSAGE_ERROR("", "", "RegisterInitialVariables failed, throwing exception");
+				throw CExceptionHTML("environment variable error");
 			}
 
-			if(db.Query("select `value` from `settings_default` where `setting`=\"title_head\"") > 0)
-				indexPage.RegisterVariable("title_head", db.Get(0, "value"));
-			else
-			{
-				CLog	log;
-				log.Write(ERROR, string(__func__) + "[" + to_string(__LINE__) + "]:ERROR: getting title_head from settings_default");
-			}
-
-			if(db.Query("select `value` from `settings_default` where `setting`=\"description_head\"") > 0)
-				indexPage.RegisterVariable("description_head", db.Get(0, "value"));
-			else
-			{
-				CLog	log;
-				log.Write(ERROR, string(__func__) + "[" + to_string(__LINE__) + "]:ERROR: getting description_head from settings_default");
-			}
-
-			if(db.Query("select `value` from `settings_default` where `setting`=\"NewsOnSinglePage\"") > 0)
-				indexPage.RegisterVariable("NewsOnSinglePage", db.Get(0, "value"));
-			else
-			{
-				CLog			log;
-				log.Write(ERROR, string(__func__) + "[" + to_string(__LINE__) + "]:ERROR: getting NewsOnSinglePage from settings_default");
-
-				indexPage.RegisterVariable("NewsOnSinglePage", to_string(NEWS_ON_SINGLE_PAGE));
-			}
-
-			if(db.Query("select `value` from `settings_default` where `setting`=\"FriendsOnSinglePage\"") > 0)
-				indexPage.RegisterVariable("FriendsOnSinglePage", db.Get(0, "value"));
-			else
-			{
-				CLog			log;
-				log.Write(ERROR, string(__func__) + "[" + to_string(__LINE__) + "]:ERROR: getting FriendsOnSinglePage from settings_default");
-
-				indexPage.RegisterVariable("FriendsOnSinglePage", to_string(FRIENDS_ON_SINGLE_PAGE));
-			}
-
-			if((!action.length()) and (user.GetLogin().length()) and (user.GetLogin() != "Guest"))
-			{
-				action = GetDefaultActionLoggedinUser();
-
-				{
-					CLog	log;
-					log.Write(DEBUG, __func__ + string("[") + to_string(__LINE__) + "]: META-registration: action has been overriden to 'logged-in user' default action [action = ", action, "]");
-				}
-
-			}
-			else if(!action.length())
-			{
-				action = GUEST_USER_DEFAULT_ACTION;
-
-				{
-					CLog	log;
-					log.Write(DEBUG, __func__ + string("[") + to_string(__LINE__) + "]: META-registration: action has been overriden to 'guest user' default action [action = ", action, "]");
-				} // --- log block
-			} // --- default action
-	//------- End register html META-tags
+			//------- Generate session
+			action = GenerateSession(action, &indexPage, &db, &user);
 		}
-	// ------------ end generate common parts
+		// ------------ end generate common parts
 
 		{
 			CLog	log;
@@ -293,10 +113,9 @@ int main()
 
 				if(!indexPage.SetTemplate("groups_i_own_list.htmlt"))
 				{
-					CLog	log;
-					log.Write(ERROR, string(__func__) + string("[") + to_string(__LINE__) + "]: action == " + action + ":ERROR: can't find template my_network.htmlt");
+ 					MESSAGE_DEBUG("", action, "can't find template");
 					throw CExceptionHTML("user not activated");
-				} // if(!indexPage.SetTemplate("my_network.htmlt"))
+				}
 			}
 
 

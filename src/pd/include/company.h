@@ -11,6 +11,7 @@
 #include "cuser.h"
 #include "cmail.h"
 #include "cstatistics.h"
+#include "utilities_common.h"
 #include "utilities_bestbounty.h"
 #include "localy.h"
 

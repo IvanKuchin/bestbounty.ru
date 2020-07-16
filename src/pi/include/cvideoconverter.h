@@ -29,6 +29,7 @@ class CVideoConverter
 	vector<string>		_exts = {".mp4", ".webm"};
 
 	int					_width = 0, _height = 0;
+	string				_rotation = "";
 
 	string				_metadataLocation = "";
 	string				_metadataLocationAltitude = "";

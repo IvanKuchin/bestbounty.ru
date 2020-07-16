@@ -1,62 +1,5 @@
 #include "c_float.h"
 
-static string GetFormattedOutput(double val, int prec)
-{
-	long			multiplier = pow(10, prec);
-	ostringstream	ost;
-
-	ost.str("");
-	ost.precision(prec);
-	ost << fixed << (round(val * multiplier)) / multiplier;
-
-	return CutTrailingZeroes(ost.str());
-}
-
-/*
-static string GetFormattedOutput(double val, int prec)
-{
-	ostringstream	result;
-
-	result.setf( ios::fixed, ios::floatfield ); // floatfield set to fixed
-	result.precision(prec);
-	result << val;
-
-	return result.str();
-}
-*/
-c_float::c_float() : c_float(0, 2) {}
-
-c_float::c_float(double param) : c_float(param, 2) {}
-
-c_float::c_float(double param,  int prec_param) : precision(prec_param) 
-{
-	val = RoundWithPrecision(param, precision);
-}
-
-c_float::c_float(string param) : c_float(param, 2) {}
-
-c_float::c_float(string param, int prec_param) : precision(prec_param)
-{
-// TODO: remove after building c_float tests
-/*
-	if(param.empty()) val = 0;
-	else
-	{
-		try
-		{
-			val = stod(FixRussianLocale(param));
-		}
-		catch(...)
-		{
-			MESSAGE_ERROR("c_float", "", "can't convert " + param + " to double");
-			val = 0;
-		}
-
-	}
-*/
-	Set(param);
-}
-
 void c_float::Set(string param)
 {
 	if(param.empty()) Set(0);
@@ -70,67 +13,140 @@ auto c_float::FixRussianLocale(string param) -> string
 {
 	locale	loc;
 
-	MESSAGE_DEBUG("c_float", "", "start (" + param + ")")
+	MESSAGE_DEBUG("", "", "start (" + param + ")")
 
 	if(loc.name().find("ru"))
 		if(param.find(".") != string::npos)
 			param.replace(param.find("."), 1, ",");
 
-	MESSAGE_DEBUG("c_float", "", "finish (" + param + ")")
+	MESSAGE_DEBUG("", "", "finish (" + param + ")")
 
 	return param;
 }
 
 double c_float::RoundWithPrecision(double num, int precision)
 {
+/*
 	double	result;
 	long	multiplier;
 
 	multiplier = pow(10, precision);
 	result = round(fma(num, multiplier, 0)) / multiplier;
 
-	// MESSAGE_DEBUG("c_float", "", to_string(num) + " -> " + to_string(result));
+	// MESSAGE_DEBUG("", "", to_string(num) + " -> " + to_string(result));
 	return	result;
+*/
+	return	num;
 }
 
-double c_float::RoundWithPrecision(double num)
+long c_float::GetWhole() const
 {
-	return	RoundWithPrecision(num, precision);
+	auto	result				= 0l;
+	long	factor				= pow(10, precision);
+	auto	fract_part			= GetFraction();
+	long	factorized_val		= lround(fma(val, factor, 0));
+
+	result = lround(fma(factorized_val - fract_part, 1/double(factor), 0));
+
+
+	MESSAGE_DEBUG("", "", "finish (result = " + to_string(result) + ")");
+
+	return result;
 }
 
-long c_float::GetWhole()
+long c_float::GetFraction() const
 {
-    double	intpart;
-    long	result;
+	long	factor				= pow(10, precision);
+/*
+	// ---
+	// --- if you'll see fraction == 100 then consider use following code
+	// --- https://stackoverflow.com/questions/3884232/modf-returns-1-as-the-fractional?answertab=active#tab-top
+	// --- 
+	double	inf					= copysign(std::numeric_limits<double>::infinity(), val);
+	double	theNumberAfter		= nextafter(val, inf);
+	double	epsilon				= theNumberAfter - val;
+	double	factorized_epsilon	= fma(epsilon, factor/2,0);
+	double	rounded_val	= lround(fma(val, factor, factorized_epsilon)) / factor;
+*/
+/*
+	// --- former algorithm
+	double	rounded_val			= lround(fma(val, factor, 0)) / factor;
+	double	intpart;
+	double	fractpart			= modf(rounded_val , &intpart);
+	long 	result				= lround(fma(fractpart, factor, 0));
+*/
+	long 	result				= lround(fma(val, factor, 0)) % factor;
 
-    modf (val , &intpart);
+	if(result == factor)
+	{
+		MESSAGE_ERROR("", "", "fractional part extracting issue from " + to_string(val) + ", fraction part = " + to_string(result) + "");
+		result = 0;
+	}
 
-    result = lround(intpart);
+	MESSAGE_DEBUG("", "", "finish (result = " + to_string(result) + ")");
 
-    MESSAGE_DEBUG("", "", "finish (result = " + to_string(result) + ")");
-
-    return result;
+	return result;
 
 }
 
-long c_float::GetFraction()
+string c_float::GetStringValue() const
 {
-    double	fractpart, intpart;
-    long	result;
+	long			multiplier = pow(10, precision);
+	ostringstream	ost;
 
-    fractpart = modf (val , &intpart);
+	ost.str("");
+	ost.precision(precision);
+	ost << fixed << (round(val * multiplier)) / multiplier; // --- this trick will print 0.01 from 0.005
 
-    result = lround(fma(fractpart, 100, 0));
-
-    MESSAGE_DEBUG("", "", "finish (result = " + to_string(result) + ")");
-
-    return result;
-
+	return ost.str();	
 }
 
-c_float::operator string()
+string c_float::GetFormattedOutput() const
 {
-	return GetFormattedOutput(Get(), GetPrecision());
+	return CutTrailingZeroes(GetStringValue());
+}
+
+string c_float::PrintPriceTag() const
+{
+	auto	result = GetStringValue();
+
+	// --- having spaces between thouthands may trigger problems with invoice/act/vat price representation in Excel
+	// --- or DB update (UPDATE xxx=123 456.56) will fail sql-query
+	// --- for example: 12 000.55 will be presented as 12 in Excel
+	{
+		auto	frac_separator = result.find_first_not_of("0123456789");
+
+		if(frac_separator == string::npos)
+		{
+			MESSAGE_ERROR("", "", "fail to find fraction seprator in price_tag(" + result + ")");
+		}
+		else
+		{
+			// --- insert _spaces_ between thousands
+/*
+			while(frac_separator > 3)
+			{
+				frac_separator -= 3;
+				result.insert(frac_separator, " ");
+			}
+*/
+		}
+	}	
+
+	return result;
+}
+
+string c_float::PrintPriceTag_SpaceIfZero() const
+{
+	// --- replace " " to empty may result to overlap with next line. 
+	// --- Empty symbol have 0px height, therefore next line will be printed over current
+	// --- for example: subc invoice, subc act in summary after table "Total"-line will override "VAT"-line
+	return Get() ? PrintPriceTag() : " ";
+}
+
+c_float::operator string() const
+{
+	return GetFormattedOutput();
 }
 
 c_float	c_float::operator+(const c_float &term2)
@@ -139,7 +155,7 @@ c_float	c_float::operator+(const c_float &term2)
 
 	result = RoundWithPrecision(fma(1, term2.Get(), Get()));
 
-	MESSAGE_DEBUG("c_float", "", to_string(Get()) + " + " + to_string(term2.Get()) + " = " + to_string(result.Get()));
+	MESSAGE_DEBUG("", "", to_string(Get()) + " + " + to_string(term2.Get()) + " = " + to_string(result.Get()));
 
 	return result;
 }
@@ -150,7 +166,7 @@ c_float	c_float::operator-(const c_float &term2)
 
 	result = RoundWithPrecision(fma(-1, term2.Get(), Get()));
 
-	MESSAGE_DEBUG("c_float", "", to_string(Get()) + " - " + to_string(term2.Get()) + " = " + to_string(result.Get()));
+	MESSAGE_DEBUG("", "", to_string(Get()) + " - " + to_string(term2.Get()) + " = " + to_string(result.Get()));
 
 	return result;
 }
@@ -161,7 +177,7 @@ c_float	c_float::operator*(const c_float &term2)
 
 	result = RoundWithPrecision(fma(Get(), term2.Get(), 0));
 
-	MESSAGE_DEBUG("c_float", "", to_string(Get()) + " * " + to_string(term2.Get()) + " = " + to_string(result.Get()));
+	MESSAGE_DEBUG("", "", to_string(Get()) + " * " + to_string(term2.Get()) + " = " + to_string(result.Get()));
 
 	return result;
 }
@@ -172,7 +188,7 @@ c_float	c_float::operator/(const c_float &term2)
 
 	result = RoundWithPrecision(fma(Get(), 1 / term2.Get(), 0));
 
-	MESSAGE_DEBUG("c_float", "", to_string(Get()) + " / " + to_string(term2.Get()) + " = " + to_string(result.Get()));
+	MESSAGE_DEBUG("", "", to_string(Get()) + " / " + to_string(term2.Get()) + " = " + to_string(result.Get()));
 
 	return result;
 }
@@ -182,26 +198,30 @@ c_float	c_float::operator/(const long int &term2)
 	c_float	result;
 
 	result = RoundWithPrecision(Get() / term2);
-	MESSAGE_DEBUG("c_float", "", to_string(Get()) + " / " + to_string(term2) + " = " + to_string(result.Get()));
+	MESSAGE_DEBUG("", "", to_string(Get()) + " / " + to_string(term2) + " = " + to_string(result.Get()));
 
 	return result;
 }
 
-/*
-c_float& c_float::operator=(const c_float &other)
-{
-	if(this != &other)
-	{
-		MESSAGE_DEBUG("c_float", "", "copy assignment (this.precision = " + to_string(this->precision) + ") value (other.value = " + to_string(other.val) + ")");
-		this->val = other.val;
-	}
-
-	return *this;
-}
-*/
 ostream& operator<<(ostream& os, const c_float &var)
 {
-	os << GetFormattedOutput(var.Get(), var.GetPrecision());;
+	os << string(var);
 	return os;
+}
+
+
+double c_float_with_rounding::RoundWithPrecision(double num, int precision)
+{
+
+	double	result;
+	long	multiplier;
+
+	multiplier = pow(10, precision);
+	result = round(fma(num, multiplier, 0)) / multiplier;
+
+	MESSAGE_DEBUG("", "", to_string(num) + " (prec: " + to_string(precision) + ") -> " + to_string(result));
+	return	result;
+
+	// return	num;
 }
 

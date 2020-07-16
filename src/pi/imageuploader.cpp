@@ -311,7 +311,6 @@ int main()
 	try
 	{
 		indexPage.ParseURL();
-		indexPage.AddCookie("lng", "ru", "", "", "/");
 
 		if(!indexPage.SetTemplate("index.htmlt"))
 		{

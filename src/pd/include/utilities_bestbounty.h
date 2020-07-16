@@ -9,6 +9,11 @@ string      	GetMessageLikesUsersList(string messageID, CUser *, CMysql *);
 string      	GetUserNotificationSpecificDataByType(unsigned long typeID, unsigned long actionID, CMysql *, CUser *);
 string      	GetUserNotificationInJSONFormat(string sqlRequest, CMysql *, CUser *);
 
+string			GetMessageImageList(string imageSetID, CMysql *);
+string			GetMessageCommentsCount(string messageID, CMysql *);
+string			GetMessageSpam(string messageID, CMysql *);
+string			GetMessageSpamUser(string messageID, string userID, CMysql *);
+
 auto			GetEventGuestsListInJSONFormat(string dbQuery, CMysql *, CUser *) -> string;
 auto 	     	GetCompanyListInJSONFormat(string dbQuery, CMysql *, CUser *, bool quickSearch = true, bool includeEmployedUsersList = false) -> string;
 auto 	     	GetGroupListInJSONFormat(string dbQuery, CMysql *, CUser *) -> string;
@@ -23,6 +28,7 @@ auto 			GetSchoolListInJSONFormat(string dbQuery, CMysql *, bool includeStudents
 auto			GetGiftListInJSONFormat(string dbQuery, CMysql *, CUser *) -> string;
 auto 			GetGiftToGiveListInJSONFormat(string dbQuery, CMysql *, CUser *) -> string;
 auto			GetEventListInJSONFormat(string dbQuery, CMysql *, CUser *) -> string;
+auto			GetEventCheckistInJSONFormat(string dbQuery, CMysql *, CUser *) -> string;
 auto			GetEventHostsListInJSONFormat(string dbQuery, CMysql *, CUser *) -> string;
 auto 			GetCertificationLikesUsersList(string usersCertificationID, CUser *, CMysql *) -> string;
 auto 			GetCourseLikesUsersList(string usersCourseID, CUser *, CMysql *) -> string;
@@ -44,5 +50,6 @@ auto			GetCompanyPositionIDByTitle(string title, CMysql *) -> string;
 auto 			GetCandidatesListAppliedToVacancyInJSONFormat(string dbQuery, CMysql *) -> string;
 auto 			GetOpenVacanciesInJSONFormat(string companyID, CMysql *, CUser * = NULL) -> string;
 
+auto			GetUserListInJSONFormat_BySearchString(const string lookForKey, bool include_myself, CMysql *, CUser *) -> string;
 
 #endif

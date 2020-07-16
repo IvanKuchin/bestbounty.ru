@@ -27,18 +27,25 @@ private:
 	string							headTag = "";
 	string							folderID = "", filePrefix = "", fileExtention = "";
 	string							embedVideoURL = "";
-	string							type = "feed"; // --- depends on type different /images/xxxx folders stores images
+	string							type = "feed";		// --- type of files (feed, temp) to save form request
+														// --- depends on type different /images/xxxx folders stores images
 	bool							isParsingRequired = true;
+
+    struct curl_slist 				*__slist_headers = NULL;
+	string							__post_json = "";
 
 	string 							GetTagContent(string tag_name);
 	string							GetAttributeValue(string tag_name, string attr_name, string name_content, string attr_content_name);
 
 	void							ResetMetaValues();
 	bool							ParseHTMLPage();
+	
 	bool							ExtractHEAD();
 	bool							ExtractTITLE();
 	bool							ExtractDESCRIPTION();
 	bool							ExtractPreviewImage();
+
+	string							TryToFixURL(string url);
 	tuple<string, string, string>	PickFileName();
 	bool							DownloadFile(string urlPreview, FILE *f);
 	bool							ExtractEmbedVideoURL();
@@ -46,15 +53,22 @@ private:
 	int 							GetNumberOfFoldersByType();
 	string							GetDirectoryByType();
 
+	bool							isPostJSON() { return __post_json.length(); };
+
+
 public:
 									CHTML();
 									CHTML(string _type_);
-									
+
 	void							AppendToHTMLPage(string param)			{ htmlPage += param; };
 	bool							PerformRequest(string param);
 
 	void							SetType(const string &tmp)				{ type = tmp; }
 	void							SetType(string &&tmp) 		noexcept	{ type = move(tmp); }
+
+	void							SetPostJSON(const string &tmp)			{ __post_json = tmp; }
+	void							SetPostJSON(string &&tmp)	noexcept	{ __post_json = move(tmp); }
+
 	void							SetParsingDisable()			noexcept	{ isParsingRequired = false; };
 	void							SetParsingEnable()			noexcept	{ isParsingRequired = true; };
 
@@ -64,6 +78,7 @@ public:
 	string							GetPreviewImageFolder()			const	{ return folderID; };
 	string							GetPreviewImagePrefix()			const	{ return filePrefix; };
 	string							GetPreviewImageExtention()		const	{ return fileExtention; };
+	string							GetPostJSON()					const	{ return __post_json; };
 	string							GetContent() 					const	{ return htmlPage; };
 
 	bool							isEmbedVideoHostedOnYoutube();

@@ -47,7 +47,6 @@ int main()
 	{
 
 		indexPage.ParseURL();
-		indexPage.AddCookie("lng", "ru", "", "", "/");
 
 		if(!indexPage.SetTemplate("index.htmlt"))
 		{
@@ -122,9 +121,9 @@ int main()
 
 				if(!indexPage.SetTemplate("events_list.htmlt"))
 				{
-					MESSAGE_DEBUG("", action, "can't find template my_network.htmlt");
+					MESSAGE_DEBUG("", action, "can't find template");
 					throw CExceptionHTML("user not activated");
-				} // if(!indexPage.SetTemplate("my_network.htmlt"))
+				}
 			}
 
 
@@ -1978,7 +1977,7 @@ int main()
 
 											indexPage.RegisterVariableForce("invite_name", user.GetName() + " " + user.GetNameLast());
 
-											mail.Send("", "quick_registration_invite", indexPage.GetVarsHandler(), &db, email);
+											mail.SendToEmail(email, user.GetLogin(), "quick_registration_invite", indexPage.GetVarsHandler(), &db);
 
 											ostResult << "{\"result\": \"success\", \"guests\": [" << GetEventGuestsListInJSONFormat("SELECT * FROM `event_guests` WHERE `event_id`=\"" + event_id + "\";", &db, &user) << "]}";
 										}

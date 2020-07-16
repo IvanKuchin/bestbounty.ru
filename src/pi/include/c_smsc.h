@@ -5,6 +5,7 @@
 #include <libintl.h>
 
 #include "utilities.h"	// --- split and CMysql
+#include "cmysql.h"
 #include "clog.h"
 #include "localy.h"
 

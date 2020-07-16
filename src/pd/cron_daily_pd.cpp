@@ -1,81 +1,5 @@
-#include "cron_daily.h"
+#include "cron_daily_pd.h"
 #include "cactivator.h"
-
-bool CleanupActivators(CMysql *db)
-{
-	bool		result = true;
-
-	MESSAGE_DEBUG("", "", "start");
-
-	db->Query("DELETE FROM `activators` WHERE  `date`<=(now() - INTERVAL " + to_string(ACTIVATOR_SESSION_LEN) + " MINUTE);");
-	
-	MESSAGE_DEBUG("", "", "finish");
-
-	return result;
-}
-
-bool RemoveOldCaptcha()
-{
-	DIR 		*dir;
-	struct 		dirent *ent;
-	bool		result = true; 
-	string		dirName = IMAGE_CAPTCHA_DIRECTORY;
-	time_t		now;
-
-	{
-		CLog	log;
-		log.Write(DEBUG, string(__func__) + "[" + to_string(__LINE__) + "]: start");
-	}
-
-	time(&now);
-
-	if ((dir = opendir( dirName.c_str() )) != NULL) 
-	{
-		/* print all the files and directories within directory */
-		while ((ent = readdir (dir)) != NULL) 
-		{
-			struct	stat	sb;
-			string	fileName = dirName + ent->d_name;
-
-			if(stat(fileName.c_str(), &sb) == 0)
-			{
-				double		secondsBetween = difftime(now, sb.st_mtime);
-
-
-				if(secondsBetween > 2600 * 24)
-				{
-					{
-						CLog	log;
-						log.Write(DEBUG, string(__func__) + "[" + to_string(__LINE__) + "]: remove file [" + ent->d_name + "] created " + to_string(secondsBetween) + " secs ago");
-					}
-					unlink(fileName.c_str());
-				}
-			}
-			else
-			{
-				{
-					CLog	log;
-					log.Write(ERROR, string(__func__) + "[" + to_string(__LINE__) + "]:ERROR: file stat [" + ent->d_name + "]");
-				}
-			}
-		}
-		closedir (dir);
-	} 
-	else 
-	{
-		/* could not open directory */
-		result = false;
-	}
-
-
-
-	{
-		CLog	log;
-		log.Write(DEBUG, string(__func__) + "[" + to_string(__LINE__) + "]: finish");
-	}
-
-	return result;
-}
 
 bool BirthdayNotificationToFriends(CMysql *db)
 {
@@ -182,46 +106,6 @@ bool EventNotificationToGuests(CMysql *db)
 	return result;
 }
 
-bool RemoveTempMedia(CMysql *db)
-{
-	bool	result = true;
-	int		affected;
-
-	{
-		CLog	log;
-		log.Write(DEBUG, string(__func__) + "[" + to_string(__LINE__) + "]: start");
-	}
-
-	affected = db->Query("SELECT * FROM `temp_media` WHERE `mediaType`=\"image\" AND `eventTimestamp`<DATE_SUB(CURDATE(), INTERVAL 2 DAY);");
-	for(int i = 0; i < affected; ++i)
-	{
-		string	filename = IMAGE_TEMP_DIRECTORY + "/" + db->Get(i, "folder") + "/" + db->Get(i, "filename");
-
-		if(isFileExists(filename))
-		{
-			{
-				CLog	log;
-				log.Write(DEBUG, string(__func__) + "[" + to_string(__LINE__) +  "]: deleting file [filename=" + filename + "]");
-			}
-			unlink(filename.c_str());
-		}
-		else
-		{
-			CLog	log;
-			log.Write(ERROR, string(__func__) + "[" + to_string(__LINE__) +  "]:ERROR: file doesn't exists  [filename=" + filename + "]");
-		}
-	}
-	
-	db->Query("DELETE FROM `temp_media` WHERE `mediaType`=\"image\" AND `eventTimestamp`<DATE_SUB(CURDATE(), INTERVAL 2 DAY);");
-
-	{
-		CLog	log;
-		log.Write(DEBUG, string(__func__) + "[" + to_string(__LINE__) + "]: finish (result = " + (result ? "true" : "false") + ")");
-	}
-
-	return result;
-}
-
 bool UpdateGiftsToGive(CMysql *db)
 {
 	bool	result = true;
@@ -269,7 +153,6 @@ int main()
 		}
 
 		//--- start of daily cron main functionality
-		CleanupActivators(&db);
 
 		//--- notify friends about public birthday
 		BirthdayNotificationToFriends(&db);
@@ -277,14 +160,8 @@ int main()
 		//--- notify guests about upcoming event
 		EventNotificationToGuests(&db);
 
-		//--- Remove temporarily media files
-		RemoveTempMedia(&db);
-
 		//--- Remove gifts reservation to give
 		UpdateGiftsToGive(&db);
-
-		//--- Remove old captcha
-		RemoveOldCaptcha();
 
 		//--- end of daily cron main functionality
 	}

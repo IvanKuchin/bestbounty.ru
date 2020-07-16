@@ -13,5 +13,6 @@
 #include "cstatistics.h"
 #include "utilities_bestbounty.h"
 #include "localy.h"
+#include "utilities_common.h"
 
 #endif

@@ -35,51 +35,56 @@ class CMail
 		int				MakeMailFile(string text);
 		int				Input(int fd);
 
-		// TODO: remove on July 1
-		// void			RedirStdoutToFile();
-		// void			RedirStderrToFile();
-
 		long long		getFileSize(string fname);
 		bool			isFileExist(string fname);
 
 		string			GetRandom(int len);
 		string			GetTimeStamp();
 		void			BuildUniqPostfix();
-		
+
 		bool			SendLocal();
 		bool			SendSMTP();
 
-		void			SetUniqPostfix(string tmp) { uniqFilePostfix = tmp; }
-		string			GetUniqPostfix() { return uniqFilePostfix; }
+		void			SetUniqPostfix(const string &tmp)		{ uniqFilePostfix = tmp; }
+		void			SetStdinFname(const string &tmp) 		{ stdinFname = tmp; }
+		void			SetStdoutFname(const string &tmp)		{ stdoutFname = tmp; }
+		void			SetStderrFname(const string &tmp)		{ stderrFname = tmp; }
 
-		void			SetStdinFname(string tmp) { stdinFname = tmp; }
-		string			GetStdinFname() { return stdinFname; }
-		void			SetStdoutFname(string tmp) { stdoutFname = tmp; }
-		string			GetStdoutFname() { return stdoutFname; }
-		void			SetStderrFname(string tmp) { stderrFname = tmp; }
-		string			GetStderrFname() { return stderrFname; }
+		void			SetUniqPostfix(string &&tmp) 	noexcept{ uniqFilePostfix = move(tmp); }
+		void			SetStdinFname(string &&tmp) 	noexcept{ stdinFname = move(tmp); }
+		void			SetStdoutFname(string &&tmp)	noexcept{ stdoutFname = move(tmp); }
+		void			SetStderrFname(string &&tmp)	noexcept{ stderrFname = move(tmp); }
+
+		string			GetUniqPostfix() 				const	{ return uniqFilePostfix; }
+		string			GetStdinFname() 				const	{ return stdinFname; }
+		string			GetStdoutFname()				const	{ return stdoutFname; }
+		string			GetStderrFname()				const	{ return stderrFname; }
 
 	public:
 						CMail();
 
-		void			To(string to);
-		void			From(string from);
-		void			Subject(string subj);
-		void			Message(string mess);
+		void			To(const string &param)					{ rcptto = param; }
+		void			From(const string &param)				{ mailfrom = param; }
+		void			Subject(const string &param)			{ subject = param; }
+		void			Message(const string &param)			{ message = param; }
+
+		void			To(string &&param)				noexcept{ rcptto = move(param); }
+		void			From(string &&param)			noexcept{ mailfrom = move(param); }
+		void			Subject(string &&param)			noexcept{ subject = move(param); }
+		void			Message(string &&param)			noexcept{ message = move(param); }
 
 		// setting SMTP-server like "127.0.0.1" or "65.25.0.4"
 		// in: string
 		// out: none
-		void			SetSMTPServer(string server);
-		void			SetSMTPPort(int port);
+		void			SetSMTPServer(const string &param)		{ smtpServer = param; }
+		void			SetSMTPServer(string &&param)	noexcept{ smtpServer = move(param); }
+		void			SetSMTPPort(const int port)				{ smtpPort = port; }
 
 		bool			Send();
 		bool			Send(string to, string subj, string mess);
 
 		void			SetSMTP();
 		void			SetLocal();
-
-						~CMail();
 };
 
 class CMailLocal : public CMail
@@ -90,25 +95,26 @@ class CMailLocal : public CMail
 		string		userLogin, userID;
 
 	public:
-				CMailLocal();
+		void		SetVars(CVars *param)					{ vars = param; }
+		void		SetDB(CMysql *param)					{ db = param; }
 
-		void		SetDB(CMysql *);
-		void		SetVars(CVars *v);
+		void		UserLogin(const string &param)			{ userLogin = param; }
+		void		UserID(const string &param)				{ userID = param; }
 
-		void		UserLogin(string log);
-		string		GetUserLogin();
-		void		UserID(string id);
-		string		GetUserID();
+		void		UserLogin(string &&param)		noexcept{ userLogin = move(param); }
+		void		UserID(string &&param)			noexcept{ userID = move(param); }
 
+		string		GetUserLogin()					const	{ return userLogin; }
+		string		GetUserID()						const	{ return userID;}
 		string		GetUserLng();
+
 
 		string		SetTemplate(string templID);
 		string		SetTemplateFile(string fileName);
 
 		// mainly usage function.
-		void		Send(string login, string templID, CVars *v, CMysql *, string email = "");
-
-				~CMailLocal();
+		void		Send(string login, string templID, CVars *, CMysql *);
+		void		SendToEmail(string email, string login, string templID, CVars *, CMysql *);
 };
 
 #endif

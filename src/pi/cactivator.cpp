@@ -1,4 +1,3 @@
-
 #include "cactivator.h"
 
 CActivator::CActivator() : cgi(NULL), db(NULL)
@@ -22,72 +21,6 @@ string CActivator::GetRandom(int len)
 	}
 
 	return result;
-}
-
-string CActivator::GetID()
-{
-	return actID;
-}
-
-void CActivator::SetID(string id)
-{
-	actID = id;
-}
-
-string CActivator::GetUser()
-{
-	return user;
-}
-
-void CActivator::SetUser(string u)
-{
-	user = u;
-}
-
-void CActivator::SetType(string t)
-{
-	type = t;
-}
-
-string CActivator::GetType()
-{
-	return type;
-}
-
-void CActivator::SetTime(string t)
-{
-	time = t;
-}
-
-string CActivator::GetTime()
-{
-	return time;
-}
-
-void CActivator::SetDB(CMysql *mysql)
-{
-	ostringstream 	ost;
-
-	db = mysql;
-
-	// --- Clean-up database
-	{
-		CLog	log;
-		log.Write(DEBUG, "CActivator::" + string(__func__) + "[" + to_string(__LINE__) + "]: clean-up 'activator' table.");
-	}
-	db->Query("DELETE FROM `activators` WHERE  `date`<=(now() - INTERVAL " + to_string(ACTIVATOR_SESSION_LEN) + " MINUTE)");
-
-	if(db->Query("SELECT `id` FROM `users` WHERE `isactivated`='N' AND `activator_sent` <= (now() - INTERVAL " + to_string(ACTIVATOR_SESSION_LEN) + " MINUTE);"))
-	{
-		db->Query("DELETE FROM `users_passwd` WHERE `userID` IN (SELECT `id` FROM `users` WHERE `isactivated`='N' AND `activator_sent` <= (now() - INTERVAL " + to_string(ACTIVATOR_SESSION_LEN) + " MINUTE));");
-		db->Query("DELETE FROM `users` WHERE `isactivated`='N' AND `activator_sent` <= (now() - INTERVAL " + to_string(ACTIVATOR_SESSION_LEN) + " MINUTE);");
-	}
-
-}
-
-void CActivator::SetCgi(CCgi *c)
-{
-	cgi = c;
 }
 
 void CActivator::Save()
@@ -253,10 +186,6 @@ void CActivator::Activate()
 void CActivator::Delete()
 {
 	Delete(GetID());
-}
-
-CActivator::~CActivator()
-{
 }
 
 

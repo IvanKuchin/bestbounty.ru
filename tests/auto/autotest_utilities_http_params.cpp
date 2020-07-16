@@ -4,7 +4,7 @@
 #include "cmysql.h"
 #include "cuser.h"
 #include "cstatistics.h"
-#include "utilities_bestbounty.h"
+// #include "utilities_timecard.h"
 #include "utilities_common.h"
 #include "localy.h"
 
@@ -33,6 +33,8 @@ bool Test1()
 	vector<string>	date_test_success = {"1/2/00", "1/2/11", "1/2/2018", "11/12/2000", "28/2/2019", "29/2/2020", "29/2/2020", "31/12/20"};
 	vector<string>	email_test_fail = {"0/@0/00", "@0111", "@0111.123", "1@1.1" "user@domain.longdomain", "U_S_E_R@Domaincom", "my@.mail.com", "my@-mail.com", "my@mail-.com", "my@mail..com", "my@mail,com", "my,name@mail.com", "my!name@mail.com", "my.name@my!mail.com", "my#name@mail.com", "my.name@my#mail.com", "my_super_long_first_Name_and_super_long_last_Name@my-super-long-grand-domain.my-super-long-sub-domain.my-super-long-domain.com.edu"};
 	vector<string>	email_test_success = {"a@ab.com", "user@mail.mail", "1@24.11", "USER@DOMAIN.NET", "U_S_E_R@domain.com", "my.@mail.com", ".my@mail.com", "my_@mail.com", "_my@mail.com", "U_S_E_R@my-domain.com", "first_name.last_name@secondary.my-domain.com"};
+	vector<string>	timeentry_test_fail = {"8.8.8.8.8", "8,8.009", "1,a,1", "a", "0.10", "0,", "00", "000000000.00000000000,0", "8,8.084", "1.124,1,12", "1-E10,1230", "01,01,01,01", "1-E10,1230","12,123,123.00,24.24", "0", "0.0", "1.125,1,12"};
+	vector<string>	timeentry_test_success = {"8", "", "8,-1,8", ",", "", "8,8.8", "8,8.08", "8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8"};
 	auto			rus_alphabet = "Аа Бб Вв Гг Дд Ее Ёё Жж Зз Ии Йй Кк Лл Мм Нн Оо Пп Рр Сс Тт Уу Фф Хх Цц Чч Шш Щщ Ъъ Ыы Ьь Ээ Юю Яя"s;
 	auto			us_alphabet = "Aa Bb Cc Dd Ee Ff Gg Hh Ii Jj Kk Ll Mm Nn Oo Pp Qq Rr Ss Tt Uu Vv Ww Xx Yy Zz"s;
 
@@ -106,21 +108,21 @@ bool Test1()
 		cout << "failed on RemoveAllNonAlphabetSymbols(.`:'apo';`)=" << translation << ", test" << endl;
 	}
 
-	if(RemoveSpecialHTMLSymbols("<tag>\"value—value\"</tag>") == "&lt;tag&gt;&quot;value-value&quot;&lt;/tag&gt;") {}
+	if(RemoveSpecialHTMLSymbols("<tag>\"value—value\"</tag>") == "&lt;tag&gt;&quot;value—value&quot;&lt;/tag&gt;") {}
 	else
 	{
 		result = false;
 		cout << "failed on RemoveSpecialHTMLSymbols(<tag>\"value—value\"</tag>), test" << endl;
 	}
 
-	if((translation = RemoveSpecialHTMLSymbols("<tag>\"chanel№5\"</tag>")) == "&lt;tag&gt;&quot;chanel&#35;5&quot;&lt;/tag&gt;") {}
+	if((translation = RemoveSpecialHTMLSymbols("<tag>\"chanel№5\"</tag>")) == "&lt;tag&gt;&quot;chanel№5&quot;&lt;/tag&gt;") {}
 	else
 	{
 		result = false;
 		cout << "failed on RemoveSpecialHTMLSymbols(<tag>\"chanel№5\"</tag>)=" << translation << ", test" << endl;
 	}
 
-	if((translation = RemoveSpecialHTMLSymbols("<tag>\"chanel№5\"</tag>\\\\\\")) == "&lt;tag&gt;&quot;chanel&#35;5&quot;&lt;/tag&gt;") {}
+	if((translation = RemoveSpecialHTMLSymbols("<tag>\"chanel№5\"</tag>\\\\\\")) == "&lt;tag&gt;&quot;chanel№5&quot;&lt;/tag&gt;") {}
 	else
 	{
 		result = false;
@@ -168,7 +170,7 @@ bool Test1()
 		cout << "failed on SymbolReplace_KeepDigitsOnly(\"1234567890йцукенгшщз1234567890qwertyuiop\")=" << translation << ", test" << endl;
 	}
 
-	if((translation = RemoveSpecialSymbols("\\ 123	chanel№5	——— \\\\")) == " 123 chanelN5 --- ") {}
+	if((translation = RemoveSpecialSymbols("\\ 123	chanel№5	——— \\\\")) == " 123 chanel№5 ——— ") {}
 	else
 	{
 		result = false;
@@ -286,6 +288,23 @@ bool Test1()
 	return result;
 }
 
+bool Test2()
+{
+	auto	result = true;
+	auto	error_message = ""s;
+
+	if(split(",2,,4,5,,7,,9,,,12,", ',').size() == 6) {}
+	else
+	{
+		result = false;
+		cout << "fail to split" << endl;
+	}
+
+
+	return result;
+}
+
+
 int main(void)
 {
 	CStatistics		appStat;  // --- CStatistics must be firts statement to measure end2end param's
@@ -301,6 +320,11 @@ int main(void)
 	{
 		testing_success = false;
 		cout << "Test1 failed" << endl;
+	}
+	if(!Test2())
+	{
+		testing_success = false;
+		cout << "Test2 failed" << endl;
 	}
 
 	if(testing_success)

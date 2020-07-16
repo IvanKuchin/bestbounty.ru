@@ -1,6 +1,6 @@
 #include "chtml.h"
 
-size_t WriteMemoryCallback(void *contents, size_t size, size_t nmemb, void *userp)
+static size_t WriteMemoryCallback(void *contents, size_t size, size_t nmemb, void *userp)
 {
 	CHTML	*obj = (CHTML *)userp;
 
@@ -25,7 +25,7 @@ size_t WriteMemoryCallback(void *contents, size_t size, size_t nmemb, void *user
 	return bufferLength;
 }
 
-CHTML::CHTML() 
+CHTML::CHTML()
 {
 	MESSAGE_DEBUG("", "", "start");
 
@@ -181,14 +181,45 @@ bool CHTML::ExtractEmbedVideoURL()
 	return !embedVideoURL.empty();
 }
 
+string CHTML::TryToFixURL(string url)
+{
+	MESSAGE_DEBUG("", "", "start(" + url + ")");
+
+	if((url[0] == '/') && (url[0] == '/')) url.erase(0, 2);
+
+	MESSAGE_DEBUG("", "", "finish(" + url + ")");
+
+	return url;
+}
+
 bool CHTML::ExtractPreviewImage()
 {
-	bool	result;
-
 	MESSAGE_DEBUG("", "", "start");
 
-	metaPreviewImageURL = GetAttributeValue("meta", "property", "og:image", "content");
-	result = !metaPreviewImageURL.empty();
+	bool	result = false;
+
+	if(
+		(metaPreviewImageURL = GetAttributeValue("meta", "property", "\"og:image\"", "content")).length()	||
+		(metaPreviewImageURL = GetAttributeValue("meta", "property", "'og:image'", "content")).length()		||
+		(metaPreviewImageURL = GetAttributeValue("meta", "property", "og:image", "content")).length()
+	)
+	{
+		if((metaPreviewImageURL = TryToFixURL(metaPreviewImageURL)).length())
+		{
+			result = true;
+		}
+		else
+		{
+			MESSAGE_DEBUG("", "", "URL has been 'fixed' and emptied");
+		}
+	}
+	else
+	{
+		MESSAGE_DEBUG("", "", "og:image has not been found");
+	}
+
+
+
 
 	MESSAGE_DEBUG("", "", "finish (return: " + (result ? "true" : "false") + ")");
 
@@ -248,7 +279,7 @@ bool CHTML::ExtractHEAD()
 
 	MESSAGE_DEBUG("", "", "finish (return: " + (result ? "true" : "false") + ")");
 
-	return result;	
+	return result;
 }
 
 int CHTML::GetNumberOfFoldersByType()
@@ -306,10 +337,10 @@ tuple<string, string, string> CHTML::PickFileName()
 		filePrefix = GetRandom(20);
         tmp = metaPreviewImageURL;
 
-        if((foundPos = tmp.rfind(".")) != string::npos) 
+        if((foundPos = tmp.rfind(".")) != string::npos)
         {
             fileExtention = tmp.substr(foundPos, tmp.length() - foundPos);
-
+            
             // --- filter wrong fileExtension (for ex: .com?action=fake_action) 
             if(fileExtention.find("jpeg")) fileExtention = ".jpeg";
             else if(fileExtention.find("png")) fileExtention = ".png";
@@ -345,11 +376,11 @@ bool CHTML::DownloadFile(string urlPreview, FILE *f)
 	bool		result = false;
 
 	MESSAGE_DEBUG("", "", "start");
-	
+
 	curl = curl_easy_init();
 	if(curl)
 	{
-		// --- specify URL to get  
+		// --- specify URL to get
 		curl_easy_setopt(curl, CURLOPT_URL, urlPreview.c_str());
 
 		// --- send all data to this file
@@ -359,7 +390,7 @@ bool CHTML::DownloadFile(string urlPreview, FILE *f)
 		curl_easy_setopt(curl, CURLOPT_FOLLOWLOCATION, 1L);
 
 		/* some servers don't like requests that are made without a user-agent
-		 field, so we provide one */ 
+		 field, so we provide one */
 		curl_easy_setopt(curl, CURLOPT_USERAGENT, "libcurl-agent/1.0");
 
 		curlRes = curl_easy_perform(curl);
@@ -496,6 +527,7 @@ bool CHTML::ParseHTMLPage()
 bool CHTML::PerformRequest(string param)
 {
 	bool		result = false;
+
 	MESSAGE_DEBUG("", "", "start");
 
 	url = param;
@@ -506,10 +538,10 @@ bool CHTML::PerformRequest(string param)
 		curl = curl_easy_init();
 		if(curl)
 		{
-			// --- specify URL to get  
+			// --- specify URL to get
 			curl_easy_setopt(curl, CURLOPT_URL, url.c_str());
 
-			// --- send all data to this function   
+			// --- send all data to this function
 			// curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, bind(&CHTML::WriteMemoryCallback, this, placeholders::_1, placeholders::_2, placeholders::_3, placeholders::_4));
 			curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, WriteMemoryCallback);
 
@@ -519,10 +551,32 @@ bool CHTML::PerformRequest(string param)
 			curl_easy_setopt(curl, CURLOPT_FOLLOWLOCATION, 1L);
 
 			/* some servers don't like requests that are made without a user-agent
-			 field, so we provide one */ 
+			 field, so we provide one */
 			curl_easy_setopt(curl, CURLOPT_USERAGENT, "libcurl-agent/1.0");
 
+			// --- low security
+			curl_easy_setopt(curl, CURLOPT_SSL_VERIFYPEER, FALSE);
+
+			if(isPostJSON())
+			{
+				MESSAGE_DEBUG("", "", "post json: " + GetPostJSON());
+
+				curl_easy_setopt(curl, CURLOPT_CUSTOMREQUEST, "POST");
+			    __slist_headers = curl_slist_append(__slist_headers, "Accept: application/json");
+			    __slist_headers = curl_slist_append(__slist_headers, "Content-Type: text/plain;charset=UTF-8");
+				curl_easy_setopt(curl, CURLOPT_HTTPHEADER, __slist_headers);
+				curl_easy_setopt(curl, CURLOPT_POSTFIELDSIZE, GetPostJSON().length());
+				curl_easy_setopt(curl, CURLOPT_COPYPOSTFIELDS, GetPostJSON().c_str());
+			}
+
 			curlRes = curl_easy_perform(curl);
+
+			if(isPostJSON())
+			{
+				curl_slist_free_all(__slist_headers);
+				__slist_headers = nullptr;
+			}
+
 			if(curlRes == CURLE_OK)
 			{
 				// --- can't move it behind ParseHTMLPage, beacause ParseHTMLPage also calls culr_easy_cleanup
@@ -537,10 +591,7 @@ bool CHTML::PerformRequest(string param)
 					}
 					else
 					{
-						{
-							CLog	log;
-							log.Write(ERROR, string("CHTML::") + string(__func__) + string("[") + to_string(__LINE__) +  "]:ERROR: page parsing fail");
-						}
+						MESSAGE_ERROR("", "", "page parsing fail");
 						result = false;
 					}
 				}
@@ -552,12 +603,10 @@ bool CHTML::PerformRequest(string param)
 			}
 			else
 			{
-				{
-					CLog	log;
-					log.Write(ERROR, string("CHTML::") + string(__func__) + string("[") + to_string(__LINE__) +  "]:ERROR: curl_easy_perform() returned error (" + curl_easy_strerror(curlRes) + ")");
-				}
+				MESSAGE_ERROR("", "", "curl_easy_perform() returned error (" + curl_easy_strerror(curlRes) + ")");
+
 				result = false;
-				
+
 				curl_easy_cleanup(curl);
 			}
 
@@ -601,7 +650,7 @@ void CHTML::ResetMetaValues()
 	MESSAGE_DEBUG("", "", "finish");
 }
 
-CHTML::~CHTML() 
+CHTML::~CHTML()
 {
 	MESSAGE_DEBUG("", "", "start");
 

@@ -3,15 +3,15 @@
 
 // --- file upload example
 // POST /cgi-bin/index.cgi HTTP/1.1
-// Host: bestbounty.ru
+// Host: mydomain.ru
 // Connection: keep-alive
 // Content-Length: 311726
 // Accept: application/json, text/javascript, */*; q=0.01
-// Origin: http://bestbounty.ru
+// Origin: http://mydomain.ru
 // X-Requested-With: XMLHttpRequest
 // User-Agent: Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/45.0.2454.101 Safari/537.36
 // Content-Type: multipart/form-data; boundary=----WebKitFormBoundarydt825G9wbuSO99vt
-// Referer: http://bestbounty.ru/edit_profile?rand=1759182532
+// Referer: http://mydomain.ru/edit_profile?rand=1759182532
 // Accept-Encoding: gzip, deflate
 // Accept-Language: ru-RU,ru;q=0.8,en-US;q=0.6,en;q=0.4
 // Cookie: sessid=253723801762733484377614362777192474855032305644181843370558; lng=ru
@@ -19,10 +19,28 @@
 // ------WebKitFormBoundarydt825G9wbuSO99vt
 // Content-Disposition: form-data; name="files[]"; filename="cloud_strife_and_noctis_lucis_caelum_vs_sephiroth_by_siegxionhart-d6bmp50.jpg"
 // Content-Type: image/jpeg
-// 
+//
 // ......
 // ------WebKitFormBoundarydt825G9wbuSO99vt--
 
+static vector<string> split(const string& s, const char& c)
+{
+	string buff{""};
+	vector<string> v;
+
+	for(auto n:s)
+	{
+		if(n != c) buff+=n;
+		else if(n == c && buff != "")
+		{
+			v.push_back(buff);
+			buff = "";
+		}
+	}
+	if(buff.length()) v.push_back(buff);
+
+	return v;
+}
 
 CURLMethod::CURLMethod() : paramCount(0)
 {
@@ -37,10 +55,7 @@ CPost::CPost()
 	char 	*tmpData = getenv("CONTENT_LENGTH");
 	size_t	blocksReadFromSocket = 0;
 
-	{
-		CLog log;
-		log.Write(DEBUG, "CPost::" + string(__func__) + "[" + to_string(__LINE__) + "]: start");
-	}
+	MESSAGE_DEBUG("", "", "start");
 
 	if(tmpData == NULL)
 	{
@@ -73,10 +88,8 @@ CPost::CPost()
 	}
 	queryString[contentLength] = 0;
 
-	{
-		CLog log;
-		log.Write(DEBUG, "CPost::" + string(__func__) + "[" + to_string(__LINE__) + "]: end (size of POST data: " + to_string(contentLength) + ")");
-	}
+	MESSAGE_DEBUG("", "", "finish (size of POSTed data is " + to_string(contentLength) + " bytes)");
+
 	paramCount = -1;
 }
 
@@ -85,9 +98,10 @@ char* CPost::Binary_strstr(const char *where, const char *what, unsigned int c)
 	unsigned int	count = c;
 	char*		currPos = (char *)where;
 	char*		beginPos = (char *)where;
-	
+
 	if(c == 0) return NULL;
-	while((currPos = (char *)memchr(currPos, what[0], count)) != NULL)
+
+	while((currPos = (char *)memchr(currPos, what[0], count - (currPos - beginPos))) != NULL)
 	{
 		if((currPos - beginPos + strlen(what)) > c)
 			return NULL;
@@ -121,11 +135,11 @@ int CPost::CalculateVars()
     {
 		while(true)
 		{
-				if((tmp = strchr(tmp, '&')) == NULL)
-					break;
-				paramCount++;
-				tmp++;
-				reminder = tmp;
+			if((tmp = strchr(tmp, '&')) == NULL)
+				break;
+			paramCount++;
+			tmp++;
+			reminder = tmp;
 		}
 
 		if(strlen(reminder) > 0)
@@ -137,7 +151,7 @@ int CPost::CalculateVars()
     else if(strstr(tmp, GetBoundaryMarker().c_str()) != NULL)
     {
 		char		*p1, *p2;
-		
+
 		p2 = queryString;
 		while(1)
 		{
@@ -186,52 +200,47 @@ char *CPost::ParamName(int number)
 			break;
 			i++;
 			tmp++;
-			if(i != number)
-			reminder = tmp;
-			else
-			isFound = true;
+			if(i != number) reminder = tmp; 
+			else isFound = true;
 		}
 
 		if(!isFound && (strlen(reminder) > 0))
 		{
-				i++;
-				if(i == number)
-					isFound = true;
+			i++;
+			if(i == number) isFound = true;
 		}
 
 		if(isFound)
 		{
-				tmp = strchr(reminder, '=');
-				if(!tmp)
-					tmp = reminder + strlen(reminder);
+			tmp = strchr(reminder, '=');
+			if(!tmp)
+				tmp = reminder + strlen(reminder);
 
-				result = (char *)malloc(tmp - reminder + 1);
-				if(result == NULL)
-				{
-					CLog	log;
-					log.Write(ERROR, "CPost::" + string(__func__) + "[" + to_string(__LINE__) + "]:ERROR: memory allocating error");
-					return NULL;
-				}
+			result = (char *)malloc(tmp - reminder + 1);
+			if(result == NULL)
+			{
+	        	MESSAGE_ERROR("", "", "memory allocation error");
+				return NULL;
+			}
 
-				memset(result, 0, tmp - reminder + 1);
-				memcpy(result, reminder, tmp - reminder);
+			memset(result, 0, tmp - reminder + 1);
+			memcpy(result, reminder, tmp - reminder);
 		}
 		else
 		{
-				result = (char *)malloc(1);
-				if(result == NULL)
-				{
-					CLog	log;
-					log.Write(ERROR, "CPost::" + string(__func__) + "[" + to_string(__LINE__) + "]:ERROR: memory allocating error");
-					return NULL;
-				}
-				memset(result, 0, 1);
+			result = (char *)malloc(1);
+			if(result == NULL)
+			{
+	        	MESSAGE_ERROR("", "", "memory allocation error");
+				return NULL;
+			}
+			memset(result, 0, 1);
 		}
     }
     else if(strstr(tmp, "Content-Disposition:") != NULL)
     {
 		char		*currPos, *p1, *p2;
-		
+
 		i = 0;
 		currPos = queryString;
 
@@ -249,7 +258,7 @@ char *CPost::ParamName(int number)
 				if(result == NULL)
 				{
 					CLog	log;
-					log.Write(ERROR, "CPost::" + string(__func__) + "[" + to_string(__LINE__) + "]: ERROR: memory allocating error");
+					log.Write(ERROR, "CPost::" + string(__func__) + "[" + to_string(__LINE__) + "]: ERROR: memory allocation error");
 					return NULL;
 				}
 
@@ -260,41 +269,6 @@ char *CPost::ParamName(int number)
 		}
     }
 
-/*    else if(strstr(tmp, "Content-Disposition:") != NULL)
-    {
-	string		postData, nameVar;
-	unsigned int	p1, p2 = 0;
-
-	i = 0;
-	postData = queryString;
-
-	while(1)
-	{
-		p1 = postData.find("Content-Disposition:", p2);
-		if(p1 == string::npos) break;
-		p1 = postData.find("\"", p1);
-		p2 = postData.find("\"", p1 + 1);
-		i++;
-
-		if(i == number)
-		{
-			nameVar = postData.substr(p1 + 1, p2 - p1 - 1);
-
-			result = (char *)malloc(p2 - p1);
-			if(result == NULL)
-			{
-				CLog	log;
-				log.Write(ERROR, "memory allocating error");
-				return NULL;
-			}
-
-			memset(result, 0, p2 - p1);
-			memcpy(result, nameVar.c_str(), p2 - p1 - 1);
-		}
-
-	}
-    }
-*/
     return result;
 }
 
@@ -303,22 +277,16 @@ bool CPost::isContentMultipart()
 	string				contentTypeString = getenv("CONTENT_TYPE");
 	string::size_type	boundaryStart;
 
-
-	// --- If conttent type having multipart
+	// --- If CONTENT_TYPE having multipart
 	if(contentTypeString.find("multipart") != string::npos)
 	{
-
 		if(GetBoundaryMarker().length() > 5) return true;
+
 		if((boundaryStart = contentTypeString.find("boundary=")) != string::npos)
 		{
 			boundaryMarker = contentTypeString.substr(boundaryStart + strlen("boundary="));
-			{
-				CLog log;
-				ostringstream	ost;
 
-				ost << "CPost::" << string(__func__) << "[" << to_string(__LINE__) << "]: multipart boundary marker defined as \"" << boundaryMarker << "\"";
-				log.Write(DEBUG, ost.str());
-			}
+			MESSAGE_DEBUG("", "", "multipart boundary marker: " + boundaryMarker);
 
 			return true;
 		}
@@ -344,7 +312,7 @@ bool CPost::isFileName(int number)
 	if(strstr(tmp, "Content-Disposition:") != NULL)
 	{
 		string		postData, dataVar;
-		
+
 		char		*currPos, *p1, *p2;
 
 		i = 0;
@@ -423,18 +391,18 @@ string CPost::GetFileName(int number)
 			if(i == number)
 			{
 				char		fileName[300];
-				
+
 				memset(fileName, 0, sizeof(fileName));
 				if((unsigned int)(p2 - p1 - 1) < sizeof(fileName))
 					memcpy(fileName, p1, p2 - p1 - 1);
 				else
 				{
 					CLog	log;
-					
+
 					log.Write(ERROR, "CPost::" + string(__func__) + "[" + to_string(__LINE__) + "]: ERROR: file name too long !");
 					throw CException("file name too long");
 				}
-				
+
 				dataVar = fileName;
 				if((beginFileName = dataVar.find("filename=\"")) == string::npos)
 					break;
@@ -449,7 +417,7 @@ string CPost::GetFileName(int number)
 
 				isFound = true;
 			}
-			
+
 			currPos = p2;
 		}
 	}
@@ -518,7 +486,6 @@ char *CPost::ParamValue(int number)
 
     if(!isContentMultipart())
     {
-
 /*
     	simple HTTP POST handling
     	example:
@@ -550,11 +517,7 @@ char *CPost::ParamValue(int number)
 				result = (char *)malloc(tmp - reminder + 1);
 				if(result == NULL)
 				{
-					CLog		log;
-					ostringstream	ost;
-					
-					ost << "CPost::" << string(__func__) << "(" << number << ")[" << to_string(__LINE__) << "]: ERROR memory allocating error. Need" << tmp - reminder + 1 << " bytes";
-					log.Write(ERROR, ost.str());
+		        	MESSAGE_ERROR("", "", "memory allocation error");
 					return NULL;
 				}
 
@@ -566,11 +529,7 @@ char *CPost::ParamValue(int number)
 			result = (char *)malloc(1);
 			if(result == NULL)
 			{
-				CLog	log;
-				ostringstream	ost;
-				
-				ost << "CPost::" << string(__func__) << "(" << number << ")[" << to_string(__LINE__) << "]: ERROR memory allocating error. Need" << 1 << " byte";
-				log.Write(ERROR, ost.str());
+	        	MESSAGE_ERROR("", "", "memory allocation error");
 				return NULL;
 			}
 			memset(result, 0, 1);
@@ -582,15 +541,15 @@ char *CPost::ParamValue(int number)
     	handling multipart HTTP POST request
     	example:
 	    	POST /cgi-bin/avataruploader.cgi HTTP/1.1
-			Host: bestbounty.ru
+			Host: mydomain.ru
 			Connection: keep-alive
 			Content-Length: 505632
 			Accept: application/json, text/javascript, * / *; q=0.01
-			Origin: http://bestbounty.ru
+			Origin: http://mydomain.ru
 			X-Requested-With: XMLHttpRequest
 			User-Agent: Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/45.0.2454.101 Safari/537.36
 			Content-Type: multipart/form-data; boundary=----WebKitFormBoundary651GAAbkidp9Dwrr
-			Referer: http://bestbounty.ru/edit_profile?rand=9610271653
+			Referer: http://mydomain.ru/edit_profile?rand=9610271653
 			Accept-Encoding: gzip, deflate
 			Accept-Language: ru-RU,ru;q=0.8,en-US;q=0.6,en;q=0.4
 			Cookie: sessid=662085406002941332119817186324381589130730034168489361180812; lng=ru
@@ -636,7 +595,7 @@ char *CPost::ParamValue(int number)
 	{
 		CLog	log;
 		ostringstream ost;
-		
+
 		ost << "1) p2=" << (p2 - queryString) << " p1=" << (p1 - queryString) << " p2-p1=" << (p2-p1);
 		log.Write(DEBUG, ost.str());
 	}
@@ -650,8 +609,8 @@ char *CPost::ParamValue(int number)
 				{
 					CLog	log;
 					ostringstream	ost;
-					
-					ost << "CPost::" << string(__func__) << "(" << number << ")[" << to_string(__LINE__) << "] line 638: ERROR memory allocating error. Need " << p2 - p1 + 1 << " bytes";
+
+					ost << "CPost::" << string(__func__) << "(" << number << ")[" << to_string(__LINE__) << "] line 638: ERROR memory allocation error. Need " << p2 - p1 + 1 << " bytes";
 					log.Write(ERROR, ost.str());
 					return NULL;
 				}
@@ -694,7 +653,7 @@ char *CPost::ParamValue(int number)
 {
 	CLog	log;
 	ostringstream ost;
-	
+
 	ost << "1) p2=" << p2 << " p1=" << p1 << " p2-p1=" << (p2-p1);
 	log.Write(DEBUG, ost.str());
 }
@@ -707,7 +666,7 @@ char *CPost::ParamValue(int number)
 			if(result == NULL)
 			{
 				CLog	log;
-				log.Write(ERROR, "memory allocating error");
+				log.Write(ERROR, "memory allocation error");
 				return NULL;
 			}
 
@@ -775,7 +734,7 @@ int CPost::ParamValueSize(int number)
 			if(result == NULL)
 			{
 			CLog	log;
-			log.Write(ERROR, "int CPost::ParamValueSize(int number): ERROR memory allocating error");
+			log.Write(ERROR, "int CPost::ParamValueSize(int number): ERROR memory allocation error");
 			return -1;
 			}
 			memset(result, 0, 1);
@@ -807,7 +766,7 @@ int CPost::ParamValueSize(int number)
 
 			if(p2 == NULL) p2 = queryString + contentLength - 1; else p2 -= newLineCharCount; // >> 1; // --- removed due to extra 10 13 chars has been found on Windows uploading
 			i++;
-			
+
 			if(i == number)
 			{
 				return (p2 - p1);
@@ -823,191 +782,88 @@ CPost::~CPost()
 {
     if(queryString != NULL)
     {
-	free(queryString);
-	queryString = NULL;
+		free(queryString);
+		queryString = NULL;
     }
-}
-
-CGet::CGet()
-{
-    paramCount = -1;
 }
 
 int CGet::CalculateVars()
 {
-    char	*tmp, *reminder;
+	auto queryString = getenv("QUERY_STRING");
 
-    queryString = getenv("QUERY_STRING");
-    tmp = reminder = queryString;
-    if(tmp == NULL)
+    if(queryString == NULL)
     {
-	CLog	log;
-	log.Write(ERROR, "environment variable QUERY_STRING is not set");
+    	MESSAGE_ERROR("", "", "environment variable QUERY_STRING is not set");
+    }
+    else
+    {
+    	params = split(queryString, '&');
+    	paramCount = params.size();
+
+		return paramCount;
+    }
 
 	return -1;
-    }
-
-    paramCount = 0;
-
-    while(true)
-    {
-	if((tmp = strchr(tmp, '&')) == NULL)
-	    break;
-	paramCount++;
-	tmp++;
-	reminder = tmp;
-    }
-    
-    if(strlen(reminder) > 0)
-	paramCount++;
-
-    return paramCount;
 }
 
 int CGet::ParamCount()
 {
-    if(paramCount == -1)
-	CalculateVars();
+    if(paramCount == -1) CalculateVars();
+
     return paramCount;
 }
 
-char *CGet::ParamName(int number)
+char *CGet::GetParamToken(unsigned int number, unsigned int token_idx)
 {
-    char	*tmp, *reminder;
-    bool	isFound = false;
-    int		i;
     char	*result = NULL;
+    auto    name = ""s;
 
-    queryString = getenv("QUERY_STRING");
-    tmp = reminder = queryString;
-    if(tmp == NULL)
+    if(number && (number <= params.size()))
     {
-	CLog	log;
-	log.Write(ERROR, "environment variable QUERY_STRING is not set");
-	
-	return NULL;
-    }
+        auto    key_value = split(params[number - 1], '=');
 
-    i = 0;
-    
-    while(!isFound)
-    {
-	if((tmp = strchr(tmp, '&')) == NULL)
-	    break;
-	i++;
-	tmp++;
-	if(i != number)
-	    reminder = tmp;
-	else
-	    isFound = true;
-    }
-
-    if(!isFound && (strlen(reminder) > 0))
-    {
-	i++;
-	if(i == number)
-	    isFound = true;
-    }
-
-    if(isFound)
-    {
-	tmp = strchr(reminder, '=');
-	if(!tmp)
-	    tmp = reminder + strlen(reminder);
-	    
-	result = (char *)malloc(tmp - reminder + 1);
-	if(result == NULL)
-	    return NULL;
-
-	memset(result, 0, tmp - reminder + 1);
-	memcpy(result, reminder, tmp - reminder);
+        if(token_idx < key_value.size())
+        {
+            name = key_value[token_idx];
+        }
+        else
+        {
+            MESSAGE_DEBUG("", "", "HTTP(S) key_value doesn't have either key or value: " + params[number - 1]);
+        }
     }
     else
     {
-	result = (char *)malloc(1);
-	if(result == NULL)
-	{
-	    CLog	log;
-	    log.Write(ERROR, "memory allocating error");
-	    return NULL;
-	}
-	memset(result, 0, 1);
-    }
- 
-    return result;
-}
-
-int CGet::ParamValueSize(int number)
-{
-	return 0;
-}
-
-char *CGet::ParamValue(int number)
-{
-    char	*tmp, *reminder;
-    bool	isFound = false;
-    int		i;
-    char	*result = NULL;
-
-    queryString = getenv("QUERY_STRING");
-    tmp = reminder = queryString;
-    if(tmp == NULL)
-    {
-	CLog	log;
-	log.Write(ERROR, "environment variable QUERY_STRING is not set");
-	
-	return NULL;
+        MESSAGE_ERROR("", "", "requested HTTP(S) param number should be 0 < " + to_string(number) + " <= " + to_string(params.size()));
     }
 
-    i = 0;
-    
-    while(!isFound)
+    if(name.length())
     {
-	if((tmp = strchr(tmp, '=')) == NULL)
-	    break;
-	i++;
-	tmp++;
-	reminder = tmp;
-	if(i == number)
-	    isFound = true;
-    }
+    	result = (char *)malloc(name.length() + 1);
+    	if(result == NULL)
+        {
+            MESSAGE_ERROR("", "", "memory allocation error");
 
-    if(isFound)
-    {
-	tmp = strchr(reminder, '&');
-	if(!tmp)
-	    tmp = reminder + strlen(reminder);
+            return NULL;
+        }
 
-	result = (char *)malloc(tmp - reminder + 1);
-	if(result == NULL)
-	{
-	    CLog	log;
-	    log.Write(ERROR, "memory allocating error");
-	    return NULL;
-	}
-
-	memset(result, 0, tmp - reminder + 1);
-	memcpy(result, reminder, tmp - reminder);
+    	strcpy(result, name.c_str());
     }
     else
     {
-	result = (char *)malloc(1);
-	if(result == NULL)
-	{
-	    CLog	log;
-	    log.Write(ERROR, "memory allocating error");
-	    return NULL;
-	}
-	memset(result, 0, 1);
+    	result = (char *)malloc(1);
+    	if(result == NULL)
+    	{
+        	MESSAGE_ERROR("", "", "memory allocation error");
+
+    	    return NULL;
+    	}
+    	memset(result, 0, 1);
     }
 
     return result;
 }
 
 
-CGet::~CGet()
-{
-}
 
 CRequest::CRequest() : url(NULL)
 {
@@ -1019,11 +875,6 @@ void CRequest::RegisterURLVariables(CVars *v, CFiles *f)
     vars = v;
     files = f;
 
-    {
-		CLog	log;
-        log.Write(DEBUG, "CRequest::" + string(__func__) + "[" + to_string(__LINE__) + "]: start");
-    }
-    
     methodType = getenv("REQUEST_METHOD");
 
     if(methodType == NULL)
@@ -1036,91 +887,43 @@ void CRequest::RegisterURLVariables(CVars *v, CFiles *f)
 
     if(strstr(methodType, "GET") != 0)
     {
+    	MESSAGE_DEBUG("", "", "HTTP(S) method GET");
+
 		url = new CGet();
-	    {
-			CLog	log;
-	        log.Write(DEBUG, "CRequest::" + string(__func__) + "[" + to_string(__LINE__) + "]: HTTP method GET");
-	    }
     }
     else if(strstr(methodType, "POST") != 0)
     {
+    	MESSAGE_DEBUG("", "", "HTTP(S) method POST");
+
 		url = new CPost();
-	    {
-			CLog	log;
-	        log.Write(DEBUG, "CRequest::" + string(__func__) + "[" + to_string(__LINE__) + "]: HTTP method POST");
-	    }
     }
     else if(strstr(methodType, "HEAD") != 0)
     {
+    	MESSAGE_DEBUG("", "", "HTTP(S) method HEAD");
+
 		url = new CGet();
-	    {
-			CLog	log;
-	        log.Write(DEBUG, "CRequest::" + string(__func__) + "[" + to_string(__LINE__) + "]: HTTP method HEAD");
-	    }
     }
     else
     {
-    	MESSAGE_ERROR("CRequest", "", "Unknown HTTP(S) method(" + methodType + ")");
+    	MESSAGE_ERROR("", "", "Unknown HTTP(S) method(" + methodType + ")");
 		throw CException("Unknown HTTP method");
     }
 
     requestURI = getenv("REQUEST_URI");
     if(requestURI == NULL)
     {
-		CLog	log;
-		log.Write(ERROR, "CRequest::" + string(__func__) + "[" + to_string(__LINE__) + "]: ERROR environment variable REQUEST_URI is not set");
+    	MESSAGE_ERROR("", "", "environment variable REQUEST_URI is not set");
 		throw CException("environment variable REQUEST_URI is not set");
     }
 
-    /*{
-		CLog	log;
-		char	tmp[300];
-
-		memset(tmp, 0, sizeof(tmp));
-		snprintf(tmp, sizeof(tmp) - 2, "void CRequest::RegisterURLVariables: Register URL[%s] variables", requestURI);
-		log.Write(DEBUG, tmp);
-    }*/
-
-    for(int i = 1; i <= (*url).ParamCount(); i++)
+    for(auto i = 1; i <= (*url).ParamCount(); i++)
     {
-		/*{
-			CLog		log;
-			ostringstream	ost;
-			
-			ost << "void CRequest::RegisterURLVariables: loop through HTTP params start " << i << "";
-			log.Write(DEBUG, ost.str());
-		}*/
-
-    	
 		char *name = url->ParamName(i);
-		/*{
-			CLog		log;
-			ostringstream	ost;
-			
-			ost << "void CRequest::RegisterURLVariables: after name [" << name << "] ";
-			log.Write(DEBUG, ost.str());
-		}*/
-
 		char *value = url->ParamValue(i);
-
-		/*{
-			CLog		log;
-			ostringstream	ost;
-			
-			ost << "void CRequest::RegisterURLVariables: after value [... cut due to size ...] ";
-			log.Write(DEBUG, ost.str());
-		}*/
 
 		if(url->isFileName(i))
 		{
-			{
-				CLog		log;
-				ostringstream	ost;
-				
-				ost.str("");
-				ost << "CRequest::" << string(__func__) << "[" << to_string(__LINE__) << "]: HTTP POST parameter #" << i << " is filename [" << url->GetFileName(i) << "], size [" << url->ParamValueSize(i) << "]";
-				log.Write(DEBUG, ost.str());
-			}
+			MESSAGE_DEBUG("", "", "HTTP POST parameter #" + to_string(i) + " is filename [" + url->GetFileName(i) + "], size [" + to_string(url->ParamValueSize(i)) + "]");
 
 			files->Add(url->GetFileName(i), value, url->ParamValueSize(i));
 		}
@@ -1128,39 +931,18 @@ void CRequest::RegisterURLVariables(CVars *v, CFiles *f)
 		{
 			string s_name(name);
 			string s_value(value);
-		
+
 			s_name = WebString(s_name);
 			s_value = WebString(s_value);
-		
-			{
-				CLog log;
-				ostringstream	ost;
 
-				ost << "CRequest::" << string(__func__) << "[" << to_string(__LINE__) << "]: HTTP parameter #" << i << " [" << s_name << "=" << s_value << "]";
-				log.Write(DEBUG, ost.str());
-			}
+			MESSAGE_DEBUG("", "", "HTTP parameter #" + to_string(i) + " [" + s_name + "=" + (s_value) + "]");
 
 			vars->Add(s_name, s_value);
-		
+
 			if(name != NULL) free(name);
 			if(name != NULL) free(value);
 		}
-
-/*		{
-			CLog		log;
-			ostringstream	ost;
-			
-			ost << "void CRequest::RegisterURLVariables: loop through HTTP params end " << i << "";
-			log.Write(DEBUG, ost.str());
-		}
-*/
     }
-
-    {
-		CLog	log;
-        log.Write(DEBUG, "CRequest::" + string(__func__) + "[" + to_string(__LINE__) + "]: finish");
-    }
-
 }
 
 string CRequest::WebString(string str)
@@ -1174,42 +956,42 @@ string CRequest::WebString(string str)
     findPos = 0;
     while((findPos = result.find("+", findPos)) != string::npos)
     {
-	result.replace(findPos++, 1, " ");
+		result.replace(findPos++, 1, " ");
     }
 
     while((findPos = result.find("%", firstPos)) != string::npos)
     {
-	char	ch1, ch2;
+		char	ch1, ch2;
 
-	result1 += result.substr(firstPos, findPos - firstPos);
+		result1 += result.substr(firstPos, findPos - firstPos);
 
-	firstPos = findPos + 1;
-	ch1 = result[findPos + 1];
-	ch2 = result[findPos + 2];
+		firstPos = findPos + 1;
+		ch1 = result[findPos + 1];
+		ch2 = result[findPos + 2];
 
-	if(((ch1 >= '0') && (ch1 <= '9')) || ((ch1 >= 'A') && (ch1 <= 'F')))
-	{}
-	else
-	    continue;
-	if(((ch2 >= '0') && (ch2 <= '9')) || ((ch2 >= 'A') && (ch2 <= 'F')))
-	{}
-	else
-	    continue;
+		if(((ch1 >= '0') && (ch1 <= '9')) || ((ch1 >= 'A') && (ch1 <= 'F')))
+		{}
+		else
+		    continue;
+		if(((ch2 >= '0') && (ch2 <= '9')) || ((ch2 >= 'A') && (ch2 <= 'F')))
+		{}
+		else
+		    continue;
 
-	if((ch1 >= '0') && (ch1 <= '9'))
-	    first = ch1 - '0';
-	else
-	    first = ch1 - 'A' + 10;
+		if((ch1 >= '0') && (ch1 <= '9'))
+		    first = ch1 - '0';
+		else
+		    first = ch1 - 'A' + 10;
 
-	if((ch2 >= '0') && (ch2 <= '9'))
-	    second = ch2 - '0';
-	else
-	    second = ch2 - 'A' + 10;
+		if((ch2 >= '0') && (ch2 <= '9'))
+		    second = ch2 - '0';
+		else
+		    second = ch2 - 'A' + 10;
 
-	resCh = (first << 4) + second;
-	
-	result1 += resCh;
-	firstPos += 2;
+		resCh = (first << 4) + second;
+
+		result1 += resCh;
+		firstPos += 2;
     }
     result1 += result.substr(firstPos, result.length() - firstPos);
 

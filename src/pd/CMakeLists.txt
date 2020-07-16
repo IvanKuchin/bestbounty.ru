@@ -8,14 +8,14 @@ set(EXECUTABLE_CGIs_with_PD_PI_LIBS
     system.cgi
     )
 set(EXECUTABLE_CGIs_with_PI_LIBS
-    cron_minute
-    cron_daily
+    cron_daily_pd
     )
 
 # --- Libraries
 # ---- list of independent libraries
 set(INDEPENDENT_LIBRARIES_SRCs
-    utilities_bestbounty1.cpp     # --- order is important, must follow c_bt
+    utilities_bestbounty1.cpp
+    utilities_bestbounty2.cpp
     )
 
 # --- MACROSes start ---
@@ -83,7 +83,6 @@ install(TARGETS system.cgi          DESTINATION     ${CGIDIR})
 
 install(TARGETS admin.cgi           DESTINATION     ${CGIADMINDIR})
 
-install(TARGETS cron_daily			DESTINATION		${CRON_INSTALL_DIR})
-install(TARGETS cron_minute			DESTINATION		${CRON_INSTALL_DIR})
+install(TARGETS cron_daily_pd			DESTINATION		${CRON_INSTALL_DIR})
 
 # print_all_variables()

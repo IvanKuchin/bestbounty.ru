@@ -1,10 +1,14 @@
 #include "ccookie.h"
 
-/*
-Header mismatch:
-	Expected: Set-Cookie: name=value; expires=Thu, 24-Apr-2014 22:36:43 GMT; Max-Age=5
-	Received: Set-Cookie: name=value; expires=Thu, 24-Apr-2014 22:36:43 GMT
-*/
+CCookie::CCookie() 
+{
+	// --- 5am used to avoid jumping between dates in case of DST
+	strptime("1/1/1970 05:00:00", "%d/%m/%Y %H:%M:%S", &expiration_tm);
+	expiration_tm.tm_isdst = -1;      /*  Not set by strptime(); tells mktime()
+				                          to determine whether daylight saving time
+				                          is in effect */
+	mktime(&expiration_tm);
+}
 
 void	CCookie::SetNew(bool s) 
 {
@@ -13,84 +17,147 @@ void	CCookie::SetNew(bool s)
 	isNew = s;
 }
 
-CCookies::CCookies()
+string	CCookie::GetExpiration()
 {
-	cookies.reserve(8);
+	MESSAGE_DEBUG("", "", "start (name is " + GetName() + ")");
+
+	auto	result = ""s;
+
+	if((expiration_tm.tm_year + 1900) > 1971)
+	{
+		auto t = mktime(&expiration_tm);
+		auto utc_tm = gmtime(&t);
+
+		if(utc_tm)
+		{
+			char			utc_str[100];
+			auto			curr_locale	= string(setlocale(LC_ALL, NULL));	// --- DO NOT remove string() !
+																			// --- otherwise following setlocale call will change memory content where curr_locale pointing out
+																			// --- string() copies memory content to local stack therefore it could be reused later.
+		    setlocale(LC_ALL, LOCALE_ENGLISH.c_str());
+			auto	str_length = strftime(utc_str, sizeof(utc_str), "%a, %02d %b %Y %T %Z", utc_tm);
+		    setlocale(LC_ALL, curr_locale.c_str());
+
+			if(str_length)
+			{
+				result = utc_str;
+			} 
+			else
+			{
+				MESSAGE_ERROR("", "", "strftime(" + utc_str + ", " + to_string(sizeof(utc_str)) + ", '', utc_tm) buffer size is not enough to convert date to GMT");
+			}
+		}
+		else
+		{
+			MESSAGE_ERROR("", "", "fail from gmtime(&t)  (possible problem with cookie expiration)");
+		}
+	}
+	else
+	{
+		MESSAGE_DEBUG("", "", "session cookie");
+	}
+
+
+	MESSAGE_DEBUG("", "", "finish(" + result + ")");
+
+	return result;
 }
 
-void CCookies::Add(string name, string value, string expiration, string domain, string path, string secure, bool newCookie)
+string CCookie::SetExpirationShiftedFromNow(int delta_seconds)
 {
-	CCookie		*c;
+	MESSAGE_DEBUG("", "", "start");
 
-	MESSAGE_DEBUG("", "", "start (add " + name + "=" + value + ";expiration=" + expiration + ";newCookie=" + to_string(newCookie) + ")");
+	auto		error_message = ""s;
+	time_t 		curr_time;
+	struct tm	*curr_tm;
+
+	curr_time = time(NULL);
+	curr_tm = localtime(&curr_time);
+	curr_tm->tm_sec += delta_seconds;
+
+	SetExpiration(curr_tm);
+	mktime(&expiration_tm);
+
+	MESSAGE_DEBUG("", "", "finish(" + PrintDateTime(expiration_tm) + " " + PrintDate(expiration_tm) + ")");
+
+	return error_message;
+
+}
+
+
+
+
+CCookie CCookies::PreBuildNewCookie(string name, string value, string domain, string path, string secure, bool newCookie)
+{
+	CCookie		c;
 
 	if((cookies.capacity() - cookies.size()) <= 0)
 	{
-		MESSAGE_ERROR("", "", "Size of cookie vector is overflow. May be reallocating memory.");
+		MESSAGE_ERROR("", "", "Size of cookie vector was overflown (memory could be reallocated).");
 	}
 
-	c = new(CCookie);
-	if(!c)
-	{
-		MESSAGE_ERROR("", "", "error allocating memory (cookie module)");
-		throw CException("error allocating memory (cookie module)");
-	}
+	c.SetName(name);
+	c.SetValue(value);
+	c.SetDomain(domain);
+	c.SetPath(path);
+	c.SetSecure(secure);
+	c.SetNew(newCookie);
 
-	c->SetName(name);
-	c->SetValue(value);
-	c->SetExpiration(expiration);
-	// c->SetMaxAge(0);
-	c->SetDomain(domain);
-	c->SetPath(path);
-	c->SetSecure(secure);
-	c->SetNew(newCookie);
+	return c;
+}
+
+void CCookies::Add(string name, string value, struct tm *expiration, string domain, string path, string secure, bool newCookie)
+{
+	MESSAGE_DEBUG("", "", "start (add " + name + "=" + value + ";expiration=" + (expiration ? to_string(expiration->tm_hour) + ":" + to_string(expiration->tm_min) + ":" + to_string(expiration->tm_sec) + " " + to_string(expiration->tm_mday) + "/" + to_string(expiration->tm_mon) + "/" + to_string(expiration->tm_year) : "nullptr") + ";newCookie=" + to_string(newCookie) + ")");
+
+	auto c = PreBuildNewCookie(name, value, domain, path, secure, newCookie);
+
+	c.SetExpiration(expiration);
+
+	Remove_VectorInstance_IfExists(name);
 
 	cookies.push_back(c);
 
 	MESSAGE_DEBUG("", "", "finish (size of cookies=" + to_string(cookies.size()) + " object)");
 }
 
-void CCookies::Add(string name, string value, string expiration, int maxAge, string domain, string path, string secure, bool newCookie)
+void CCookies::Add(string name, string value, int shift_in_seconds_from_now, string domain, string path, string secure, bool newCookie)
 {
-	CCookie		*c;
+	MESSAGE_DEBUG("", "", "start (add " + name + "=" + value + ";shift_in_seconds_from_now=" + to_string(shift_in_seconds_from_now) + ";newCookie=" + to_string(newCookie) + ")");
 
-	MESSAGE_DEBUG("", "", "start (" + name + "=" + value + ";exp=" + expiration + ";maxAge=" + to_string(maxAge) + ";domain=" + domain + ";path=" + path + ";secure=" + secure + ";newCookie=" + to_string(newCookie) + ")");
+	auto c = PreBuildNewCookie(name, value, domain, path, secure, newCookie);
 
-	if((cookies.capacity() - cookies.size()) <= 0)
-	{
-		MESSAGE_ERROR("", "", "Size of cookie vector is overflowed. Memory reallocating possible. (cookies.capacity()=" + to_string(cookies.capacity()) + " cookies.size()=" + to_string(cookies.size()) + " )");
-	}
+	c.SetExpirationShiftedFromNow(shift_in_seconds_from_now);
 
-	c = new(CCookie);
-	if(!c)
-	{
-		MESSAGE_ERROR("", "", "error allocating memory (cookie module)");
-		throw CException("error allocating memory (cookie module)");
-	}
-
-	c->SetName(name);
-	c->SetValue(value);
-	c->SetExpiration((expiration == "") ? GetTimestampShifted(maxAge) : expiration);
-	c->SetMaxAge(maxAge);
-	c->SetDomain(domain);
-	c->SetPath(path);
-	c->SetSecure(secure);
-	c->SetNew(newCookie);
+	Remove_VectorInstance_IfExists(name);
 
 	cookies.push_back(c);
 
 	MESSAGE_DEBUG("", "", "finish (size of cookies=" + to_string(cookies.size()) + " object)");
 }
 
-bool CCookies::IsExist(string name)
+void CCookies::Remove_VectorInstance_IfExists(string name)
 {
-	bool	result;
-	vector<CCookie *>::iterator	im;
+	MESSAGE_DEBUG("", "", "start(cookies vector size is " + to_string(cookies.size()) + ")");
 
-	result = false;
-	for(im = cookies.begin(); im < cookies.end(); ++im)
+	for(auto itr = cookies.begin(); itr != cookies.end(); ++itr)
 	{
-		if((*im)->GetName() == name)
+		if(itr->GetName() == name)
+		{
+			cookies.erase(itr);
+			--itr;
+		}
+	}
+	MESSAGE_DEBUG("", "", "finish(cookies vector size is " + to_string(cookies.size()) + ")");
+}
+
+bool CCookies::IsExist(string name) const
+{
+	bool 	result = false;
+
+	for(auto &cookie: cookies)
+	{
+		if(cookie.GetName() == name)
 		{
 			result = true;
 			break;
@@ -100,154 +167,80 @@ bool CCookies::IsExist(string name)
 	return result;
 }
 
-// --- input: deltaTimeStamp in seconds
-// --- return: string with shifted timestamp
-string CCookies::GetTimestampShifted(int deltaTimeStamp)
-{
-	time_t		t;
-	char		utc_str[100];
-	struct tm	*utc_tm;
-	string		result = "";
-
-	MESSAGE_DEBUG("", "", " start (deltaTimeStamp = " + to_string(deltaTimeStamp) + ")");
-
-	t = time(NULL) + deltaTimeStamp;
-	utc_tm = gmtime(&t);
-	if(utc_tm)
-	{
-		if(strftime(utc_str, sizeof(utc_str), "%a, %02d %b %Y %T %Z", utc_tm))
-		{
-			result = utc_str;
-		} 
-		else
-		{
-			MESSAGE_ERROR("", "", "ERROR: in running strftime)(" + utc_str + ", " + to_string(sizeof(utc_str)) + ", '', utc_tm) buffer size is not enough to convert date to GMT");
-		}
-	}
-	else
-	{
-		MESSAGE_ERROR("", "", "ERROR: in running gmtime(&t)  (possible problem with cookie expiration in IE)");
-	}
-
-
-	MESSAGE_DEBUG("", "", " return (result = " + result + ")");
-
-	return result;
-}
-
 // --- shift timestamp and update cookies
 // --- name - cookie name
 // --- deltaTimeStamp - delta time in minutes
 bool CCookies::UpdateTS(string name, int deltaTimeStamp)
 {
-	string						value, path, timestamp, domain, secure;
-	vector<CCookie *>::iterator	im;
-	bool						result = true;
+	// string						value, path, timestamp, domain, secure;
+	bool						result = false;
 
 	MESSAGE_DEBUG("", "", " start (name = " + name + ", deltaTimeStamp = " + to_string(deltaTimeStamp) + ")");
 
-	if(IsExist(name)) {
-		value = Get(name);
-		timestamp = GetTimestampShifted(deltaTimeStamp * 60);
-		path = "/";
-		domain = "";
-		secure = "";
-
-		for(im = cookies.begin(); im < cookies.end(); ++im)
-		{
-			if((*im)->GetName() == name)
-			{
-				(*im)->SetValue(value);
-				(*im)->SetDomain(domain);
-				(*im)->SetPath(path);
-				(*im)->SetSecure(secure);
-				(*im)->SetNew(true);
-				if(deltaTimeStamp)
-				{
-					(*im)->SetExpiration(timestamp);
-					(*im)->SetMaxAge(deltaTimeStamp * 60);
-				}
-				else
-				{
-					(*im)->SetExpiration("");
-				}
-				break;
-			}
-		}
-
-	}
-	else 
+	for(auto &cookie: cookies)
 	{
+		if(cookie.GetName() == name)
 		{
-			MESSAGE_ERROR("", "", "unable to find cookie (name = " + name + ")");
-		}
+			// cookie.SetValue(value);
+			cookie.SetDomain("");
+			cookie.SetPath("/");
+			cookie.SetSecure("");
+			cookie.SetNew(true);
+			if(deltaTimeStamp)
+			{
+				// cookie.SetExpiration(timestamp);
+				cookie.SetExpirationShiftedFromNow(deltaTimeStamp * 60);
+				// cookie.SetMaxAge(deltaTimeStamp * 60);
+			}
+			else
+			{
+				// cookie.SetExpiration("");
+			}
 
-		result = false;
-	} // if(IsExist(name)) 
+			result = true;
+			break;
+		}
+	}
+
+	if(!result)
+	{
+		MESSAGE_ERROR("", "", "can;t find cookie " + name);
+	}
 
 	MESSAGE_DEBUG("", "", "finish (" + to_string(result) + ")");
 
 	return result;
 }
 
-void CCookies::Modify(string name, string value, string expiration, string domain, string path, string secure)
-{
-	vector<CCookie *>::iterator	im;
-
-	for(im = cookies.begin(); im < cookies.end(); ++im)
-	{
-		if((*im)->GetName() == name)
-		{
-			(*im)->SetValue(value);
-			(*im)->SetExpiration(expiration);
-			(*im)->SetDomain(domain);
-			(*im)->SetPath(path);
-			(*im)->SetSecure(secure);
-			(*im)->SetNew(true);
-			break;
-		}
-	}
-}
-
 void CCookies::Delete(string name, string domain, string path, string secure)
 {
-// TODO delete Jun 1
-/*
-	time_t		t = time(NULL) - 3600 * 24 * 30 * 12;
-	char		date[100];
-
-	memset(date, 0, sizeof(date));
-	strftime(date, sizeof(date) - 2, "%a, %d %b %Y %X %Z", localtime(&t));
-*/
-	for(auto im = cookies.begin(); im < cookies.end(); ++im)
+	for(auto &cookie: cookies)
 	{
-		if((*im)->GetName() == name)
+		if(cookie.GetName() == name)
 		{
-			(*im)->SetValue((*im)->GetValue());
-			(*im)->SetExpiration(GetTimestampShifted(-3600 * 24));
-			(*im)->SetPath(path);
-			(*im)->SetMaxAge(0);
-			(*im)->SetNew(TRUE);
+			cookie.SetValue(cookie.GetValue());
+			// cookie.SetExpiration(GetTimestampShifted(-3600 * 24));
+			cookie.SetExpirationShiftedFromNow(-3600 * 24);
+			cookie.SetPath(path);
+			// cookie.SetMaxAge(0);
+			cookie.SetNew(TRUE);
 //			break;
 		}
 	}
 }
 
-string CCookies::Get(string name)
+string CCookies::Get(string name) const
 {
-	string result;
-	vector<CCookie *>::iterator	im;
+	auto result = ""s;
 
-	result = "";
-	for(im = cookies.begin(); im < cookies.end(); ++im)
+	for(auto &cookie: cookies)
 	{
-		if((*im)->GetName() == name)
+		if(cookie.GetName() == name)
 		{
-			result = (*im)->GetValue();
+			result = cookie.GetValue();
 			break;
 		}
 	}
-
 
 	return result;
 }
@@ -255,47 +248,39 @@ string CCookies::Get(string name)
 string CCookies::GetAll()
 {
 	string 						result;
-	vector<CCookie *>::iterator	im;
 	ostringstream				ost;
 
 	MESSAGE_DEBUG("", "", " start");
 
 	result = "";
-	for(im = cookies.begin(); im < cookies.end(); ++im)
+	for(auto &cookie: cookies)
 	{
-		if((*im)->GetNew())// does this cookie needs to be sendback to server ?
+		if(cookie.GetNew())// does this cookie needs to be sendback to server ?
 		{
-			string	temp;
+			auto	temp = ""s;
+			auto	cookie_exp = cookie.GetExpiration();
 
-			temp = "Set-Cookie: ";
-			temp += (*im)->GetName();
-			temp += "=";
-			temp += (*im)->GetValue();
-			if((*im)->GetExpiration().length() > 0)
+			temp = "Set-Cookie: " + cookie.GetName() + "=" + cookie.GetValue();
+
+			if(cookie_exp.length() > 0)
 			{
-				temp += "; ";
-				temp += "expires=";
-				temp += (*im)->GetExpiration();
+				temp += "; expires=" + cookie_exp;
 			}
-			if((*im)->GetMaxAge() >= 0)
+/*
+			if(cookie.GetMaxAge() >= 0)
 			{
-				ost.str("");
-				ost << "; max-age=" << (*im)->GetMaxAge();
-				temp += ost.str();
+				temp += "; max-age=" + cookie.GetMaxAge();
 			}
-			if((*im)->GetPath().length() > 0)
+*/
+			if(cookie.GetPath().length() > 0)
 			{
-				temp += "; ";
-				temp += "path=";
-				temp += (*im)->GetPath();
+				temp += "; path=" + cookie.GetPath();
 			}
+			MESSAGE_DEBUG("", "", " add cookie: " + temp); // --- keep it here to avoud \n appears in the log
+
 			temp += "\n";
 
 			result += temp;
-
-			{
-				MESSAGE_DEBUG("", "", " add cookie: " + temp);
-			}
 		}
 	}
 	
@@ -308,18 +293,15 @@ string CCookies::GetAll()
 
 void CCookies::RegisterCookieVariables(CVars *v)
 {
-	vector<CCookie *>::iterator	im;
 
 	MESSAGE_DEBUG("", "", " start ");
 
-	for(im = cookies.begin(); im < cookies.end(); ++im)
-		if((*im)->GetName().length())
-			v->Add((*im)->GetName(), (*im)->GetValue());
+	for(auto &cookie: cookies)
+		if(cookie.GetName().length())
+			v->Add(cookie.GetName(), cookie.GetValue());
 		else
 		{
-			{
-				MESSAGE_ERROR("", "", "ERROR: cookie name is empty (" + (*im)->GetName() + " = " + (*im)->GetValue() + ")");
-			}
+			MESSAGE_ERROR("", "", "ERROR: cookie name is empty (" + cookie.GetName() + " = " + cookie.GetValue() + ")");
 		}
 
 	MESSAGE_DEBUG("", "", " finish ");
@@ -360,36 +342,17 @@ void CCookies::ParseString(string str)
 		trim(cookName);
 		trim(cookValue);
 
-		{
-			MESSAGE_DEBUG("", "", "adding cookie: " + cookName + " = " + cookValue);
-		}
+		MESSAGE_DEBUG("", "", "adding cookie: " + cookName + " = " + cookValue);
 
 		if(cookName.length())
-			Add(cookName, cookValue, "", "", "", "", FALSE);
+			Add(cookName, cookValue, nullptr, "", "", "", FALSE);
 		else
 		{
-			{
-				MESSAGE_ERROR("", "", "cookie parsing end-up with empty name() and value(" + cookValue + ")");
-			}
-
+			MESSAGE_ERROR("", "", "cookie parsing end-up with empty name() and value(" + cookValue + ")");
 		}
 
 		exprPos = result.find(";");
 	}
 
 	MESSAGE_DEBUG("", "", "finish");
-}
-
-CCookies::~CCookies()
-{
-	vector<CCookie *>::iterator	iv;
-
-	MESSAGE_DEBUG("", "", " start");
-
-	for(iv = cookies.begin(); iv < cookies.end(); ++iv)
-	{
-		delete(*iv);
-	}
-
-	MESSAGE_DEBUG("", "", " finish");
 }

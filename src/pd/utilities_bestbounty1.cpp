@@ -829,138 +829,6 @@ string GetCourseListInJSONFormat(string dbQuery, CMysql *db, bool includeStudent
 
 // input: ....
 //		  includeStudents will add student counter
-string GetLanguageListInJSONFormat(string dbQuery, CMysql *db, bool includeStudents/* = false*/)
-{
-	struct ItemClass {
-		string	  id, title, photoFolder, photoFilename, studentUserList;
-		string	  isComplained, complainedUserList;
-	};
-
-	ostringstream	   ostResult;
-	int				 itemsCount;
-	vector<ItemClass>   itemsList;
-
-	{
-		CLog	log;
-		log.Write(DEBUG, string(__func__) + "[" + to_string(__LINE__) + "]: start");
-	}
-
-	ostResult.str("");
-	itemsCount = db->Query(dbQuery);
-	if(itemsCount)
-	{
-		for(int i = 0; i < itemsCount; i++) 
-		{
-			ItemClass   item;
-
-			item.id				 = db->Get(i, "id");
-			item.title			  = db->Get(i, "title");
-			item.photoFolder		= db->Get(i, "logo_folder");
-			item.photoFilename	  = db->Get(i, "logo_filename");
-			item.studentUserList	= "";
-
-			itemsList.push_back(item);						
-		}
-		
-		for(int i = 0; i < itemsCount; i++) 
-		{
-
-				if(includeStudents)
-				{
-					string temp = "";
-
-					for(int j = 0; j < db->Query("SELECT * from `users_language` WHERE `language_id`=\"" + itemsList.at(i).id + "\";"); ++j)
-					{
-						if(temp.length()) temp += ",";
-						temp += db->Get(j, "user_id");
-					}
-
-					itemsList.at(i).studentUserList = temp;
-				}
-
-				if(ostResult.str().length()) ostResult << ", ";
-
-				ostResult << "{"
-						  << "\"languageID\": \""				 << itemsList.at(i).id << "\", "
-						  << "\"languageTitle\": \""			  << itemsList.at(i).title << "\", "
-						  << "\"languagePhotoCoverFolder\": \""   << itemsList.at(i).photoFolder << "\","
-						  << "\"languagePhotoCoverFilename\": \"" << itemsList.at(i).photoFilename << "\","
-						  << "\"languageStudentsUserID\": ["	   << itemsList.at(i).studentUserList << "]"
-						  << "}";
-		} // --- for loop through user list
-	} // --- if sql-query on user selection success
-	else
-	{
-		CLog	log;
-		log.Write(DEBUG, string(__func__) + "[" + to_string(__LINE__) + "]: there are no languages returned by the request [", dbQuery, "]");
-	}
-
-	{
-		CLog	log;
-		log.Write(DEBUG, string(__func__) + "[" + to_string(__LINE__) + "]: finish (returning string length = " + to_string(ostResult.str().length()) + ")");
-	}
-
-	return ostResult.str();
-}
-
-string GetSkillListInJSONFormat(string dbQuery, CMysql *db)
-{
-	struct ItemClass {
-		string	  id, title;
-		string	  isComplained, complainedUserList;
-	};
-
-	ostringstream	   ostResult;
-	int				 itemsCount;
-	vector<ItemClass>   itemsList;
-
-	{
-		CLog	log;
-		log.Write(DEBUG, string(__func__) + "[" + to_string(__LINE__) + "]: start");
-	}
-
-	ostResult.str("");
-	itemsCount = db->Query(dbQuery);
-	if(itemsCount)
-	{
-		for(int i = 0; i < itemsCount; i++) 
-		{
-			ItemClass   item;
-
-			item.id				 = db->Get(i, "id");
-			item.title			  = db->Get(i, "title");
-
-			itemsList.push_back(item);						
-		}
-		
-		for(int i = 0; i < itemsCount; i++) 
-		{
-
-				if(ostResult.str().length()) ostResult << ", ";
-
-				ostResult << "{"
-						  << "\"id\": \""		<< itemsList.at(i).id << "\", "
-						  << "\"title\": \""	<< itemsList.at(i).title << "\" "
-						  << "}";
-		} // --- for loop through user list
-	} // --- if sql-query on user selection success
-	else
-	{
-		CLog	log;
-		log.Write(DEBUG, string(__func__) + "[" + to_string(__LINE__) + "]: there are no skills returned by the request [", dbQuery, "]");
-	}
-
-	{
-		CLog	log;
-		log.Write(DEBUG, string(__func__) + "[" + to_string(__LINE__) + "]: finish (returning string length = " + to_string(ostResult.str().length()) + ")");
-	}
-
-	return ostResult.str();
-}
-
-
-// input: ....
-//		  includeStudents will add student counter
 string GetUniversityListInJSONFormat(string dbQuery, CMysql *db, bool includeStudents/* = false*/)
 {
 	struct ItemClass {
@@ -1273,6 +1141,7 @@ string GetEventListInJSONFormat(string dbQuery, CMysql *db, CUser *user)
 				ostFinal << "\"isMine\": \""				<< (user ? eventsList[i].owner_id == user->GetID() : false) << "\",";
 				ostFinal << "\"hosts\": ["					<< GetEventHostsListInJSONFormat("SELECT * FROM `event_hosts` WHERE `event_id`=\"" + eventsList[i].id + "\";", db, user) << "],";
 				ostFinal << "\"guests\": ["					<< GetEventGuestsListInJSONFormat("SELECT * FROM `event_guests` WHERE `event_id`=\"" + eventsList[i].id + "\";", db, user) << "],";
+				ostFinal << "\"checklists\": ["				<< GetEventCheckistInJSONFormat("SELECT * FROM `event_checklists` WHERE `event_id`=\"" + eventsList[i].id + "\";", db, user) << "],";
 				ostFinal << "\"hideGifts\": \""				<< eventsList[i].hideGifts << "\",";
 				ostFinal << "\"isBlocked\": \""				<< eventsList[i].isBlocked << "\",";
 				ostFinal << "\"eventTimestampCreation\": \""<< eventsList[i].eventTimestampCreation << "\",";
@@ -2081,199 +1950,6 @@ string GetCandidatesListAppliedToVacancyInJSONFormat(string dbQuery, CMysql *db)
 		MESSAGE_DEBUG("", "", "finish (result.length() = " + to_string(result.length()) + ")");
 	}
 	return result;
-}
-
-// --- Returns user list in JSON format grabbed from DB
-// --- Input: dbQuery - SQL format returns users
-//			db	  - DB connection
-//			user	- current user object
-string GetUserListInJSONFormat(string dbQuery, CMysql *db, CUser *user)
-{
-	ostringstream					 ost, ost1;
-	string							 sessid, lookForKey;
-	unordered_set<unsigned long>	 setOfUserID;
-
-	struct	ItemClass
-	{
-		string	userID;
-		string	userLogin;
-		string	userName;
-		string	userNameLast;
-		string	userSex;
-		string	userBirthday;
-		string	userBirthdayAccess;
-		string	userAppliedVacanciesRender;
-		string	userCurrentCityID;
-		string	userLastOnline;
-		string	userLastOnlineSecondSinceY2k;
-	};
-	vector<ItemClass>		itemsList;
-	int						itemsCount;
-
-
-	{
-		CLog	log;
-		log.Write(DEBUG, string(__func__) + "[" + to_string(__LINE__) + "]: start");
-	}
-
-	if((itemsCount = db->Query(dbQuery)) > 0)
-	{
-		for(int i = 0; i < itemsCount; ++i)
-		{
-			ItemClass	item;
-			item.userID = db->Get(i, "id");
-			item.userLogin = db->Get(i, "login");
-			item.userName = db->Get(i, "name");
-			item.userNameLast = db->Get(i, "nameLast");
-			item.userSex = db->Get(i, "sex");
-			item.userBirthday = db->Get(i, "birthday");
-			item.userBirthdayAccess = db->Get(i, "birthdayAccess");
-			item.userAppliedVacanciesRender = db->Get(i, "appliedVacanciesRender");
-			item.userCurrentCityID = db->Get(i, "geo_locality_id");
-			item.userLastOnline = db->Get(i, "last_online");
-			item.userLastOnlineSecondSinceY2k = db->Get(i, "last_onlineSecondsSinceY2k");
-
-			itemsList.push_back(item);
-		}
-
-
-		ost.str("");
-		for(int i = 0; i < itemsCount; i++) 
-		{
-
-			if(setOfUserID.find(stol(itemsList[i].userID)) == setOfUserID.end())
-			{
-				string				userID, userLogin, userName, userNameLast, userSex, userBirthday, userBirthdayAccess, userCurrentEmployment, userCurrentCityID, userCurrentCity, avatarPath;
-				string				userAppliedVacanciesRender;
-				string				userLastOnline, numberUreadMessages, userLastOnlineSecondSinceY2k;
-				string				userFriendship;
-				ostringstream		ost1;
-				int					affected1;
-
-				userID = itemsList[i].userID;
-				userLogin = itemsList[i].userLogin;
-				userName = itemsList[i].userName;
-				userNameLast = itemsList[i].userNameLast;
-				userSex = itemsList[i].userSex;
-				userBirthday = itemsList[i].userBirthday;
-				userBirthdayAccess = itemsList[i].userBirthdayAccess;
-				userAppliedVacanciesRender = itemsList[i].userAppliedVacanciesRender;
-				userCurrentCityID = itemsList[i].userCurrentCityID;
-				userLastOnline = itemsList[i].userLastOnline;
-				userLastOnlineSecondSinceY2k = itemsList[i].userLastOnlineSecondSinceY2k;
-
-				setOfUserID.insert(atol(userID.c_str()));
-
-				// --- Defining title and company of user
-				ost1.str("");
-				ost1 << "SELECT `company_position`.`title` as `users_company_position_title`,  \
-						`company`.`name` as `company_name`, `company`.`id` as `company_id`  \
-						FROM `users_company` \
-						LEFT JOIN  `company_position` ON `company_position`.`id`=`users_company`.`position_title_id` \
-						LEFT JOIN  `company` 				ON `company`.`id`=`users_company`.`company_id` \
-						WHERE `users_company`.`user_id`=\"" << userID << "\" and `users_company`.`current_company`='1' \
-						ORDER BY  `users_company`.`occupation_start` DESC ";
-
-				affected1 = db->Query(ost1.str());
-				ost1.str("");
-				ost1 << "[";
-				if(affected1 > 0)
-				{
-					for(int j = 0; j < affected1; j++)
-					{
-						ost1 << "{ \
-								\"companyID\": \"" << db->Get(j, "company_id") << "\", \
-								\"company\": \"" << db->Get(j, "company_name") << "\", \
-								\"title\": \"" << db->Get(j, "users_company_position_title") << "\" \
-								}";
-						if(j < (affected1 - 1)) ost1 << ", ";
-					}
-				}
-				ost1 << "]";
-				userCurrentEmployment = ost1.str(); 
-
-				{
-					CLog	log;
-
-					log.Write(DEBUG, string(__func__) + "[" + to_string(__LINE__) + "]: done with building employment list ", userCurrentEmployment);
-				}
-
-				// --- Get user avatars
-				ost1.str("");
-				ost1 << "select * from `users_avatars` where `userid`='" << userID << "' and `isActive`='1';";
-				avatarPath = "empty";
-				if(db->Query(ost1.str()))
-				{
-					ost1.str("");
-					ost1 << "/images/avatars/avatars" << db->Get(0, "folder") << "/" << db->Get(0, "filename");
-					avatarPath = ost1.str();
-				}
-
-				// --- Get friendship status
-				userFriendship = "empty";
-				if(user && db->Query("select * from `users_friends` where `userid`='" + user->GetID() + "' and `friendID`='" + userID + "';"))
-				{
-					userFriendship = db->Get(0, "state");
-				}
-
-				// --- Get presense status for chat purposes
-				ost1.str("");
-				ost1 << "select COUNT(*) as `number_unread_messages` from `chat_messages` where `fromType`='fromUser' and `fromID`='" << userID << "' and (`messageStatus`='unread' or `messageStatus`='sent' or `messageStatus`='delivered');";
-				if(db->Query(ost1.str()))
-				{
-					numberUreadMessages = db->Get(0, "number_unread_messages");
-				}
-
-				if(userCurrentCityID.length() && db->Query("SELECT `title` FROM `geo_locality` WHERE `id`=\"" + userCurrentCityID + "\";"))
-				{
-					userCurrentCity = db->Get(0, "title");
-				}
-
-				if(ost.str().length()) ost << ", ";
-
-				if(userBirthdayAccess == "private") userBirthday = "";
-
-				ost << "{ \"id\": \""						<< userID << "\", "
-						  "\"name\": \""						<< userName << "\", "
-						  "\"nameLast\": \""					<< userNameLast << "\","
-						  "\"userSex\": \""					<< userSex << "\","
-						  "\"birthday\": \""					<< userBirthday << "\","
-						  "\"birthdayAccess\": \""			<< userBirthdayAccess << "\","
-						  "\"appliedVacanciesRender\": \""	<< userAppliedVacanciesRender << "\","
-						  "\"last_online\": \""				<< userLastOnline << "\","
-						  "\"last_online_diff\": \""			<< to_string(GetTimeDifferenceFromNow(userLastOnline)) << "\","
-						  "\"last_onlineSecondsSinceY2k\": \""   << userLastOnlineSecondSinceY2k << "\","
-						  "\"userFriendship\": \""			<< userFriendship << "\","
-						  "\"avatar\": \""					<< avatarPath << "\","
-						  "\"currentEmployment\": "			<< userCurrentEmployment << ", "
-						  "\"currentCity\": \""				<< userCurrentCity << "\", "
-						  "\"numberUnreadMessages\": \""		<< numberUreadMessages << "\", "
-						  "\"languages\": ["		 			<< GetLanguageListInJSONFormat("SELECT * FROM `language` WHERE `id` in (SELECT `language_id` FROM `users_language` WHERE `user_id`=\"" + userID + "\");", db) << "], "
-						  "\"skills\": ["		 				<< GetSkillListInJSONFormat("SELECT * FROM `skill` WHERE `id` in (SELECT `skill_id` FROM `users_skill` WHERE `user_id`=\"" + userID + "\");", db) << "], "
-						  "\"subscriptions\":[" 				<< (user && (user->GetID() == userID) ? GetUserSubscriptionsInJSONFormat("SELECT * FROM `users_subscriptions` WHERE `user_id`=\"" + userID + "\";", db) : "") << "],"
-						  "\"isMe\": \""						<< ((user && (userID == user->GetID())) ? "yes" : "no") << "\" "
-						"}";
-			} // --- if user is not dupicated
-		} // --- for loop through user list
-	} // --- if sql-query on user selection success
-	else
-	{
-		CLog	log;
-
-		ost.str("");
-		log.Write(DEBUG, string(__func__) + "[" + to_string(__LINE__) + "]: there are users returned by request [", dbQuery, "]");
-	}
-
-	{
-		CLog	log;
-		ostringstream	ostTemp;
-
-		ostTemp.str("");
-		ostTemp << "GetUserListInJSONFormat: end. returning string length " << ost.str().length();
-		log.Write(DEBUG, ostTemp.str());
-	}
-
-	return ost.str();
 }
 
 // --- Returns company list in JSON format grabbed from DB
@@ -5190,5 +4866,91 @@ string  GetUserNotificationInJSONFormat(string sqlRequest, CMysql *db, CUser *us
 	}
 	
 	return ostUserNotifications.str();
+}
+
+string GetGiftListInJSONFormat(string dbQuery, CMysql *db, CUser *user)
+{
+	struct ItemClass 
+	{
+		string	id;
+		string	link;
+		string	title;
+		string	description;
+		string	folder;
+		string	filename;
+		string	requested_quantity;
+		string	gained_quantity;
+		string	estimated_price;
+		string	user_id;
+		string	eventTimestamp;
+	};
+
+	ostringstream			ost, ostFinal;
+	string					sessid, lookForKey;
+	int						affected;
+	vector<ItemClass>		groupsList;
+
+	{
+		MESSAGE_DEBUG("", "", "start");
+	}
+
+	ostFinal.str("");
+
+	if((affected = db->Query(dbQuery)) > 0)
+	{
+		int			groupCounter = affected;
+
+		groupsList.reserve(groupCounter);  // --- reserving allows avoid moving vector in memory
+											// --- to fit vector into continous memory piece
+
+		for(int i = 0; i < affected; i++)
+		{
+			ItemClass	gift;
+
+			gift.id = db->Get(i, "id");
+			gift.link = db->Get(i, "link");
+			gift.title = db->Get(i, "title");
+			gift.description = db->Get(i, "description");
+			gift.folder = db->Get(i, "logo_folder");
+			gift.filename = db->Get(i, "logo_filename");
+			gift.requested_quantity = db->Get(i, "requested_quantity");
+			gift.gained_quantity = db->Get(i, "gained_quantity");
+			gift.estimated_price = db->Get(i, "estimated_price");
+			gift.user_id = db->Get(i, "user_id");
+			gift.eventTimestamp = db->Get(i, "eventTimestamp");
+
+			groupsList.push_back(gift);
+		}
+
+		for(int i = 0; i < groupCounter; i++)
+		{
+				if(ostFinal.str().length()) ostFinal << ", ";
+
+				ostFinal << "{";
+				ostFinal << "\"id\": \""				  	<< groupsList[i].id << "\",";
+				ostFinal << "\"link\": \""					<< groupsList[i].link << "\",";
+				ostFinal << "\"title\": \""					<< groupsList[i].title << "\",";
+				ostFinal << "\"description\": \""			<< groupsList[i].description << "\",";
+				ostFinal << "\"logo_folder\": \""			<< groupsList[i].folder << "\",";
+				ostFinal << "\"logo_filename\": \""			<< groupsList[i].filename << "\",";
+				ostFinal << "\"requested_quantity\": \""	<< groupsList[i].requested_quantity << "\",";
+				ostFinal << "\"gained_quantity\": \""		<< groupsList[i].gained_quantity << "\",";
+				ostFinal << "\"estimated_price\": \""		<< groupsList[i].estimated_price << "\",";
+				ostFinal << "\"user_id\": \""				<< groupsList[i].user_id << "\",";
+				ostFinal << "\"eventTimestamp\": \""		<< groupsList[i].eventTimestamp << "\"";
+				ostFinal << "}";
+		} // --- for loop through gift list
+
+	} // --- if sql-query on gift selection success
+	else
+	{
+		MESSAGE_DEBUG("", "", "there are no gifts returned by request [" + dbQuery + "]");
+	}
+
+	{
+		MESSAGE_DEBUG("", "", "end (result length = " + to_string(ostFinal.str().length()) + ")");
+	}
+
+	return ostFinal.str();
 }
 

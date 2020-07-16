@@ -3,6 +3,8 @@
 
 using namespace std;
 
+#include <curl/curl.h>
+
 #include "cfiles.h"
 #include "cvars.h"
 #include "clog.h"
@@ -30,17 +32,22 @@ class CURLMethod
 
 class CGet : public CURLMethod
 {
+	private:
 		char		*queryString;
+		vector<string>	params;
+
+		char*		GetParamToken(unsigned int i, unsigned int token_idx);
+
     public:
-					CGet();
+					CGet()					{ paramCount = -1; };
 		int			CalculateVars();
 		int			ParamCount();
-		char*		ParamName(int i);
-		char*		ParamValue(int i);
-		int			ParamValueSize(int i);
-		bool		isFileName(int i) { return false; };
-		string		GetFileName(int i) { return(""); };
-					~CGet();
+		char*		ParamName(int i)		{ return GetParamToken(i, 0); };
+		char*		ParamValue(int i)		{ return GetParamToken(i, 1); };
+		int			ParamValueSize(int i)	{ return 0; };
+		bool		isFileName(int i)		{ return false; };
+		string		GetFileName(int i)		{ return(""); };
+					~CGet()					{};
 };
 
 class CPost : public CURLMethod

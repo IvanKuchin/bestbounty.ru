@@ -22,32 +22,37 @@ using namespace std;
 class CCgi
 {
     private:
-		FILE		*templateFile;
-		CMysql		*db;
-		CVars		vars;
-		CFiles		files;
-		CSession	sessionDB;
-		int			initHeadersFlag;
+		FILE				*templateFile;
+		CMysql				*db;
+		CVars				vars;
+		CFiles				files;
+		CSession			sessionDB;
+		int					initHeadersFlag;
+		vector<string>		empty_var_list = {};
 
-		void		InitHeaders();
+		string				content = "";
+
+		void				InitHeaders();
 
 		//it's temporarily
-		string		cookieName, cookieVal, cookieMaxAge, cookiePath, cookieDomain;
-		int			cookieSecure;
-		CCookies	cookie;
+		string				cookieName, cookieVal, cookieMaxAge, cookiePath, cookieDomain;
+		int					cookieSecure;
+		CCookies			cookie;
 
-		string		RecvLine(FILE *s);
-		string		GlobalMessageReplace(string where, string src, string dst);
+		string				RecvLine(FILE *s);
+		string				GlobalMessageReplace(string where, string src, string dst);
 
-		string		FindLanguageByIP(string ip);
+		string				FindLanguageByIP(string ip);
     public:
-			CCgi();
-			CCgi(int typeTemplate);
-			CCgi(const char *fileName, int typeTemplate);
-			CCgi(const char *fileName, CVars v);
-			CCgi(const char *fileName, CVars v, CFiles f);
+				CCgi();
+				CCgi(int typeTemplate);
+				CCgi(const char *fileName, int typeTemplate);
+				CCgi(const char *fileName, CVars v);
+				CCgi(const char *fileName, CVars v, CFiles f);
 
 		void	SetDB(CMysql *mysql);
+
+		void	SetVars(CVars &param) 				{ vars = param; };
 
 		bool	SetTemplateFile(string fileName);
 		bool	SetTemplate(string templ);
@@ -56,17 +61,19 @@ class CCgi
 		//in: string
 		//out: string
 		string	RenderLine(string rLine);
+		auto	RenderTemplate() -> string;
 
 		//Out templateFile wich content <<>> tags
 		//in: nothing
 		//out:nothing
 		void	OutTemplate();
+		auto	GetContent()						{ return content; };
 
 		//Simple out string to stdout
 		//in: nothing
 		//out:nothing
-		void	OutString(const char *str, bool endlFlag);
-		void	OutString(const string str, bool endlFlag);
+		void	OutString(const string &str, bool endlFlag);
+		void	AddToContent(const string &str, bool endlFlag);
 
 		void	OutStringEncode(const char *str);
 		string	StringEncode(string str);
@@ -102,10 +109,12 @@ class CCgi
 		string	GetCookie(string name);
 
 		//add cookie to set in HTTP-Response
-		void	AddCookie(string cn, string cv, string ce = "", string cp = "", string cd = "", string cs = "");
-		void	AddCookie(string cn, string cv, string ce = "", int cma = 0, string cp = "", string cd = "", string cs = "");
+		void	AddCookie(string cn, string cv, struct tm *ce = nullptr, string cp = "", string cd = "", string cs = "");
+		void	AddCookie(string cn, string cv, int shift_in_seconds_from_now, string cp = "", string cd = "", string cs = "");
+		// void	AddCookie(string cn, string cv, string ce = "", string cp = "", string cd = "", string cs = "");
+		// void	AddCookie(string cn, string cv, string ce = "", int cma = 0, string cp = "", string cd = "", string cs = "");
 		bool	CookieUpdateTS(string name, int deltaTimeStamp);
-		void	ModifyCookie(string cn, string cv, string cma = "", string cp = "", string cd = "", string cs = "");
+		// void	ModifyCookie(string cn, string cv, string cma = "", string cp = "", string cd = "", string cs = "");
 		void	DeleteCookie(string cn, string cd = "", string cp = "/", string cs = "");
 
 		//return environment variable HTTP_HOST
@@ -147,7 +156,9 @@ class CCgi
 		bool	Cookie_InitialAction_Expire();
 		bool	Cookie_InitialAction_Assign(string inviteHash);
 
-			~CCgi();
+		auto	GetEmptyVarList()		{ return empty_var_list; };
+
+				~CCgi();
 };
 
 #endif

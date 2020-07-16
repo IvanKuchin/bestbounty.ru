@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2019-03-11 16:56-0400\n"
+"POT-Creation-Date: 2020-02-13 11:04-0500\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -28,3 +28,95 @@ msgstr[2] "%d заказчикам"
 msgid "Access prohibited"
 msgstr "Нет доступа"
 
+msgid "Login contains illegal characters"
+msgstr "Логин должен состоять из английских букв и цифр"
+
+msgid "Login must be at least 8 characters"
+msgstr "Логин должен быть 8 и более символов"
+
+msgid "Login must contain alphabet characters"
+msgstr "Логин должен содержать английские буквы"
+
+msgid "SQL syntax error"
+msgstr "Ошибка БД"
+
+msgid "Sent by"
+msgstr "Отправлено"
+
+msgid "You need to enter phone number in user profile"
+msgstr "Нужно ввести телефон в профиле"
+
+msgid "already exists"
+msgstr "уже существует"
+
+msgid "can't close archive"
+msgstr "не удалось закрыть архив"
+
+msgid "can't create archive"
+msgstr "не удалось создать архив"
+
+msgid "case"
+msgstr "случай"
+
+msgid "db is not initialized"
+msgstr "БД не инициализирована"
+
+msgid "email is empty"
+msgstr "не указан email"
+
+msgid "fail to insert to db"
+msgstr "не удалось добавить запись в БД"
+
+msgid "helpdesk ticket not found"
+msgstr "тикет не найден"
+
+msgid "incorrect confirmation code"
+msgstr "некорректный код"
+
+msgid "incorrect image file"
+msgstr "некорректное имя фаила"
+
+msgid "login"
+msgstr "логин"
+
+msgid "mandatory parameter missed"
+msgstr "не указан обязательный параметер"
+
+msgid "opened"
+msgstr "открыт"
+
+msgid "parameters incorrect"
+msgstr "некорректный параметер"
+
+msgid "phone not registered"
+msgstr "телефон не зарегистрирован"
+
+msgid "phone number is incorrect"
+msgstr "некорректный номер телефона"
+
+msgid "please try again"
+msgstr "попробуйте еще раз"
+
+msgid "re-login required"
+msgstr "требуется войти на сайт"
+
+msgid "there was created more token than allowed"
+msgstr "было создано слишком много токенов"
+
+msgid "token not found"
+msgstr "токен не найден"
+
+msgid "try to upload as pdf"
+msgstr "попробуйте загрузить как pdf"
+
+msgid "unknown file type"
+msgstr "неизвстный тип фаила"
+
+msgid "updated"
+msgstr "изменено"
+
+msgid "user not found"
+msgstr "пользователь не найден"
+
+msgid "you are not authorized"
+msgstr "у Вас недостаточно прав"

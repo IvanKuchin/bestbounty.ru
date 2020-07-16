@@ -22,24 +22,8 @@
 
 CMail::CMail() : smtpServer(SMTP_HOST), smtpPort(SMTP_PORT), smtpFlag(false)
 {
-	ostringstream		ost;
-
-// "-f \"bestbounty.ru <noreply@bestbounty.ru>\""
-
-	ost.str("");
-	ost << "-f <" << SMTP_MAILFROM << ">";
-
-	mailfrom = ost.str();
-}
-
-void CMail::SetSMTPServer(string server)
-{
-	smtpServer = server;
-}
-
-void CMail::SetSMTPPort(int port)
-{
-	smtpPort = port;
+	// --- this has to be Return Path in the header which must match server hostname and opendkim sign key
+	mailfrom = "-f noreply@" + GetDomain();
 }
 
 unsigned long CMail::Addr2Num (const char *addr)
@@ -76,27 +60,6 @@ unsigned long CMail::Addr2Num (const char *addr)
 		}
 	}
 	return ipnum;
-}
-
-
-void CMail::To(string to)
-{
-	rcptto = to;
-}
-
-void CMail::From(string from)
-{
-	mailfrom = from;
-}
-
-void CMail::Subject(string subj)
-{
-	subject = subj;
-}
-
-void CMail::Message(string mess)
-{
-	message = mess;
 }
 
 bool CMail::Send(string to, string subj, string mess)
@@ -558,13 +521,10 @@ void CMail::RedirStderrToFile()
 
 int CMail::SendMailExec(const char *progr, char **av, int inp)
 {
+	MESSAGE_DEBUG("", "", "start (" + progr + ")");
+
 	void (*del)(int), (*quit)(int);
 	int pid;
-
-	{
-		CLog	log;
-		log.Write(DEBUG, "CMail::" + string(__func__) + "[" + to_string(__LINE__) + "]: start");
-	}
 
 	del = signal(SIGINT, SIG_IGN); quit = signal(SIGQUIT, SIG_IGN);
 	if( ! (pid = fork()))
@@ -641,23 +601,17 @@ int CMail::SendMailExec(const char *progr, char **av, int inp)
 	/* восстановить реакции на сигналы от клавиатуры */
 	signal(SIGINT, del); signal(SIGQUIT, quit);
 
-	{
-		CLog	log;
-		log.Write(DEBUG, "CMail::SendMailExec: end");
-	}
+	MESSAGE_DEBUG("", "", "finish");
 
 	return pid;     /* вернуть идентификатор сына */
 }
 
 int CMail::MakeMailFile(string text)
 {
+	MESSAGE_DEBUG("", "", "start");
+
 	int	fd, result;
 	string	fname = GetStdinFname();
-
-	{
-		CLog	log;
-		log.Write(DEBUG, "CMail::MakeMailFile: start");
-	}
 
 	fd = open(fname.c_str(), O_WRONLY | O_CREAT, 0666);
 	if(fd < 0)
@@ -697,25 +651,19 @@ int CMail::MakeMailFile(string text)
 		throw CException("mail error");
 	}
 
-	{
-		CLog	log;
-		log.Write(DEBUG, "CMail::MakeMailFile: end");
-	}
+	MESSAGE_DEBUG("", "", "finish");
 
 	return fd;
 }
 
 bool CMail::SendLocal()
 {
+	MESSAGE_DEBUG("", "", "start");
+
 	char	*argv[6];
 	char	rcpt[64];
 	char	from[64];
 	long long	stderrSize, stdoutSize;
-
-	{
-		CLog	log;
-		log.Write(DEBUG, "CMail::SendLocal: start ");
-	}
 
 	strcpy(rcpt, rcptto.c_str());
 	strcpy(from, mailfrom.c_str());
@@ -724,40 +672,21 @@ bool CMail::SendLocal()
 	argv[2] = rcpt;
 	argv[3] = NULL;
 
-	{
-		CLog	log;
-		ostringstream	ost;
-		ost.str("");
-		ost << "CMail::SendLocal: params from: [" << from << "] to: [" << rcpt << "]";
-		log.Write(DEBUG, ost.str());
-	}
+	MESSAGE_DEBUG("", "", "params from: [" + from + "] to: [" + rcpt + "]");
 
 	BuildUniqPostfix();
 	SendMailExec(SENDMAIL_FILE_NAME, argv, MakeMailFile(message));
 	
 	stderrSize = getFileSize(GetStderrFname());
 	stdoutSize = getFileSize(GetStdoutFname());
-	{
-		CLog	log;
-		ostringstream	ost;
 
-		ost.str("");
-		ost << "CMail::SendLocal: stderr size = " << stderrSize;
-		log.Write(DEBUG, ost.str());
-
-		ost.str("");
-		ost << "CMail::SendLocal: stdout size = " << stdoutSize;
-		log.Write(DEBUG, ost.str());
-	}
+	MESSAGE_DEBUG("", "", "stdout size: " + to_string(stdoutSize) + ", stderr size: " + to_string(stderrSize) + "");
 
 	if(!stdoutSize) unlink((MAIL_STDOUT + GetUniqPostfix()).c_str() );	
 	if(!stderrSize) unlink((MAIL_STDERR + GetUniqPostfix()).c_str() );
 	if(!(stdoutSize || stderrSize)) unlink((MAIL_FILE_NAME + GetUniqPostfix()).c_str() );
 
-	{
-		CLog	log;
-		log.Write(DEBUG, "CMail::SendLocal: end");
-	}
+	MESSAGE_DEBUG("", "", "finish");
 
 	return true;
 }
@@ -774,99 +703,39 @@ void CMail::SetLocal()
 
 bool CMail::Send()
 {
-	bool	result;
-	{
-		CLog	log;
-		log.Write(DEBUG, "CMail::Send: start");
-	}
-
-	if(smtpFlag)
-		result = SendSMTP();
-	else
-		result = SendLocal();
-
-	{
-		CLog	log;
-		log.Write(DEBUG, "CMail::Send: end [result = ", (result ? "true" : "false"), "]");
-	}
-
-	return result;
-}
-
-CMail::~CMail()
-{
+	return (smtpFlag ? SendSMTP() : SendLocal());
 }
 
 
 
-CMailLocal::CMailLocal()
-{
-}
 
-void CMailLocal::UserLogin(string log)
-{
-	userLogin = log;
-}
 
-void CMailLocal::UserID(string id)
-{
-	userID = id;
-}
 
-string CMailLocal::GetUserLogin()
-{
-	return userLogin;
-}
 
-string CMailLocal::GetUserID()
-{
-	return userID;
-}
-
-void CMailLocal::SetDB(CMysql *mysql)
-{
-	db = mysql;
-}
 
 string CMailLocal::GetUserLng()
 {
-	auto			result = string(DEFAULT_LANGUAGE);
 	ostringstream	ost;
 
-    MESSAGE_DEBUG("", "", "start");
+	MESSAGE_DEBUG("", "", "start");
 
-    if(GetUserLogin().empty())
-    {
-    	MESSAGE_DEBUG("", "", "set defult language");
+	ost.str("");
 
-    	result = DEFAULT_LANGUAGE;
-    }
-    else
-    {
-		ost.str("");
+	if(GetUserLogin().empty() && GetUserID().empty())
+		throw CExceptionHTML("recipient before template");
 
-		if(GetUserLogin().empty() && GetUserID().empty())
-			throw CExceptionHTML("recipient before template");
+	if(!GetUserLogin().empty()) ost << "select lng from users where login=\"" << GetUserLogin() << "\"";
+	if(!GetUserID().empty()) ost << "select lng from usere where id=\"" << GetUserID() << "\"";
+	if(db->Query(ost.str()) == 0) throw CExceptionHTML("no user");
 
-		if(!GetUserLogin().empty()) ost << "select lng from users where login=\"" << GetUserLogin() << "\"";
-		if(!GetUserID().empty()) ost << "select lng from usere where id=\"" << GetUserID() << "\"";
-		if(db->Query(ost.str()) == 0) throw CExceptionHTML("no user");
+	MESSAGE_DEBUG("", "", "finish");
 
-		result = db->Get(0, "lng");
-    }
-
-    MESSAGE_DEBUG("", "", "finish");
-
-	return result;
+	return db->Get(0, "lng");
 }
 
 string CMailLocal::SetTemplate(string templID)
 {
-	ostringstream	ost;
-
-	ost << TEMPLATE_PATH << GetUserLng() << "/mails/" << templID << ".htmlt";
-
-	return SetTemplateFile(ost.str());
+	return SetTemplateFile(TEMPLATE_PATH + GetUserLng() + "/mails/" + templID + ".htmlt");
 }
 
 string CMailLocal::SetTemplateFile(string fileName)
@@ -886,67 +755,55 @@ string CMailLocal::SetTemplateFile(string fileName)
     return fileName;
 }
 
-void CMailLocal::SetVars(CVars *v)
+void CMailLocal::Send(string login, string templID, CVars *v, CMysql *db)
 {
-	vars = v;
-}
+	string			email;
 
-void CMailLocal::Send(string login, string templID, CVars *v, CMysql *mysql, string email)
-{
-	string			message, to, templFileName;
-	ostringstream	ost;
-	CTemplate		templ;
-	string			trySubj;
-	string::size_type	p1;
+	MESSAGE_DEBUG("", "", "start (" + login + ", " + templID + ")");
 
-	MESSAGE_DEBUG("", "", "start");
-
-	SetDB(mysql);
-	templFileName = SetTemplate(templID);
-	SetVars(v);
-
-	if(login.length())
+	if(db->Query("select `email` from `users` where `login`=\"" + login + "\";") == 0)
 	{
-		// --- send message to registered user
-		UserLogin(login);
-		if(db->Query("select `email` from `users` where `login`=\"" + GetUserLogin() + "\";") == 0)
-		{
-			MESSAGE_ERROR("", "", "select email from table return empty result");
+		MESSAGE_ERROR("", "", "select email from table return empty result");
 
-			throw CExceptionHTML("user mail failed");
-		}
-		
-		to = db->Get(0, "email");
-
-		MESSAGE_DEBUG("", "", "message sending to registered user.login(" + GetUserLogin() + ") email(" + to + ")")
+		throw CExceptionHTML("user mail failed");
 	}
-	else if(email.length())
+
+	if((email = db->Get(0, "email")).empty())
 	{
-		// --- send message to e-mail directly
+		MESSAGE_ERROR("", "", "mail length is zero");
 
-		to = email;
-
-		MESSAGE_DEBUG("", "", "message sending to email(" + to + ")")
+		throw CExceptionHTML("user mail failed");
 	}
 	else
 	{
-		MESSAGE_ERROR("", "", "failed because neither user nor e-mail specified")
-		throw CExceptionHTML("user mail failed");
+		v->Redefine("RECIPIENT_EMAIL", email);
 	}
 
-	if(to.empty())
-	{
-		MESSAGE_ERROR("", "", "e-mail is empty");
+	SendToEmail(email, login, templID, v, db);
 
-		throw CExceptionHTML("user mail failed");
-	}
+	MESSAGE_DEBUG("", "", "finish");
+}
 
-	templ.SetFile(templFileName);
+void CMailLocal::SendToEmail(string email, string login, string templID, CVars *v, CMysql *mysql)
+{
+	MESSAGE_DEBUG("", "", "start (" + email + ", " + login + ", " + templID + ")");
+
+	auto				message = ""s;
+	auto				trySubj = ""s;
+	CTemplate			templ;
+	string::size_type	p1;
+
+	SetDB(mysql);
+	UserLogin(login);
+	SetVars(v);
+
+	templ.SetFile(SetTemplate(templID));
 	templ.SetVars(vars);
 	message = templ.Render();
+
 	if(message.empty())
 	{
-		MESSAGE_ERROR("", "", "message is empty");
+		MESSAGE_ERROR("", "", "message length is zero");
 
 		throw CExceptionHTML("user mail failed");
 	}
@@ -957,24 +814,12 @@ void CMailLocal::Send(string login, string templID, CVars *v, CMysql *mysql, str
 		trySubj = message.substr(p1 + 8, message.find("\n") - p1 - 8);
 		message.erase(0, message.find("\n") + 1);
 	}
-	if(!CMail::Send(to, trySubj, message))
+
+	if(!CMail::Send(email, trySubj, message))
 	{
 		throw CExceptionHTML("mail error");
 	}
 
 	MESSAGE_DEBUG("", "", "finish");
 }
-
-CMailLocal::~CMailLocal()
-{
-}
-
-
-
-
-
-
-
-
-
 

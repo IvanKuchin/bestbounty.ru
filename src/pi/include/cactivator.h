@@ -24,23 +24,27 @@ class CActivator
 
 		string		GetRandom(int len);
 	public:
-				CActivator();
+					CActivator();
 
-		void		SetUser(string u);
-		string		GetUser();
+		void		SetUser(const string &u)		{ user = u; }
+		void		SetUser(string &&u) noexcept	{ user = move(u); }
+		string		GetUser() const 				{ return user; }
 
 		void		GenerateID();
-		void		SetID(string id);
-		string		GetID();
+		void		SetID(const string &id)			{ actID = id; }
+		void		SetID(string &&id) noexcept		{ actID = move(id); }
+		string		GetID() const					{ return actID; }
 
-		void		SetType(string t);
-		string		GetType();
+		void		SetType(const string &t)		{ type = t; }
+		void		SetType(string &&t) noexcept	{ type = move(t); }
+		string		GetType() const					{ return type; }
 
-		void		SetTime(string t);
-		string		GetTime();
+		void		SetTime(const string &t)		{ time = t; }
+		void		SetTime(string &&t) noexcept	{ time = t; }
+		string		GetTime() const					{ return time; }
 
-		void		SetDB(CMysql *mysql);
-		void		SetCgi(CCgi *cgi);
+		void		SetDB(CMysql *param)			{ db = param; }
+		void		SetCgi(CCgi *param)				{ cgi = param; }
 
 		void		Save();
 		bool		Load(string id);
@@ -49,8 +53,6 @@ class CActivator
 		void		Delete();
 
 		void		Activate();
-
-				~CActivator();
 };
 
 #endif

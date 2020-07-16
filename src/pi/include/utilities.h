@@ -10,10 +10,16 @@
 #include <regex>
 #include <cctype> 		//--- used for tolower
 #include <sys/stat.h>
+#include <sys/types.h>	// --- DIR
+#include <dirent.h>		// --- opendir, rmdir
+#include <openssl/sha.h>
 #include <execinfo.h>   // --- backtrace defined here
 #include <signal.h>     // --- signal intercaeption
+#include <Magick++.h>
 #include <codecvt>		// --- codecvt_utf8
 
+#include "c_smsc.h"
+#include "cfiles.h"
 #include "cmysql.h"
 #include "cuser.h"
 #include "cexception.h"
@@ -23,6 +29,7 @@
 using namespace std;
 
 auto			crash_handler(int sig) -> void;
+auto			GetSHA512(const string &src) -> string;
 auto			wide_to_multibyte(std::wstring const& s) -> string;
 auto			multibyte_to_wide(std::string const& s) -> wstring;
 auto      		rtrim(string& str) -> string;
@@ -33,22 +40,27 @@ auto  			toLower(string src) -> string;
 auto      		GetRandom(int len) -> string;
 auto      		DeleteHTML(string src, bool removeBR = true) -> string;
 auto      		RemoveQuotas(string src) -> string;
+auto 			RemoveSpecialSymbols(wstring src) -> wstring;
 auto      		RemoveSpecialSymbols(string src) -> string;
-auto      		RemoveSpecialHTMLSymbols(string src) -> string;
+auto 			RemoveSpecialHTMLSymbols(const wstring &src) -> wstring;
+auto      		RemoveSpecialHTMLSymbols(const string &src) -> string;
 auto      		ReplaceDoubleQuoteToQuote(string src) -> string;
 auto      		ReplaceCRtoHTML(string src) -> string;
+auto			ReplaceWstringAccordingToMap(const wstring &src, const map<wstring, wstring> &replacements) -> wstring;
 auto	      	ConvertHTMLToText(const wstring &messageBody) -> wstring;
 auto	      	ConvertHTMLToText(const string &messageBody) -> string;
 auto      		CleanUPText(const string messageBody, bool removeBR = true) -> string;
-auto      		RemoveAllNonAlphabetSymbols(string src) -> string;
-auto      		ConvertTextToHTML(const string messageBody) -> string;
+auto      		RemoveAllNonAlphabetSymbols(const wstring &src) -> wstring;
+auto      		RemoveAllNonAlphabetSymbols(const string &src) -> string;
+auto      		ConvertTextToHTML(const string &messageBody) -> string;
 auto 			CheckHTTPParam_Text(string srcText) -> string;
 auto 			CheckHTTPParam_Number(string srcText) -> string;
-auto	 		CheckHTTPParam_Date(const string &srcText) -> string;
+auto	 		CheckHTTPParam_Date(string srcText) -> string;
 auto	 		CheckHTTPParam_Float(const string &srcText) -> string;
 auto 			CheckHTTPParam_Email(string srcText) -> string;
 auto      		CheckIfFurtherThanNow(string occupationStart_cp1251)  -> string;
-auto			GetDefaultActionFromUserType(string role, CMysql *) -> string;
+auto			GetDefaultActionFromUserType(const string &role, CMysql *) -> string;
+auto			GetDefaultActionFromUserType(CUser *, CMysql *) -> string;
 auto    	  	GetSecondsSinceY2k() -> double;
 auto    	  	GetLocalFormattedTimestamp() -> string;
 auto    	  	GetTimeDifferenceFromNow(const string timeAgo) -> double;
@@ -62,23 +74,21 @@ auto    	  	SymbolReplace(const string where, const string src, const string dst
 auto    	  	SymbolReplace_KeepDigitsOnly(const string where) -> string;
 auto         	qw(const string src, vector<string> &dst) -> int;
 auto			split(const string& s, const char& c) -> vector<string>;
+auto			join(const vector<string>& vec, string separator) -> string;
 auto 	     	UniqueUserIDInUserIDLine(string userIDLine) -> string; //-> decltype(static_cast<string>("123"))
 auto 	     	AutodetectSexByName(string name, CMysql *) -> string;
 auto			GetPasswordNounsList(CMysql *) -> string;
 auto			GetPasswordAdjectivesList(CMysql *) -> string;
 auto			GetPasswordCharacteristicsList(CMysql *) -> string;
 auto			isAllowed_NoSession_Action(string action) -> bool;
-auto			stod_noexcept(const string &) -> double;
+auto			stod_noexcept(const string &) noexcept -> double;
 auto			MaskSymbols(string src, int first_pos, int last_pos) -> string;
 
-string      	GetChatMessagesInJSONFormat(string dbQuery, CMysql *);
-string      	GetUnreadChatMessagesInJSONFormat(CUser *, CMysql *);
-string      	GetMessageImageList(string imageSetID, CMysql *);
-string      	GetMessageCommentsCount(string messageID, CMysql *);
-string      	GetMessageSpam(string messageID, CMysql *);
-string      	GetMessageSpamUser(string messageID, string userID, CMysql *);
-
-string			GetGeoLocalityIDByCityAndRegion(string regionName, string cityName, CMysql *);
+auto      		GetBaseUserInfoInJSONFormat(string dbQuery, CMysql *, CUser *) -> string;
+auto      		GetGeoCountryListInJSONFormat(string dbQuery, CMysql *, CUser *) -> string;
+auto	      	GetChatMessagesInJSONFormat(string dbQuery, CMysql *) -> string;
+auto	      	GetUnreadChatMessagesInJSONFormat(CUser *, CMysql *) -> string;
+auto			GetGeoLocalityIDByCityAndRegion(string regionName, string cityName, CMysql *) -> string;
 bool        	AllowMessageInNewsFeed(CUser *me, const string messageOwnerID, const string messageAccessRights, vector<string> *messageFriendList);
 bool        	isPersistenceRateLimited(string REMOTE_ADDR, CMysql *);
 bool        	isFileExists(const std::string& name);
@@ -110,6 +120,39 @@ bool 			isBotIP(string ip);
 bool 			isAdverseWordsHere(string text, CMysql *);
 string			GetDefaultActionLoggedinUser(void);
 auto			CutTrailingZeroes(string number) -> string;
+auto			GetSiteThemesInJSONFormat(string sqlQuery, CMysql *, CUser *) -> string;
+
+// --- string counters
+auto			GetNumberOfCntrls (const wstring &src) -> unsigned int;
+auto			GetNumberOfCntrls (const  string &src) -> unsigned int;
+auto			GetNumberOfSpaces (const wstring &src) -> unsigned int;
+auto			GetNumberOfSpaces (const  string &src) -> unsigned int;
+auto			GetNumberOfDigits (const wstring &src) -> unsigned int;
+auto			GetNumberOfDigits (const  string &src) -> unsigned int;
+auto			GetNumberOfLetters(const wstring &src) -> unsigned int;
+auto			GetNumberOfLetters(const  string &src) -> unsigned int;
+
+// --- SMS functions
+auto			SendPhoneConfirmationCode(const string &country_code, const string &phone_number, const string &session, CMysql *db, CUser *user) -> string;
+auto			CheckPhoneConfirmationCode(const string &confirmation_code, const string &session, CMysql *, CUser *) -> vector<pair<string, string>>;
+auto			RemovePhoneConfirmationCodes(string sessid, CMysql *) -> string;
+
+// --- DB functions
+auto			GetValueFromDB(string sql, CMysql *) -> string;
+auto			GetValuesFromDB(string sql, CMysql *) -> vector<string>;
+
+// --- login functions
+auto			GetCountryCodeAndPhoneNumberBySMSCode(const string &confirmation_code, const string &session, CMysql *) -> tuple<string, string, string>;
+
+// --- helpdesk
+auto			GetHelpDeskTicketsInJSONFormat(string sqlQuery, CMysql *db, CUser *user) -> string;
+auto			GetHelpDeskTicketHistoryInJSONFormat(string sqlQuery, CMysql *db, CUser *user) -> string;
+auto			GetHelpDeskTicketAttachInJSONFormat(string sqlQuery, CMysql *db, CUser *user) -> string;
+auto			isHelpdeskTicketOwner(string ticket_id, string user_id, CMysql *db, CUser *user) -> bool;
+auto			isUserAllowedToChangeTicket(string ticket_id, string user_id, CMysql *db, CUser *user) -> string;
+
+// --- FAQ
+auto			GetFAQInJSONFormat(string sqlQuery, CMysql *db, CUser *user) -> string;
 
 // --- date functions
 struct tm		GetTMObject(string date);
@@ -136,8 +179,9 @@ string 			GetSpecificData_GetDBCoverPhotoFilenameString(string itemType);
 bool 			GetSpecificData_AllowedToChange(string itemID, string itemType, CMysql *, CUser *);
 
 // --- UTF8 encoding/decoding
-int         	convert_utf8_to_windows1251(const char* utf8, char* windows1251, size_t n);
-bool 			convert_cp1251_to_utf8(const char *in, char *out, int size);
+auto         	convert_utf8_to_windows1251(const char* utf8, char* windows1251, size_t n) -> int;
+auto			utf8_to_cp1251(const string &) -> string;
+auto 			convert_cp1251_to_utf8(const char *in, char *out, int size) -> bool;
 
 // --- base64 encoding/decoding
 static const std::string base64_chars = 
@@ -212,5 +256,8 @@ string		ParseGPSLongitude(const string longitudeStr);
 string		ParseGPSLatitude(const string latitudeStr);
 string		ParseGPSAltitude(const string altitudeStr);
 string		ParseGPSSpeed(const string speedStr);
+
+auto		GetDomain() -> string;
+auto		isDemoDomain() -> bool;
 
 #endif

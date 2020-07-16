@@ -186,9 +186,16 @@ $archive_filename  = $mysqldb."_".($action eq "--backup" ? "full_" : "struct_").
 #
 if($action =~ /^--backup/)
 {
+	my $system_err;
+
 	print "\n\nPerforming ".($action eq "--backup" ? "full" : "structure")." backup\n";
-	# print "performing clean-up\n";
-	# system("make clean");
+	print "make clean...\n";
+	$system_err = system("cd ".$config{project_binary_dir}." && make clean"); # --- save around 20MB per backup
+	if($system_err) { print "\n\nmake clean\t[ERROR]\n"; }
+	else			{ print "make clean\t[OK]\n"; }
+
+	print "removing MaxMingDB...\t";
+	unlink (glob($config{binary_maxmind_dir}.'/*')) and print "[OK]\n" or print "[ERROR]\n";
 
 	print "removing old files (sql, *~, *.tar.gz, $mysqldb.tar.gz)\n";
 	unlink 'sql', 'sql_controltables', '$mysqldb.tar.gz';
@@ -208,21 +215,28 @@ if($action =~ /^--backup/)
 		Remove_Local_PersistentFolders();
 	}
 
+	Remove_CGI_From_Local_Folders();
+
 	print "mysqldump ....\n";
 	if($action =~ /_structure/)
 	{
-		system("mysqldump --no-data -Q -u $mysqllogin -p$mysqlpass -h $mysqlhost $mysqldb > sql");
-		system("mysqldump --add-drop-table -Q -u $mysqllogin -p$mysqlpass -h $mysqlhost $mysqldb ".$config{tables_to_upgrade}." > sql_controltables");
+		system("mysqldump --default-character-set=utf8mb4 --no-data -Q -u $mysqllogin -p$mysqlpass -h $mysqlhost $mysqldb > sql");
+		system("mysqldump --default-character-set=utf8mb4 --add-drop-table -Q -u $mysqllogin -p$mysqlpass -h $mysqlhost $mysqldb ".$config{tables_to_upgrade}." > sql_controltables");
 	}
 	else
 	{
-		system("mysqldump  -Q -u $mysqllogin -p$mysqlpass -h $mysqlhost $mysqldb > sql");
+		system("mysqldump --default-character-set=utf8mb4 -Q -u $mysqllogin -p$mysqlpass -h $mysqlhost $mysqldb > sql");
 	}
 
 	print "archiving ....\n";
-	system("tar -czf ".$archive_filename." *");
+	$system_err = system("tar -czf ".$archive_filename." *");
+	if($system_err) { print "\n\narchiving\t[ERROR]\n"; }
+	else			{ print "archiving\t[OK]\n"; }
+
 	print "copying ".$domainSuffix." development environment ....\n";
-	system("cp ".$archive_filename." /storage/".$config{backup_username}."/backup/".$domainSuffix."/");
+	$system_err = system("cp ".$archive_filename." /storage/".$config{backup_username}."/backup/".$domainSuffix."/");
+	if($system_err) { print "\n\copying\t[ERROR]\n"; }
+	else			{ print "copying\t[OK]\n"; }
 
 	if(isDevServer())
 	{
@@ -255,8 +269,21 @@ if($action =~ /^--backup/)
 		# 	system("cp ".$archive_filename." /storage/".$config{backup_username}."/backup/www.".$domainSuffix."/");
 
 		# }
+
+
 		print "rsync to remote server ....\n";
-		system("rsync -alzhe ssh --exclude '*.tar.gz' ./ ".$config{backup_username}."\@".$config{backup_hostname}.":/storage/".$config{backup_username}."/backup/".$domainSuffix."/rsync/");
+		$system_err = system("rsync -rptgoDzhe ssh --exclude '*.tar.gz' ./ ".$config{backup_username}."\@".$config{backup_hostname}.":/storage/".$config{backup_username}."/backup/".$domainSuffix."/rsync/");
+		if($system_err) { print "\n\nrsyncing\t[ERROR]\n"; }
+		else			{ print "rsyncing\t[OK]\n"; }
+
+		my @date = split(" ", localtime(time));
+		if($date[0] eq "Sat") # --- today is Friday least busy day, do full backup
+		{
+			print "full backup to remote server ....\n";
+			$system_err = system("scp ".$archive_filename." ".$config{backup_hostname}.":/storage/".$config{backup_username}."/backup/".$domainSuffix."/".$archive_filename."");
+			if($system_err) { print "\n\nscp to remote server\t[ERROR]\n"; }
+			else			{ print "scp to remote server\t[OK]\n"; }
+		}
 	}
 
 	print "cleaning-up development folder ...\n";
@@ -275,6 +302,11 @@ if($action =~ /^--backup/)
 	{
 		print "\n ---recover cli: \nsudo date && rm -rf ./tmp/recover/ && mkdir -p ./tmp/recover/ && cd ./tmp/recover/ && cp /storage/".$config{backup_username}."/backup/".$domainSuffix."/".$archive_filename." ./tmp/recover/ && tar -zxf ".$archive_filename." && time sudo ./archive.pl --restore;\n\n";
 	}
+
+	print "cmake project on local server...\n";
+	$system_err = system("cd ".$config{project_binary_dir}." && cmake -DCMAKE_BUILD_TYPE=debug .."); # --- save around 20MB per backup
+	if($system_err) { print "\n\nproject cmake\t[ERROR]\n"; }
+	else			{ print "project cmake\t[OK]\n"; }
 }
 
 if($action =~ /^--restore/)
@@ -378,7 +410,7 @@ if($action =~ /^--restore/)
 		# [IMPORTANT] supposed that sql file in current directory having only MySQL tables structure --no-data
 		#
 		print "adding MySQL production data to MySQL backup structure\n";
-		system("mysqldump --no-create-info --skip-add-drop-table -Q -u $mysqllogin -p$mysqlpass -h $mysqlhost $mysqldb >> sql");
+		system("mysqldump --default-character-set=utf8mb4 --no-create-info --skip-add-drop-table -Q -u $mysqllogin -p$mysqlpass -h $mysqlhost $mysqldb >> sql");
 	}
 
 	if(isDevServer())
@@ -426,33 +458,48 @@ if($action =~ /^--restore/)
 	print "restoring production folders\n";
 	Dirmove_Local_To_Production();
 
-	system("cd ".$folders_to_backup{SRCDIR}."/build && cmake ..");
+	if(CompileAndInstall())
+	{
+		#
+		# change ownership of html and cgi-bin folders
+		#
+		print "fix the owner and access rights ...\n";
+		system("chown -R ".$config{backup_username}.":".$config{backup_username}." ./*");
+		FixOwnerAndAccessRights();
+	}
+	else
+	{
+		print "[ERROR] during build stage\n";
+	}
+}
+
+#
+# No error checks in here.
+# We must do our best to install as much as possible to recover production.
+#
+sub CompileAndInstall
+{
+	#
+	# ATTENTION !!!
+	# if you want to move compilation phase up , then RemoveProdFolders and DirmoveLocalToProduction 
+	# has to be split to treat SRCDIR separately from HTMLDIR.
+	# current workflow: 
+	#	RemoveProdDir -> MoveAllDirsToProd -> build
+	# new workflow: 
+	#	RemoveProdSrcDir -> MoveSrcDirsToProd -> compile -> RemoveProdHTMLDir -> MoveHTMLDirsToProd -> build
+	#
+	system("cd ".$folders_to_backup{SRCDIR}."/build && cmake -DCMAKE_BUILD_TYPE=debug ..");
 	#
 	# renice process to provide enough resources to mysql and apache.
 	# don't change it to lowest value (19),
 	# that way c-compiler can spend a lot of time in "CPU-wait" state, rather than use CPU-cycles
 	#
-	system("cd ".$folders_to_backup{SRCDIR}."/build && nice -5 make -j2");
+	system("cd ".$folders_to_backup{SRCDIR}."/build && time nice -10 make -j4");
 	system("cd ".$folders_to_backup{SRCDIR}."/build && make install");
 	system("cd ".$folders_to_backup{SRCDIR}."/build && make clean");
 
-	#
-	# change ownership of html and cgi-bin folders
-	#
-	print "fix the owner and access rights ...\n";
-	system("chown -R ".$config{backup_username}.":".$config{backup_username}." ./*");
-	FixOwnerAndAccessRights();
-
-	# system("chown -R www-data:www-data $htmldir");
-	# system("chown -R www-data:www-data $cgidir");
-	# system("chown -R www-data:www-data $realImageDomainDir");
-	# system("chmod -R g+w $htmldir");
-	# system("chmod -R g+w $cgidir");
-	# system("chmod -R g+w $realImageDomainDir");
-	# system("chmod -R o-rw $htmldir");
-	# system("chmod -R o-rw $cgidir");
-	# system("chmod -R o-rw $realImageDomainDir");
-}
+	return 1;
+};
 
 sub activate_htaccess
 {
@@ -960,6 +1007,16 @@ sub Remove_Local_PersistentFolders
 	}
 }
 
+sub Remove_CGI_From_Local_Folders
+{
+	print "removing *.cgi from local folders";
+	foreach my $folder_id(keys %folders_to_backup)
+	{
+		system("find $folder_id -name *.cgi -type f -exec rm -f {} \\;");
+	}
+	print "\t[ok]\n";
+}
+
 sub Remove_Production_Folders
 {
 	foreach my $folder_id(keys %folders_to_backup)
@@ -1105,7 +1162,7 @@ sub	CreateRecoveryPoint
 		}
 
 		print "\tMySQL backup to $recovery_point_folder/sql\n";
-		system("mysqldump -Q -u $mysqllogin -p$mysqlpass -h $mysqlhost $mysqldb > $recovery_point_folder/sql");
+		system("mysqldump --default-character-set=utf8mb4 -Q -u $mysqllogin -p$mysqlpass -h $mysqlhost $mysqldb > $recovery_point_folder/sql");
 	}
 }
 

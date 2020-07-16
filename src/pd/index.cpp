@@ -333,7 +333,7 @@ int main()
 	{
 
 		indexPage.ParseURL();
-		indexPage.AddCookie("lng", "ru", "", "", "/");
+		indexPage.AddCookie("lng", "ru", nullptr, "", "/");
 
 		if(!indexPage.SetTemplate("index.htmlt"))
 		{
@@ -375,23 +375,16 @@ int main()
 
 		if((action.length() > 10) && (action.compare(action.length() - 9, 9, "_template") == 0))
 		{
-			ostringstream	ost;
-			string			strPageToGet, strFriendsOnSinglePage;
-
-			{
-				MESSAGE_DEBUG("", action, "start");
-			}
+			MESSAGE_DEBUG("", action, "start");
 
 			string		template_name = action.substr(0, action.length() - 9) + ".htmlt";
 
 			if(!indexPage.SetTemplate(template_name))
 			{
 				MESSAGE_DEBUG("", action, "can't find template " + template_name);
-			} // if(!indexPage.SetTemplate("my_network.htmlt"))
-
-			{
-				MESSAGE_DEBUG("", action, "finish");
 			}
+
+			MESSAGE_DEBUG("", action, "finish");
 		}
 
 		if(action == "setlang")
@@ -399,7 +392,7 @@ int main()
 			string		lng;
 
 			lng = indexPage.GetVarsHandler()->Get("lng");
-			indexPage.AddCookie("lng", lng, "", "", "/");
+			indexPage.AddCookie("lng", lng, nullptr, "", "/");
 
 			if(!indexPage.SetTemplate("index.htmlt"))
 			{
@@ -1397,7 +1390,7 @@ int main()
 
 			indexPage.RegisterVariableForce("result", result.str());
 
-			if(!indexPage.SetTemplate("ajax_getJobTitles.htmlt"))
+			if(!indexPage.SetTemplate("json_response.htmlt"))
 			{
 				CLog	log;
 
@@ -1478,7 +1471,6 @@ int main()
 
 						result.str("");
 						result << "{ \"result\":\"ok\", \"description\":\"\" }";
-
 					}
 					else
 					{
@@ -1509,10 +1501,10 @@ int main()
 								(`friendID`=\"" << user.GetID() << "\" and `userID`=\"" << friendID << "\" );";
 						db.Query(ost.str());
 
-						ost.str("");
+/*						ost.str("");
 						ost << "INSERT INTO `feed` (`title`, `userId`, `actionTypeId`, `actionId`, `eventTimestamp`) values(\"\",\"" << user.GetID() << "\", \"15\", \"" << friendID << "\", NOW())";
 						db.Query(ost.str());
-
+*/
 						result.str("");
 						result << "{ \"result\":\"ok\", \"description\":\"\" }";
 					}
@@ -1536,18 +1528,42 @@ int main()
 				{
 					if((currentFriendshipStatus == "requested") || (currentFriendshipStatus == "requesting") || (currentFriendshipStatus == "confirmed") || (currentFriendshipStatus == "blocked"))
 					{
-						ost.str("");
-						ost << "update `users_friends` set `state`='confirmed', `date`=NOW() WHERE  \
-								(`userID`=\"" << user.GetID() << "\" and `friendID`=\"" << friendID << "\") \
-								OR \
-								(`friendID`=\"" << user.GetID() << "\" and `userID`=\"" << friendID << "\" );";
-						db.Query(ost.str());
+						db.Query("update `users_friends` set `state`='confirmed', `date`=NOW() WHERE  "
+								 "(`userID`=\"" + user.GetID() + "\" and `friendID`=\"" + friendID + "\") "
+								 "OR "
+								 "(`friendID`=\"" + user.GetID() + "\" and `userID`=\"" + friendID + "\" );");
+						db.Query("INSERT INTO `feed` (`title`, `userId`, `actionTypeId`, `actionId`, `eventTimestamp`) values(\"\",\"" + user.GetID() + "\", \"14\", \"" + friendID + "\", NOW());");
+						db.Query("INSERT INTO `feed` (`title`, `userId`, `actionTypeId`, `actionId`, `eventTimestamp`) values(\"\",\"" + friendID + "\", \"14\", \"" + user.GetID() + "\", NOW());");
 
+						result.str("");
+						result << "{ \"result\":\"ok\", \"description\":\"\"}";
+					}
+					if(currentFriendshipStatus == "empty")
+					{
 						ost.str("");
-						ost << "INSERT INTO `feed` (`title`, `userId`, `actionTypeId`, `actionId`, `eventTimestamp`) values(\"\",\"" << user.GetID() << "\", \"14\", \"" << friendID << "\", NOW())";
-						db.Query(ost.str());
-						ost.str("");
-						ost << "INSERT INTO `feed` (`title`, `userId`, `actionTypeId`, `actionId`, `eventTimestamp`) values(\"\",\"" << friendID << "\", \"14\", \"" << user.GetID() << "\", NOW())";
+						ost << "START TRANSACTION;"
+								"insert into `users_friends` (`userID`, `friendID`, `state`, `date`) "
+								"VALUES ("
+								"\"" << user.GetID() << "\", "
+								"\"" << friendID << "\", "
+								"\"confirmed\", "
+								"NOW() "
+								");"
+								"insert into `users_friends` (`userID`, `friendID`, `state`, `date`) "
+								"VALUES ("
+								"\"" << friendID << "\", "
+								"\"" << user.GetID() << "\", "
+								"\"confirmed\", "
+								"NOW() "
+								");"
+								"INSERT INTO `feed` (`title`, `userId`, `actionTypeId`, `actionId`, `eventTimestamp`) "
+								"VALUES("
+								"\"\", "
+								"\"" << user.GetID() << "\", "
+								"\"14\", "
+								"\"" << friendID << "\",  "
+								"NOW());"
+								"COMMIT;";
 						db.Query(ost.str());
 
 						result.str("");
@@ -1755,9 +1771,7 @@ int main()
 			string			sessid, messageId, messageLikeType, userList = "";
 			string		  failReason = "";
 
-			{
-				MESSAGE_DEBUG("", action, "start");
-			}
+			MESSAGE_DEBUG("", action, "start");
 
 			if(user.GetLogin() == "Guest")
 			{
@@ -1965,67 +1979,32 @@ int main()
 		// --- JSON FindFriend by ID
 		if(action == "JSON_getFindFriendByID")
 		{
-			ostringstream	ost, ostFinal;
-			string			sessid, lookForKey, userList;
-			CMysql			db1;
-
 			MESSAGE_DEBUG("", "", "start");
 
+			auto	success_message = ""s;
+			auto	error_message = ""s;
+/*
 			if(user.GetLogin() == "Guest")
 			{
-				MESSAGE_DEBUG("", action, "re-login required");
-
-				indexPage.Redirect("/" + GUEST_USER_DEFAULT_ACTION + "?rand=" + GetRandom(10));
+				error_message = gettext("re-login required");
+				MESSAGE_DEBUG("", action, error_message);
 			}
-
-			if(db1.Connect(DB_NAME, DB_LOGIN, DB_PASSWORD) < 0)
+			else
+*/
 			{
-				CLog	log;
-		
-				log.Write(ERROR, "Can not connect to mysql database");
-				return(1);
+				auto	lookForKey = CheckHTTPParam_Text(indexPage.GetVarsHandler()->Get("lookForKey"));
+				
+				success_message = "\"users\":[" + GetUserListInJSONFormat("SELECT * FROM `users` WHERE `isActivated`='Y' and `isblocked`='N' and `id`=\"" + lookForKey + "\" ;", &db, &user) + "]";
 			}
 
-			lookForKey = CheckHTTPParam_Text(indexPage.GetVarsHandler()->Get("lookForKey"));
+			AJAX_ResponseTemplate(&indexPage, success_message, error_message);
 
-			// --- Clean-up the text
-			lookForKey = ReplaceDoubleQuoteToQuote(lookForKey);
-			lookForKey = DeleteHTML(lookForKey);
-			lookForKey = SymbolReplace(lookForKey, "\r\n", "");
-			lookForKey = SymbolReplace(lookForKey, "\r", "");
-			lookForKey = SymbolReplace(lookForKey, "\n", "");
-
-			ost << "SELECT * FROM `users` WHERE `isActivated`='Y' and `isblocked`='N' and `id`=\"" << lookForKey << "\" ;";
-
-			userList = GetUserListInJSONFormat(ost.str(), &db, &user);
-
-			ostFinal.str("");
-			ostFinal << "[" << std::endl << userList << std::endl << "]" << std::endl;
-
-			indexPage.RegisterVariableForce("result", ostFinal.str());
-
-			if(!indexPage.SetTemplate("json_response.htmlt"))
-			{
-				MESSAGE_ERROR("", action, " template file json_response.htmlt was missing");
-				throw CException("Template file was missing");
-			}
-
-			{
-				MESSAGE_DEBUG("", action, "finish");
-			}
+			MESSAGE_DEBUG("", action, "finish");
 		}
 
-		// --- JSON friend list for autocomplete
-		if((action == "JSON_getFindFriendsListAutocomplete") || (action == "JSON_getFindFriendsListAutocompleteIncludingMyself") || (action == "JSON_getFindFriendsList"))
+		if(action == "JSON_getFindFriendsList")
 		{
-			ostringstream	ost, ostFinal;
-			string			sessid, lookForKey, userList;
-			vector<string>	searchWords;
-
 			MESSAGE_DEBUG("", "", "start");
-
-			// --- Initialization
-			ostFinal.str("");
 
 /*			if(user.GetLogin() == "Guest")
 			{
@@ -2035,246 +2014,32 @@ int main()
 			}
 			else
 */
+			auto	lookForKey = CheckHTTPParam_Text(indexPage.GetVarsHandler()->Get("lookForKey"));
+			auto	error_message = ""s;
+			auto	success_message = "\"users\":[" + GetUserListInJSONFormat_BySearchString(lookForKey, false, &db, &user) + "]";
+
+			AJAX_ResponseTemplate(&indexPage, success_message, error_message);
+		}
+
+		if((action == "JSON_getFindFriendsListAutocomplete") || (action == "JSON_getFindFriendsListAutocompleteIncludingMyself"))
+		{
+			MESSAGE_DEBUG("", "", "start");
+
+			auto	lookForKey = CheckHTTPParam_Text(indexPage.GetVarsHandler()->Get("lookForKey"));
+
+
+/*			if(user.GetLogin() == "Guest")
 			{
+				MESSAGE_DEBUG("", action, "re-login required");
 
-				lookForKey = CheckHTTPParam_Text(indexPage.GetVarsHandler()->Get("lookForKey"));
-
-				if(qw(lookForKey, searchWords))
-				{
-
-					ostFinal << "[";
-					{
-						// --- Logging
-						CLog			log;
-
-						MESSAGE_DEBUG("", action, "qw4(" + lookForKey + ")");
-		/*				for(vector<string>::iterator it = searchWords.begin(); it != searchWords.end(); ++it, i++)
-						{
-							ost << string(__func__) + "[" + to_string(__LINE__) << "]" + action + ": parsed value at index " << i << " [" << *it << "]" << endl;
-							log.Write(DEBUG, string(__func__) + "[" + to_string(__LINE__) << "]" + action + ": parsed value at index " << i << " [" << *it << "]" << endl);
-						}
-		*/
-					}
-
-					// --- single search word can be name, surname, company name 
-					if(searchWords.size() == 1)		
-					{
-						{
-							CLog log;
-							MESSAGE_DEBUG("", action, "single word search");
-						}
-
-						// --- Looking through name, surname
-						ost.str("");
-						ost << "SELECT * FROM `users` WHERE "
-								" `isActivated`='Y' and `isblocked`='N' "
-								<< (action == "JSON_getFindFriendsListAutocompleteIncludingMyself" ? "" : " and `users`.`id`!=\"" + user.GetID() + "\" ") <<
-								" and (`name` like \"%" 	<< lookForKey << "%\" or `nameLast` like \"%" 	<< lookForKey << "%\") LIMIT 0, 20;";
-
-						userList = GetUserListInJSONFormat(ost.str(), &db, &user);
-						if(userList.length() > 0) 
-						{
-							// --- comma required only if previous text is exists
-							if(ostFinal.str().length() > 10) ostFinal << ","; 
-							ostFinal  << std::endl << userList; 
-						}
-
-						// --- Looking through company title
-						ost.str("");
-						ost << "SELECT * FROM `users` "
-								"left join `users_company` on `users_company`.`user_id` = `users`.`id` "
-								"left join `company` on `company`.`id`=`users_company`.`company_id` "
-								"where "
-								"`users`.`isActivated`='Y' "
-								" and `users`.`isblocked`='N' "
-								<< (action == "JSON_getFindFriendsListAutocompleteIncludingMyself" ? "" : " and `users`.`id`!=\"" + user.GetID() + "\" ") <<
-								" and `users_company`.`current_company`='1' "
-								" and `company`.`name` like \"%" 	<< lookForKey << "%\" LIMIT 0, 20;";
-
-						userList = GetUserListInJSONFormat(ost.str(), &db, &user);
-						if(userList.length() > 0) 
-						{
-							// --- comma required only if previous text is exists
-							if(ostFinal.str().length() > 10) ostFinal << ","; 
-							ostFinal  << std::endl << userList; 
-						}
-
-					}
-
-					// --- two words searching through DB 
-					if(searchWords.size() == 2)
-					{
-						{
-							CLog log;
-							MESSAGE_DEBUG("", action, "two words search");
-						}
-
-						// --- Looking through user name,surname and company title
-						ost.str("");
-						ost << "SELECT * FROM `users` "
-								" left join `users_company` on `users_company`.`user_id` = `users`.`id` "
-								" left join `company` on `company`.`id`=`users_company`.`company_id` "
-								" where "
-								" `users`.`isActivated`='Y' "
-								" and `users`.`isblocked`='N' "
-								<< (action == "JSON_getFindFriendsListAutocompleteIncludingMyself" ? "" : " and `users`.`id`!=\"" + user.GetID() + "\" ") <<
-								" and `users_company`.`current_company`='1' "
-								" and ( "
-								" 	`company`.`name` like \"%" 	<< searchWords[0] << "%\" or "
-								" 	`company`.`name` like \"%" 	<< searchWords[1] << "%\" "
-								" ) and ( "
-								" 	`users`.`name` like \"%" 		<< searchWords[0] << "%\" or "
-								" 	`users`.`name` like \"%" 		<< searchWords[1] << "%\" or "
-								" 	`users`.`nameLast` like \"%" 	<< searchWords[0] << "%\" or "
-								" 	`users`.`nameLast` like \"%" 	<< searchWords[1] << "%\" "
-								" ) LIMIT 0, 20;";
-
-						userList = GetUserListInJSONFormat(ost.str(), &db, &user);
-						if(userList.length() > 0) 
-						{
-							// --- comma required only if previous text is exists
-							if(ostFinal.str().length() > 10) ostFinal << ","; 
-							ostFinal  << std::endl << userList; 
-						}
-						else
-						{
-							// --- here code will be run only if multiwork search was not sucessfull on previous step
-							// --- earlier: user _and_ company is not success
-							// --- here: user _or_ company
-							{
-								CLog log;
-								MESSAGE_DEBUG("", action, "(user _and_ company) has fail, try (user _without_ company) ");
-							}
-
-							ost.str("");
-							ost << "SELECT * FROM `users` "
-									" WHERE `isActivated`='Y' "
-									" and `isblocked`='N' "
-									<< (action == "JSON_getFindFriendsListAutocompleteIncludingMyself" ? "" : " and `users`.`id`!=\"" + user.GetID() + "\" ") <<
-									" and ( "
-									" ( "
-									" 	`users`.`name` like \"%" 		<< searchWords[1] << "%\" and "
-									" 	`users`.`nameLast` like \"%" 	<< searchWords[0] << "%\" "
-									" ) "
-									" or "
-									" ( "
-									" 	`users`.`name` like \"%" 		<< searchWords[0] << "%\" and "
-									" 	`users`.`nameLast` like \"%" 	<< searchWords[1] << "%\" "
-									" ) "
-									" ) LIMIT 0, 20;";
-
-							userList = GetUserListInJSONFormat(ost.str(), &db, &user);
-							if(userList.length() > 0) 
-							{
-								// --- comma required only if previous text is exists
-								if(ostFinal.str().length() > 10) ostFinal << ","; 
-								ostFinal  << std::endl << userList; 
-							}
-						}
-
-					}
-
-					// --- three words searching through DB 
-					if(searchWords.size() == 3)
-					{
-						{
-							CLog log;
-							MESSAGE_DEBUG("", action, "three words search");
-						}
-
-						// --- Looking through user name,surname and company title
-						ost.str("");
-						ost << "SELECT * FROM `users` \
-								left join `users_company` on `users_company`.`user_id` = `users`.`id` \
-								left join `company` on `company`.`id`=`users_company`.`company_id` \
-								where \
-								`users`.`isActivated`='Y' and `users`.`isblocked`='N' and `users`.`id`!=\"" << user.GetID() << "\" and \
-								`users_company`.`current_company`='1' and \
-								( \
-									`company`.`name` like \"%" 		<< searchWords[0] << "%\" or \
-									`company`.`name` like \"%" 		<< searchWords[1] << "%\" or \
-									`company`.`name` like \"%" 		<< searchWords[2] << "%\" \
-								) and ( \
-									`users`.`name` like \"%" 		<< searchWords[0] << "%\" or \
-									`users`.`name` like \"%" 		<< searchWords[1] << "%\" or \
-									`users`.`name` like \"%" 		<< searchWords[2] << "%\" or \
-									`users`.`nameLast` like \"%" 	<< searchWords[0] << "%\" or \
-									`users`.`nameLast` like \"%" 	<< searchWords[1] << "%\" or \
-									`users`.`nameLast` like \"%" 	<< searchWords[2] << "%\" \
-								) LIMIT 0, 20;";
-
-						userList = GetUserListInJSONFormat(ost.str(), &db, &user);
-						if(userList.length() > 0) 
-						{
-							// --- comma required only if previous text is exists
-							if(ostFinal.str().length() > 10) ostFinal << ","; 
-							ostFinal  << std::endl << userList; 
-						}
-						else
-						{
-							// --- here code will be run only if multiwork search was not sucessfull on previous step
-							// --- earlier: user _and_ company is not success
-							// --- here: user _or_ company
-							{
-								CLog log;
-								MESSAGE_DEBUG("", action, "(user _and_ company) has fail, try (user _without_ company) ");
-							}
-
-							ost.str("");
-							ost << "SELECT * FROM `users` WHERE `isActivated`='Y' and `isblocked`='N' and `id`!=\"" << user.GetID() << "\" and ( \
-									( \
-										`users`.`name` like \"%" 		<< searchWords[1] << "%\" and \
-										`users`.`nameLast` like \"%" 	<< searchWords[0] << "%\" \
-									) \
-									or \
-									( \
-										`users`.`name` like \"%" 		<< searchWords[0] << "%\" and \
-										`users`.`nameLast` like \"%" 	<< searchWords[1] << "%\" \
-									) \
-									or \
-									( \
-										`users`.`name` like \"%" 		<< searchWords[2] << "%\" and \
-										`users`.`nameLast` like \"%" 	<< searchWords[0] << "%\" \
-									) \
-									or \
-									( \
-										`users`.`name` like \"%" 		<< searchWords[0] << "%\" and \
-										`users`.`nameLast` like \"%" 	<< searchWords[2] << "%\" \
-									) \
-									or \
-									( \
-										`users`.`name` like \"%" 		<< searchWords[1] << "%\" and \
-										`users`.`nameLast` like \"%" 	<< searchWords[2] << "%\" \
-									) \
-									or \
-									( \
-										`users`.`name` like \"%" 		<< searchWords[2] << "%\" and \
-										`users`.`nameLast` like \"%" 	<< searchWords[1] << "%\" \
-									) \
-									) LIMIT 0, 20;";
-
-							userList = GetUserListInJSONFormat(ost.str(), &db, &user);
-							if(userList.length() > 0) 
-							{
-								// --- comma required only if previous text is exists
-								if(ostFinal.str().length() > 10) ostFinal << ","; 
-								ostFinal  << std::endl << userList; 
-							}
-						}
-
-					}
-
-					ostFinal << std::endl << "]";
-				}
-
-				{
-					CLog	log;
-
-					MESSAGE_DEBUG("", action, "final response [" + ostFinal.str() + "]");
-				}
-
-
-				indexPage.RegisterVariableForce("result", ostFinal.str());
+		        indexPage.RegisterVariableForce("result", "{\"status\":\"error\",\"description\":\"re-login required\",\"link\":\"/" + GUEST_USER_DEFAULT_ACTION + "?rand=" + GetRandom(10) + "\"}");
+			}
+			else
+*/
+			if(lookForKey.length())
+			{
+				auto	include_myself = (action == "JSON_getFindFriendsListAutocompleteIncludingMyself");
+				indexPage.RegisterVariableForce("result", "[" + GetUserListInJSONFormat_BySearchString(lookForKey, include_myself, &db, &user) + "]");
 			}
 
 			if(!indexPage.SetTemplate("json_response.htmlt"))
@@ -2298,13 +2063,7 @@ int main()
 
 			if(user.GetLogin() == "Guest")
 			{
-				ostringstream   ost;
-
-				{
-					
-					MESSAGE_DEBUG("", action, "re-login required");
-				}
-
+				MESSAGE_DEBUG("", action, "re-login required");
 				indexPage.Redirect("/" + GUEST_USER_DEFAULT_ACTION + "?rand=" + GetRandom(10));
 			}
 
@@ -2339,58 +2098,39 @@ int main()
 		// --- JSON get list of my friends
 		if((action == "JSON_getMyNetworkFriendList") || (action == "JSON_getWhoWatchedONMeList"))
 		{
-			ostringstream	ost, ostFinal, friendsSqlQuery;
-			string			sessid, lookForKey, userList = "";
-			CMysql			db1;
-			int				affected;
-
 			MESSAGE_DEBUG("", "", "start");
 
+			auto	success_message = ""s;
+			auto	error_message = ""s;
+
+/*
 			if(user.GetLogin() == "Guest")
 			{
-				MESSAGE_DEBUG("", action, "re-login required");
-
-				indexPage.Redirect("/" + GUEST_USER_DEFAULT_ACTION + "?rand=" + GetRandom(10));
+				error_message = gettext("re-login required");
+				MESSAGE_DEBUG("", action, error_message);
 			}
-
-			if(db1.Connect(DB_NAME, DB_LOGIN, DB_PASSWORD) < 0)
+			else
+*/
 			{
-				MESSAGE_ERROR("", "", "Can not connect to mysql database");
-				return(1);
-			}
+				ostringstream	ost, ostFinal;
+				auto			user_list = ""s;
+				auto			user_ids_list	= GetValuesFromDB(
+													action == "JSON_getMyNetworkFriendList"	? "SELECT `friendID` FROM `users_friends` WHERE `userID`='" + user.GetID() + "';"  :
+													action == "JSON_getWhoWatchedONMeList"	? "SELECT `watching_userID` FROM `users_watched` WHERE `watched_userID`='" + user.GetID() + "';" :
+													"",
+													&db);
 
-			friendsSqlQuery.str("");
-			ost.str("");
-			if(action == "JSON_getMyNetworkFriendList")
-				ost << "SELECT `friendID` FROM `users_friends` WHERE `userID`='" << user.GetID() << "';";
-			if(action == "JSON_getWhoWatchedONMeList")
-				ost << "SELECT `watching_userID` as `friendID` FROM `users_watched` WHERE `watched_userID`='" << user.GetID() << "';";
-			affected = db.Query(ost.str());
-			if(affected)
-			{
-				friendsSqlQuery << "SELECT * FROM `users` WHERE `isActivated`='Y' and `isblocked`='N' and `id` IN (";
-				for(int i = 0; i < affected; i++)
+				if(user_ids_list.size())
 				{
-					friendsSqlQuery << (i > 0 ? ", " : "") << db.Get(i, "friendID");
+					auto	friendsSqlQuery = "SELECT * FROM `users` WHERE `isActivated`='Y' and `isblocked`='N' and `id` IN (" + join(user_ids_list, ",") + ");";
+
+					user_list = GetUserListInJSONFormat(friendsSqlQuery, &db, &user);
 				}
-				friendsSqlQuery << ");";
 
-				MESSAGE_DEBUG("", action, "query for JSON prepared [" + friendsSqlQuery.str() + "]");
-
-				userList = GetUserListInJSONFormat(friendsSqlQuery.str(), &db, &user);
+				success_message = "\"users\": [" + user_list + "]";
 			}
 
-
-			ostFinal.str("");
-			ostFinal << "[" << userList << "]";
-
-			indexPage.RegisterVariableForce("result", ostFinal.str());
-
-			if(!indexPage.SetTemplate("json_response.htmlt"))
-			{
-				MESSAGE_ERROR("", action, " template file json_response.htmlt was missing");
-				throw CException("Template file was missing");
-			}
+			AJAX_ResponseTemplate(&indexPage, success_message, error_message);
 		}
 
 		if(action == "JSON_chatGetInitialData")
@@ -2645,9 +2385,7 @@ int main()
 				throw CExceptionHTML("template page missing");
 			} // if(!indexPage.SetTemplate("json_response.htmlt"))
 
-			{
-				MESSAGE_DEBUG("", action, "finish");
-			}
+			MESSAGE_DEBUG("", action, "finish");
 		}
 
 		if(action == "AJAX_notificationMarkMessageReadByMessageID")
@@ -3385,9 +3123,7 @@ int main()
 				throw CExceptionHTML("Template file was missing");
 			}
 
-			{
-				MESSAGE_DEBUG("", action, "finish");
-			}
+			MESSAGE_DEBUG("", action, "finish");
 
 		}
 
@@ -3755,37 +3491,20 @@ int main()
 				throw CExceptionHTML("Template file was missing");
 			}
 
-			{
-				MESSAGE_DEBUG("", action, "finish");
-			}
+			MESSAGE_DEBUG("", action, "finish");
 		}
 
 
 		// --- AJAX change user password
 		if(action == "AJAX_changeUserPassword")
 		{
-			ostringstream	ostResult;
 			string			newPassword, cleanedPassword;
+			auto			error_message = ""s;
 
 			if(user.GetLogin() == "Guest")
 			{
-				ostringstream	ost;
-
-				{
-					
-					MESSAGE_DEBUG("", action, "re-login required");
-				}
-
-				ost.str("");
-				ost << "{\"result\": \"error\", \"description\": \"session lost. Need to relogin\"}";
-
-				indexPage.RegisterVariableForce("result", ost.str());
-
-				if(!indexPage.SetTemplate("json_response.htmlt"))
-				{
-					MESSAGE_ERROR("", action, "can't find template json_response.htmlt");
-					throw CExceptionHTML("user not activated");
-				} // if(!indexPage.SetTemplate("json_response.htmlt"))
+				error_message = "re-login required";
+				MESSAGE_DEBUG("", action, error_message);
 			}
 			else
 			{
@@ -3795,94 +3514,16 @@ int main()
 
 				if(cleanedPassword != newPassword)
 				{
-					MESSAGE_DEBUG("", action, "" + action + ": password having wrong symbols change the password to a new one [" + newPassword + "] <> [" + cleanedPassword + "]");
-
-					ostResult.str("");
-					ostResult << "{";
-					ostResult << "\"result\": \"error\",";
-					ostResult << "\"description\": \"Пароль не должен содержать символов [(кавычки), (перевод строки), '<>] \"";
-					ostResult << "}";
+					error_message = "Пароль не должен содержать символов [(кавычки), (перевод строки), '<>]";
+					MESSAGE_DEBUG("", action, error_message);
 				}
 				else
 				{
-					// --- newPassword not empty
-					if(newPassword.length() > 0)
-					{
-						ostringstream	ost;
-
-						ost.str("");
-						ost << "SELECT * FROM `users_passwd` WHERE `userID`='" << user.GetID() << "' and `passwd`='" << newPassword << "';";
-						if(db.Query(ost.str()))
-						{
-
-							MESSAGE_DEBUG("", action, "" + action + ": new password is the same as earlier");
-
-							ostResult.str("");
-							ostResult << "{";
-							ostResult << "\"result\": \"error\",";
-							ostResult << "\"description\": \"Пароль не должен совпадать с одним из прошлых паролей\"";
-							ostResult << "}";
-						}
-						else
-						{
-							// --- Change password
-							ostringstream	ost;
-
-							ost.str("");
-							ost << "update `users_passwd` set `isActive`='false' WHERE `userID`='" << user.GetID() << "';";
-							db.Query(ost.str());
-
-							ost.str("");
-							ost << "insert into `users_passwd` (`userID`, `passwd`, `isActive`, `eventTimestamp`) VALUES \
-									('" << user.GetID() << "', '" << newPassword << "', 'true', NOW());";
-							if(db.InsertQuery(ost.str()))
-							{
-								ostResult.str("");
-								ostResult << "{";
-								ostResult << "\"result\": \"success\",";
-								ostResult << "\"description\": \"\"";
-								ostResult << "}";
-							}
-							else
-							{
-								MESSAGE_ERROR("", action, "insert into users_passwd");
-
-								ostResult.str("");
-								ostResult << "{";
-								ostResult << "\"result\": \"error\",";
-								ostResult << "\"description\": \"Ошибка БД\"";
-								ostResult << "}";
-							}
-							
-							MESSAGE_DEBUG("", action, "password has been changed successfully");
-						}
-					} // if(newPassword.length() > 0)
-					else
-					{
-						// --- Empty title, message and image
-						ostResult.str("");
-						ostResult << "{";
-						ostResult << "\"result\": \"error\",";
-						ostResult << "\"description\": \"can't change to empty password\"";
-						ostResult << "}";
-
-						
-						MESSAGE_DEBUG("", action, "can't change to empty password");
-					}
-
+					error_message = user.ChangePasswordTo(newPassword);
 				}
-
-
 			} // if(user.GetLogin() == "Guest")
 
-			indexPage.RegisterVariableForce("result", ostResult.str());
-
-			if(!indexPage.SetTemplate("json_response.htmlt"))
-			{
-				MESSAGE_ERROR("", action, "can't find template json_response.htmlt");
-				throw CExceptionHTML("Template file was missing");
-			}
-
+			AJAX_ResponseTemplate(&indexPage, "", error_message);
 		}
 
 
@@ -3892,9 +3533,7 @@ int main()
 			string		randomValue = GetRandom(4);
 			string 		userToCheck;
 
-			{
-				MESSAGE_DEBUG("", action, "start");
-			}
+			MESSAGE_DEBUG("", action, "start");
 
 			userToCheck = indexPage.GetVarsHandler()->Get("regEmail"); 
 
@@ -4304,14 +3943,12 @@ int main()
 			ostringstream	ost;
 			string		sessid;
 
-			{
-				MESSAGE_DEBUG("", action, "start");
-			}
+			MESSAGE_DEBUG("", action, "start");
 
 			sessid = indexPage.GetCookie("sessid");
 			if(sessid.length() > 0)
 			{
-				db.Query("UPDATE `sessions` SET `user`=\"Guest\", `expire`=\"1\" WHERE `id`=\"" + sessid + "\";");
+				db.Query("UPDATE `sessions` SET `user_id`=(SELECT `id` FROM `users` WHERE `login`=\"Guest\"), `expire`=\"1\" WHERE `id`=\"" + sessid + "\";");
 
 				if(!indexPage.Cookie_Expire()) {
 					CLog	log;
@@ -4459,9 +4096,7 @@ int main()
 				throw CExceptionHTML("Template file was missing");
 			}
 
-			{
-				MESSAGE_DEBUG("", action, "finish");
-			}
+			MESSAGE_DEBUG("", action, "finish");
 		}
 
 		if(action == "AJAX_recoverPassword")
@@ -4483,60 +4118,37 @@ int main()
 			}
 			else
 			{
-				string		activator_id = CheckHTTPParam_Number(indexPage.GetVarsHandler()->Get("activator_id"));
-				string		password_hash = CheckHTTPParam_Text(indexPage.GetVarsHandler()->Get("password_hash"));
+				auto		activator_id = CheckHTTPParam_Number(indexPage.GetVarsHandler()->Get("activator_id"));
+				auto		password_hash = CheckHTTPParam_Text(indexPage.GetVarsHandler()->Get("password_hash"));
 
 				if(activator_id.length())
 				{
 					if(db.Query("SELECT `user` FROM `activators` WHERE `id`=\"" + activator_id + "\" and `type`=\"password_recovery\";"))
 					{
-						string		user_email = db.Get(0, "user");
+						auto		user_email = db.Get(0, "user");
+						CUser		user(&db);
 
-						if(db.Query("SELECT `id` FROM `users` WHERE `email`=\"" + user_email + "\";"))
+						if(user.GetFromDBbyEmail(user_email))
 						{
-							string		user_id = db.Get(0, "id");
-
-							if(db.Query("SELECT `eventTimestamp` FROM `users_passwd` WHERE `userID`=\"" + user_id + "\" and `passwd`=\"" + password_hash + "\";"))
+							if((error_message = user.ChangePasswordTo(password_hash)).empty())
 							{
-								string timestamp = db.Get(0, "eventTimestamp");
+								db.Query("DELETE FROM `activators` WHERE `user`=\"" + user_email + "\" AND `type`=\"password_recovery\";");
+								if(db.isError())
+								{
+									MESSAGE_ERROR("", "", "fail to clean-up table activators with user.email(" + user_email + ") and type(password_recovery)");
+								}
 
-								error_message = "этот пароль использовался " + GetHumanReadableTimeDifferenceFromNow(timestamp) + ". Выберите другой.";
-								MESSAGE_DEBUG("", action, "user.id(" + user_id + ") not allowd to re-use old password(" + timestamp + ").");
+								redirect_url = "/login?rand=" + GetRandom(10) + "&signinInputEmail=" + user_email;
 							}
 							else
 							{
-								db.Query("UPDATE `users_passwd` SET `isActive`=\"false\" WHERE `userID`=\"" + user_id + "\";");
-								if(db.isError())
-								{
-									error_message = "Ошибка обновления пароля";
-									MESSAGE_ERROR("", action, "fail to update users_passwd table user.id(" + user_id + ")");
-								}
-								else
-								{
-									long	passwd_id = db.InsertQuery("INSERT INTO `users_passwd` SET `userID`=\"" + user_id + "\", `passwd`=\"" + password_hash + "\", `isActive`=\"true\", `eventTimestamp`=NOW();");
-
-									if(passwd_id)
-									{
-										db.Query("DELETE FROM `activators` WHERE `user`=\"" + user_email + "\" AND `type`=\"password_recovery\";");
-										if(db.isError())
-										{
-											MESSAGE_ERROR("", action, "fail to clean-up table activators with user.id(" + user_id + ") and type(password_recovery)");
-										}
-
-										redirect_url = "/login?rand=" + GetRandom(10) + "&signinInputEmail=" + user_email;
-									}
-									else
-									{
-										error_message = "Ошибка обновления пароля";
-										MESSAGE_ERROR("", action, "fail to insert new passwd to users_passwd table");
-									}
-								}
+								MESSAGE_ERROR("", action, error_message);
 							}
 						}
 						else
 						{
-							error_message = "Неизвестный пользователь";
-							MESSAGE_ERROR("", action, "user_email(" + user_email + ") not found in the users table");
+							error_message = gettext("user not found");
+							MESSAGE_ERROR("", action, error_message);
 						}
 					}
 					else
@@ -4582,268 +4194,122 @@ int main()
 			MESSAGE_DEBUG("", action, "finish");
 		}
 
-		if(action == "login_user")
-		{
-			string			login, password, lng, sessid, rememberMe;
-			CUser			user;
-			ostringstream	ost1;
-			string			error_message = "";
-			string			redirect_url = "";
-			string			result = "";
-
-			MESSAGE_DEBUG("", action, "start");
-
-			sessid = indexPage.GetCookie("sessid");
-			if(sessid.length() < 5)
-			{
-				MESSAGE_DEBUG("", action, "cookie is not enabled or session didn't created");
-				error_message = "Разрешите cookie в браузере";
-			}
-			else
-			{
-				login = indexPage.GetVarsHandler()->Get("signinInputEmail");
-				password = indexPage.GetVarsHandler()->Get("signinInputPassword");
-				rememberMe = indexPage.GetVarsHandler()->Get("signinRemember");
-				lng = indexPage.GetLanguage();
-
-				user.SetDB(&db);
-				if(!user.GetFromDBbyEmail(login))
-				{
-					MESSAGE_DEBUG("", action, "user [" + user.GetLogin() + "] not found");
-					error_message = "Имя пользователя или пароль некорректны";
-				}
-				else
-				{
-
-					if(!user.isActive())
-					{
-						MESSAGE_ERROR("", action, "user [" + user.GetLogin() + "] not activated");
-						error_message = "Пользоатель не активирован. Проверьте email и нажмите на ссылку.";
-					}
-					else
-					{
-						if((password != user.GetPasswd()) || (user.GetPasswd() == ""))
-						{
-							MESSAGE_DEBUG("", action, "password incorrect for user [" + user.GetLogin() + "]");
-							error_message = "Имя пользователя или пароль некорректны";
-						}
-						else
-						{
-							{
-								MESSAGE_DEBUG("", action, "switching session (" + sessid + ") FROM Guest to user (" + user.GetLogin() + ")");
-							}
-
-							db.Query("UPDATE `sessions` SET `user`='" + user.GetEmail() + "', `ip`=\"" + getenv("REMOTE_ADDR") + "\", `expire`=\"" + (rememberMe == "remember-me" ? "0" : to_string(SESSION_LEN * 60)) + "\" WHERE `id`=\"" + sessid + "\";");
-							if(db.isError())
-							{
-								MESSAGE_DEBUG("", action, "fail to updte DB sessions`");
-								error_message = "Ошибка БД";
-							}
-							else
-							{
-								if(rememberMe == "remember-me")
-								{
-									if(!indexPage.CookieUpdateTS("sessid", 0))
-									{
-										MESSAGE_ERROR("", action, "setting cookie to session cookie (expire after browser closed)");
-									}
-								}
-
-								indexPage.RegisterVariableForce("loginUser", user.GetLogin());
-								indexPage.RegisterVariableForce("menu_main_active", "active");
-
-								redirect_url = "/" + GetDefaultActionLoggedinUser() + "?rand=" + GetRandom(10);
-
-								{
-									MESSAGE_DEBUG("", action, "redirect to " + redirect_url);
-								}
-							}
-						} // if(password != user.GetPasswd())
-					}  // if(!user.isActive())
-				}  // if(!user.isFound())
-			} // if(sessid.length() < 5)
-
-			if(error_message.empty())
-			{
-				result = "{\"result\":\"success\",\"redirect_url\":\"" + redirect_url + "\"}";
-			}
-			else
-			{
-				result = "{\"result\":\"error\",\"description\":\"" + error_message + "\", \"redirect_url\":\"" + redirect_url + "\"}";
-			}
-
-
-			// --- scoping
-			{
-				string			template_name = "json_response.htmlt";
-				indexPage.RegisterVariableForce("result", result);
-
-				if(!indexPage.SetTemplate(template_name))
-				{
-					MESSAGE_DEBUG("", action, "can't find template " + template_name);
-				} // if(!indexPage.SetTemplate("my_network.htmlt"))
-			}
-
-			MESSAGE_DEBUG("", action, "finish");
-
-		} // --- if(action == login_user)
-
-		// --- AJAX_loginUser
 		if(action == "AJAX_loginUser")
 		{
-			string		login, password, lng, sessid, rememberMe;
-			CUser		user;
-			ostringstream	ost1, ostResult;
+			MESSAGE_DEBUG("", action, "start");
 
-			MESSAGE_DEBUG("", "", "start");
+			vector<pair<string, string>>	error_message;
+			auto							success_message = ""s;
+			auto							sessid = indexPage.GetCookie("sessid");
 
-			sessid = indexPage.GetCookie("sessid");
 			if(sessid.length() < 5)
 			{
 				MESSAGE_DEBUG("", action, "with session id derived FROM cookies");
 
-				ostResult.str("");
-				ostResult << "{";
-				ostResult << "\"result\": \"error\",";
-				ostResult << "\"description\": \"session ID derived FROM cookie is wrong\",";
-				ostResult << "\"type\": \"redirect\",";
-				ostResult << "\"url\": \"/login?rand=" << GetRandom(10) << "\"";
-				ostResult << "}";
+				error_message.push_back(make_pair("description", "session ID derived FROM cookie is wrong"));
+				error_message.push_back(make_pair("type", "redirect"));
+				error_message.push_back(make_pair("url", "/login?rand=" + GetRandom(10) + ""));
 			}
-			else 
+			else
 			{
-				login = indexPage.GetVarsHandler()->Get("login");
-				password = indexPage.GetVarsHandler()->Get("password");
-				rememberMe = indexPage.GetVarsHandler()->Get("remember");
-				lng = indexPage.GetLanguage();
+				auto	login				= CheckHTTPParam_Text(indexPage.GetVarsHandler()->Get("login"));
+				auto	password			= CheckHTTPParam_Text(indexPage.GetVarsHandler()->Get("password"));
+				auto	confirmation_code	= CheckHTTPParam_Number(indexPage.GetVarsHandler()->Get("confirmation_code"));
+				auto	rememberMe			= CheckHTTPParam_Text(indexPage.GetVarsHandler()->Get("signinRemember"));
+				auto	country_code		= ""s;
+				auto	phone_number		= ""s;
+				CUser	user;
 
 				user.SetDB(&db);
-				if(!user.GetFromDBbyEmail(login)) 
-				{
-					MESSAGE_DEBUG("", action, "user [" + user.GetLogin() + "] not found");
 
-					ostResult.str("");
-					ostResult << "{";
-					ostResult << "\"result\": \"error\",";
-					ostResult << "\"description\": \"Почта или Пароль указаны не верно.\"";
-					ostResult << "}";
+				if(confirmation_code.length())
+				{
+					tie(country_code, phone_number, password) = GetCountryCodeAndPhoneNumberBySMSCode(confirmation_code, indexPage.SessID_Get_FromHTTP() , &db);
+					error_message = CheckPhoneConfirmationCode(confirmation_code, indexPage.SessID_Get_FromHTTP(), &db, &user);
 				}
-				else 
+
+				if(error_message.empty())
 				{
-
-					if(!user.isActive()) 
+					if	(
+							((login.find("@") != string::npos) && user.GetFromDBbyEmail(login)) ||
+							(country_code.length() && phone_number.length() && password.length() && user.GetFromDBbyPhone(country_code, phone_number)) || 
+							(user.GetFromDBbyLogin(login))
+						)
 					{
-						CLog	log;
-						log.Write(ERROR, string(__func__) + "[" + to_string(__LINE__) + "]" + action + ": user [" + user.GetLogin() + "] not activated");
 
-						ostResult.str("");
-						ostResult << "{";
-						ostResult << "\"result\": \"error\",";
-						ostResult << "\"description\": \"пользователь неактивирован, необходима активация\"";
-						ostResult << "}";
-					}
-					else 
-					{
-						if((password != user.GetPasswd()) || (user.GetPasswd() == "")) 
+						if(!user.isActive())
 						{
-							if(db.Query("SELECT * FROM `users_passwd` WHERE `userID`=\"" + user.GetID() + "\" and `passwd`=\"" + password + "\";"))
+							error_message.push_back(make_pair("description", "пользователь неактивирован, необходима активация"));
+							MESSAGE_ERROR("", action, "user [" + user.GetLogin() + "] not activated");
+						}
+						else
+						{
+							if((password != user.GetPasswd()) || (user.GetPasswd() == ""))
 							{
-								// --- earlier password is user for user login
-
+								if(db.Query("SELECT * FROM `users_passwd` WHERE `userID`=\"" + user.GetID() + "\" and `passwd`=\"" + password + "\";"))
 								{
-									CLog	log;
+									// --- earlier password is user for user login
+									error_message.push_back(make_pair("description", "этот пароль был изменен " + GetHumanReadableTimeDifferenceFromNow(db.Get(0, "eventTimestamp"))));
 									MESSAGE_DEBUG("", action, "old password has been used for user [" + user.GetLogin() + "] login");
 								}
-
-								ostResult.str("");
-								ostResult << "{";
-								ostResult << "\"result\": \"error\",";
-								ostResult << "\"description\": \"этот пароль был изменен " << GetHumanReadableTimeDifferenceFromNow(db.Get(0, "eventTimestamp")) << "\"";
-								ostResult << "}";
-							}						
-							else
-							{
-								// --- password is wrong for user
-
+								else
 								{
-									CLog	log;
+									// --- password is wrong for user
+									error_message.push_back(make_pair("description", "логин или пароль указаны не верно"));
 									MESSAGE_DEBUG("", action, "user [" + user.GetLogin() + "] failed to login due to passwd error");
 								}
 
-								ostResult.str("");
-								ostResult << "{";
-								ostResult << "\"result\": \"error\",";
-								ostResult << "\"description\": \"логин или пароль указаны не верно\"";
-								ostResult << "}";
-							}
-
-						}
-						else 
-						{
-
-							{
-								CLog	log;
-								MESSAGE_DEBUG("", action, "switching session (" + sessid + ") FROM Guest to user (" + user.GetLogin() + ")");
-							}
-
-							db.Query("UPDATE `sessions` SET `user`=\"" + user.GetEmail() + "\", `ip`=\"" + getenv("REMOTE_ADDR") + "\", `expire`=\"" + (rememberMe == "remember-me" ? "0" : to_string(SESSION_LEN * 60)) + "\" WHERE `id`=\"" + sessid + "\";");
-
-							if(db.isError())
-							{
-								{
-									CLog	log;
-									log.Write(ERROR, string(__func__) + "[" + to_string(__LINE__) + "]" + action + ": updating `sessions` table");
-								}
-								ostResult.str("");
-								ostResult << "{";
-								ostResult << "\"result\": \"error\",";
-								ostResult << "\"description\": \"ошибка БД\"";
-								ostResult << "}";
 							}
 							else
 							{
-								if(rememberMe == "remember-me") 
+								MESSAGE_DEBUG("", action, "" + action + ": switching session (" + sessid + ") FROM Guest to user (" + user.GetLogin() + ")");
+
+								db.Query("UPDATE `sessions` SET `user_id`=\"" + user.GetID() + "\", `ip`=\"" + getenv("REMOTE_ADDR") + "\", `expire`=\"" + (rememberMe == "remember-me" ? "0" : to_string(SESSION_LEN * 60)) + "\" WHERE `id`=\"" + sessid + "\";");
+
+								if(db.isError())
 								{
-									if(!indexPage.CookieUpdateTS("sessid", 0))
+									error_message.push_back(make_pair("description", gettext("SQL syntax error")));
+									MESSAGE_ERROR("", action, "updating `sessions` table");
+								}
+								else
+								{
+									if(rememberMe == "remember-me")
 									{
-										CLog	log;
-										log.Write(ERROR, string(__func__) + "[" + to_string(__LINE__) + "]" + action + ": in setting up expiration sessid cookie to infinite");
+										if(!indexPage.CookieUpdateTS("sessid", 0))
+										{
+											MESSAGE_ERROR("", action, "in setting up expiration sessid cookie to infinite");
+										}
 									}
+
+									indexPage.RegisterVariableForce("loginUser", user.GetLogin());
+									indexPage.RegisterVariableForce("menu_main_active", "active");
+
+									MESSAGE_DEBUG("", action, "redirect to \"/" + GetDefaultActionFromUserType(&user, &db) + "?rand=xxxxxx\"");
+
+									success_message = 	"\"result\": \"success\","
+														"\"description\": \"\","
+														"\"url\": \"/" + GetDefaultActionFromUserType(&user, &db) + "?rand=" + GetRandom(10) + "\"";
 								}
-
-								indexPage.RegisterVariableForce("loginUser", user.GetLogin());
-								indexPage.RegisterVariableForce("menu_main_active", "active");
-
-								{
-									CLog	log;
-									MESSAGE_DEBUG("", action, "redirection to \"news_feed?rand=xxxxxx\"");
-								}
-
-								ostResult.str("");
-								ostResult << "{";
-								ostResult << "\"result\": \"success\",";
-								ostResult << "\"description\": \"\",";
-								ostResult << "\"url\": \"/news_feed?rand=" << GetRandom(10) << "\"";
-								ostResult << "}";
 							}
-						} // if(password != user.GetPasswd())
-					}  // if(!user.isActive()) 
-				}  // if(!user.isFound()) 
+						}
+					}
+					else
+					{
+						error_message.push_back(make_pair("description", "Почта или Пароль указаны не верно."));
+						MESSAGE_DEBUG("", action, "user [" + user.GetLogin() + "] not found");
+					}
+				}
+				else
+				{
+					MESSAGE_DEBUG("", action, "error_message is not empty");
+				}
+
 			} // if(sessid.length() < 5)
 
-			indexPage.RegisterVariableForce("result", ostResult.str());
+			AJAX_ResponseTemplate(&indexPage, success_message, error_message);
 
-			if(!indexPage.SetTemplate("json_response.htmlt"))
-			{
-				MESSAGE_ERROR("", action, " can't find template json_response.htmlt");
-				throw CExceptionHTML("Template file was missing");
-			}
-
-			{
-				MESSAGE_DEBUG("", action, "finish");
-			}
-		} // --- if(action == AJAX_loginUser)
-
+			MESSAGE_DEBUG("", action, "finish");
+		}
 
 		if(action == "regNewUser")
 		{
@@ -4969,7 +4435,7 @@ int main()
 				if(!indexPage.SetTemplate(template_name))
 				{
 					MESSAGE_DEBUG("", action, "can't find template " + template_name);
-				} // if(!indexPage.SetTemplate("my_network.htmlt"))
+				}
 			}
 
 			MESSAGE_DEBUG("", action, "finish");
@@ -5067,7 +4533,7 @@ int main()
 								// db.Query(ost1.str());
 
 								ost1.str("");
-								ost1 << "update `sessions` set `user`='" << login << "', `ip`='" << getenv("REMOTE_ADDR") << "', `expire`=" << (rememberMe == "remember-me" ? 0 : SESSION_LEN * 60) << " WHERE `id`='" << sessid << "';";
+								ost1 << "UPDATE `sessions` SET `user_id`='" << user.GetID() << "', `ip`='" << getenv("REMOTE_ADDR") << "', `expire`=" << (rememberMe == "remember-me" ? 0 : SESSION_LEN * 60) << " WHERE `id`='" << sessid << "';";
 								db.Query(ost1.str());
 
 								if(rememberMe == "remember-me") 
@@ -5096,7 +4562,7 @@ int main()
 			}
 			else
 			{
-				MESSAGE_ERROR("", action, "(not an error, severity error should be monitor) registered user(" + user.GetLogin() + ") attempts to access activateNewUser page, redirect to default page");
+				MESSAGE_ERROR("", action, "(not an error, severity should be monitor) registered user(" + user.GetLogin() + ") attempts to access activateNewUser page, redirect to default page");
 
 				indexPage.Redirect("/" + GetDefaultActionFromUserType(user.GetType(), &db) + "?rand=" + GetRandom(10));
 			}
@@ -5353,22 +4819,27 @@ int main()
 
 		if(action == "JSON_getUserProfile")
 		{
+			MESSAGE_DEBUG("", action, "start");
+
+			auto	temp_userID			= CheckHTTPParam_Number(indexPage.GetVarsHandler()->Get("id"));
+			auto	userID				= (temp_userID.length() ? temp_userID : user.GetID());
+			auto	success_message		= "\"users\":[" + GetUserListInJSONFormat("SELECT * FROM `users` WHERE `id`=\"" + userID + "\";", &db, &user) + "]";
+			auto	error_message		= ""s;
+
+			AJAX_ResponseTemplate(&indexPage, success_message, error_message);
+
+			MESSAGE_DEBUG("", action, "finish");
+		}
+/*
+		if(action == "JSON_getUserProfile")
+		{
 			ostringstream	ost, ostResult;
 			int				affected;
-			string			userID, name, nameLast, age, sex, birthday, birthdayAccess, cv, pass, address, phone, email, isBlocked, avatarFileName, avatarFolderName, current_company;
+			string			userID, name, nameLast, age, sex, birthday, birthdayAccess, cv, address, phone, email, isBlocked, avatarFileName, avatarFolderName, current_company;
 			auto			country_code = ""s;
 			string			geo_locality_id, city = "";
 			string			appliedVacanciesRender = "";
 
-
-/*
-			if(user.GetLogin() == "Guest")
-			{
-				MESSAGE_DEBUG("", action, "re-login required");
-
-				indexPage.Redirect("/" + GUEST_USER_DEFAULT_ACTION + "?rand=" + GetRandom(10));
-			}
-*/
 			userID = CheckHTTPParam_Number(indexPage.GetVarsHandler()->Get("id"));
 
 			if(userID.empty()) userID = user.GetID();
@@ -5404,7 +4875,6 @@ int main()
 				cv = db.Get(0, "users_cv");
 				if(cv == "") cv = "Напишите несколько слов о себе";
 				geo_locality_id = db.Get(0, "users_geo_locality_id");
-				pass = db.Get(0, "users_passwd_passwd");
 				address = db.Get(0, "users_address");
 				country_code = db.Get(0, "users_country_code");
 				phone = db.Get(0, "users_phone");
@@ -5471,9 +4941,9 @@ int main()
 			{
 				MESSAGE_ERROR("", action, " template file json_response.htmlt was missing");
 				throw CException("Template file json_response.htmlt was missing");
-			}  // if(!indexPage.SetTemplate("JSON_getUserProfile.htmlt"))
-		} 	// if(action == "JSON_getUserProfile")
-
+			}
+		}
+*/
 		if(action == "AJAX_newsFeedMarkImageToRemove")
 		{
 			ostringstream	ostFinal;
@@ -5956,62 +5426,105 @@ int main()
 			MESSAGE_DEBUG("", action, "finish");
 		}
 
-		// --- AJAX_updateActiveAvatar
 		if(action == "AJAX_updateActiveAvatar")
 		{
-			string			avatarID, companyId;
-			ostringstream	ostFinal;
-
 			MESSAGE_DEBUG("", action, "start");
+
+			auto 			avatarID = (indexPage.GetVarsHandler()->Get("id") == "-1" ? "" : CheckHTTPParam_Number(indexPage.GetVarsHandler()->Get("id")));
+			auto			success_message = ""s;
+			auto			error_message = ""s;
 
 			if(user.GetLogin() == "Guest")
 			{
-				MESSAGE_DEBUG("", action, "re-login required");
-
-				indexPage.Redirect("/" + GUEST_USER_DEFAULT_ACTION + "?rand=" + GetRandom(10));
+				error_message = gettext("re-login required");
+				MESSAGE_DEBUG("", action, error_message);
 			}
 
-			avatarID = CheckHTTPParam_Number(indexPage.GetVarsHandler()->Get("id"));
-
-			if((avatarID.length() > 0)) 
+			if(avatarID.length() > 0)
 			{
 				db.Query("update `users_avatars` set `isActive`=\"0\" WHERE `userid`='" + user.GetID() + "';");
 				db.Query("update `users_avatars` set `isActive`=\"1\" WHERE `id`=\"" + avatarID + "\" and `userid`=\"" + user.GetID() + "\";");
-
-				// --- Update live feed
 				db.Query("INSERT INTO `feed` (`title`, `userId`, `actionTypeId`, `actionId`, `eventTimestamp`) values(\"\",\"" + user.GetID() + "\", \"8\", \"" + avatarID + "\", NOW())");
-
-				ostFinal.str("");
-				ostFinal << "{" << std::endl;
-				ostFinal << "\"result\" : \"success\"," << std::endl;
-				ostFinal << "}" << std::endl;
 			}
 			else
 			{
+				error_message = gettext("mandatory parameter missed");
+				MESSAGE_DEBUG("", action, error_message);
+			}
+
+			AJAX_ResponseTemplate(&indexPage, success_message, error_message);
+
+			MESSAGE_DEBUG("", action, "" + action + ": finish");
+		}
+
+		if(action == "AJAX_updateSiteTheme")
+		{
+			string			strPageToGet, strFriendsOnSinglePage;
+			ostringstream	ostResult;
+
+			MESSAGE_DEBUG("", action, "start");
+
+			ostResult.str("");
+			if(user.GetLogin() == "Guest")
+			{
 				{
-					CLog	log;
-					log.Write(ERROR, string(__func__) + "[" + to_string(__LINE__) + "]" + action + ": required html parameter avatarID is empty");
+					MESSAGE_DEBUG("", action, "re-login required");
 				}
 
-				ostFinal.str("");
-				ostFinal << "{" << std::endl;
-				ostFinal << "\"result\" : \"error\"," << std::endl;
-				ostFinal << "\"description\" : \"avatarID is empty\"" << std::endl;
-				ostFinal << "}" << std::endl;
-
+				ostResult << "{\"result\":\"error\",\"description\":\"re-login required\"}";
 			}
-
-			indexPage.RegisterVariableForce("result", ostFinal.str());
-
-			if(!indexPage.SetTemplate("json_response.htmlt"))
+			else
 			{
-				MESSAGE_ERROR("", action, " template file json_response.htmlt was missing");
-				throw CException("Template file was missing");
+				string		template_name = "json_response.htmlt";
+				string		error_message = "";
+				string		theme_id = "";
+
+				theme_id = CheckHTTPParam_Number(indexPage.GetVarsHandler()->Get("theme_id"));
+
+				if(theme_id.length())
+				{
+					if(db.Query("SELECT `id` FROM `site_themes` WHERE `id`=\"" + theme_id + "\";"))
+					{
+						db.Query("UPDATE `users` SET `site_theme_id`=\"" + theme_id + "\" WHERE `id`=\"" + user.GetID() + "\";");
+
+						if(db.isError())
+						{
+							MESSAGE_ERROR("", action, "DB update failed (" + db.GetErrorMessage() + ")");
+							error_message = "Ошибка БД";
+						}
+					}
+					else
+					{
+						MESSAGE_DEBUG("", action, "theme_id(" + theme_id + ") not found");
+						error_message = "Некорректный идентификатор темы";
+					}
+				}
+				else
+				{
+					MESSAGE_DEBUG("", action, "theme_id is empty");
+					error_message = "Не указан идентификатор";
+				}
+
+
+				if(error_message.empty())
+				{
+					ostResult << "{\"status\":\"success\"}";
+				}
+				else
+				{
+					MESSAGE_DEBUG("", action, "business trip validity check failed");
+					ostResult << "{\"status\":\"error\",\"description\":\"" + error_message + "\"}";
+				}
+
+				indexPage.RegisterVariableForce("result", ostResult.str());
+
+				if(!indexPage.SetTemplate(template_name))
+				{
+					MESSAGE_DEBUG("", action, "can't find template " + template_name);
+				}
 			}
 
-			{
-				MESSAGE_DEBUG("", action, "finish");
-			}
+			MESSAGE_DEBUG("", action, "finish");
 		}
 
 		// --- !!! IMPORTANT !!!
@@ -6021,9 +5534,7 @@ int main()
 			ostringstream	ost;
 			string			strPageToGet, strNewsOnSinglePage;
 
-			{
-				MESSAGE_DEBUG("", action, "start");
-			}
+			MESSAGE_DEBUG("", action, "start");
 
 			if((user.GetLogin() == "Guest") && (action == "news_feed"))
 			{
@@ -6054,51 +5565,7 @@ int main()
 				throw CExceptionHTML("user not activated");
 			} // if(!indexPage.SetTemplate("news_feed.htmlt"))
 
-			{
-				MESSAGE_DEBUG("", action, "finish");
-			}
-		}
-
-		if(action == "my_network")
-		{
-			ostringstream	ost;
-			string			strPageToGet, strFriendsOnSinglePage;
-
-			{
-				MESSAGE_DEBUG("", action, "start");
-			}
-
-			if(user.GetLogin() == "Guest")
-			{
-				MESSAGE_DEBUG("", action, "re-login required");
-
-				indexPage.Redirect("/" + GUEST_USER_DEFAULT_ACTION + "?rand=" + GetRandom(10));
-			}
-
-			if(action == "my_network") indexPage.RegisterVariableForce("title_head", "Мои друзья");
-			if(action == "who_watched_on_me") indexPage.RegisterVariableForce("title_head", "Кто просматривал мой профиль");
-			if(action == "companies_i_own_list") indexPage.RegisterVariableForce("title_head", "Мои компании");
-
-			strFriendsOnSinglePage	= indexPage.GetVarsHandler()->Get("FriendsOnSinglePage");
-			strPageToGet 			= indexPage.GetVarsHandler()->Get("page");
-			if(strPageToGet.empty()) strPageToGet = "0";
-			{
-				MESSAGE_DEBUG("", action, "page " + strPageToGet + " requested");
-			}
-
-			indexPage.RegisterVariableForce("myFirstName", user.GetName());
-			indexPage.RegisterVariableForce("myLastName", user.GetNameLast());
-
-
-			if(!indexPage.SetTemplate("my_network.htmlt"))
-			{
-				MESSAGE_ERROR("", action, " can't find template my_network.htmlt");
-				throw CExceptionHTML("user not activated");
-			} // if(!indexPage.SetTemplate("my_network.htmlt"))
-
-			{
-				MESSAGE_DEBUG("", action, "finish");
-			}
+			MESSAGE_DEBUG("", action, "finish");
 		}
 
 		if(action == "find_friends")

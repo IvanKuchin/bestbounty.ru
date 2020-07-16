@@ -24,7 +24,8 @@ class CSession
 		CMysql		*db;
 		CCookie		*cookies;
 		string		sessID;
-		string		user;
+		string		user = "";
+		string		user_id = "";
 		string		lng;
 		string		ip;
 		int			expire;
@@ -47,6 +48,7 @@ class CSession
 
 		void		SetID	(const string &param)		{ sessID = param; }
 		void		SetUser	(const string &param)		{ user = param; }
+		void		SetUserID(const string &param)		{ user_id = param; }
 		void		SetIP	(const string &param)		{ ip = param; }
 		void		SetLng	(const string &param)		{ lng = param; }
 		void		SetDB	(CMysql *param)				{ db = param; }
@@ -54,12 +56,14 @@ class CSession
 
 		void		SetID	(string &&param)	noexcept{ sessID = move(param); }
 		void		SetUser	(string &&param)	noexcept{ user = move(param); }
+		void		SetUserID(string &&param)	noexcept{ user_id = move(param); }
 		void		SetIP	(string &&param)	noexcept{ ip = move(param); }
 		void		SetLng	(string &&param)	noexcept{ lng = move(param); }
 
 		string		GetIP()						const	{ return ip; }
 		string		GetID()						const	{ return sessID; }
 		string		GetUser()					const	{ return user; }
+		string		GetUserID()					const	{ return user_id; }
 		string		GetLng()					const	{ return lng; }
 		int			GetExpire()					const	{ return expire; }
 
@@ -82,4 +86,4 @@ class CSession
 					~CSession();
 };
 
-#endif 
+#endif

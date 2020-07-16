@@ -113,8 +113,11 @@ string CVars::Get(string name)
         {
             name = name.substr("index:"s.length()) + GetIndex();
         }
+
         try
         {
+            // --- do NOT replace below with self[name]
+            // --- this check helps to identify if variable already exists
             CVars::iterator itr = find(name);
             if(itr == end())
                 result = "";
@@ -154,18 +157,20 @@ string  CVars::GetNameByRegex(regex r)
 // false: success
 bool CVars::Set(string name, string val)
 {
-    bool	result = false;
+    auto	result = false;
     
     if(name.empty())
     {
+        result = true;
+
         MESSAGE_ERROR("", "", "can't set variable with empty name");
-        return result;
     }
-    
-    erase(name);
-    CVars::iterator	lb = lower_bound(name);
-    insert(lb, value_type(name, val));
-    result = false;
+    else
+    {
+        erase(name);
+        CVars::iterator	lb = lower_bound(name);
+        insert(lb, value_type(name, val));
+    }
 
     return result;    
 }

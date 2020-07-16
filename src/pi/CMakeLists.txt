@@ -3,6 +3,12 @@ set(EXECUTABLE_CGIs
     avataruploader.cgi
     generalimageuploader.cgi
     imageuploader.cgi
+    noauth.cgi
+    )
+
+set(EXECUTABLE_CRONs
+    cron_daily_pi
+    cron_minute_pi
     )
 
 # --- Libraries
@@ -25,6 +31,7 @@ set(JOINT_LIBRARY_SRCs
     cvideoconverter.cpp
     c_float.cpp
     c_archive.cpp
+    c_price_spelling.cpp
     c_smsc.cpp
     utilities1.cpp
     utilities2.cpp
@@ -174,11 +181,19 @@ foreach(EXECUTABLE_CGI ${EXECUTABLE_CGIs})
     __add_executable_2libs  (${EXECUTABLE_CGI}      "${PROJECT_PI_INCLUDE_DIRECTORIES}" "${PROJECT_PI_LIBS}" "${PROJECT_EXTERNAL_LIBS}")
 endforeach()
 
+foreach(EXECUTABLE_CRON ${EXECUTABLE_CRONs})
+    __add_executable_2libs  (${EXECUTABLE_CRON}      "${PROJECT_PI_INCLUDE_DIRECTORIES}" "${PROJECT_PI_LIBS}" "${PROJECT_EXTERNAL_LIBS}")
+endforeach()
+
 # --- Install settings
 
 # --- Install part
 foreach(EXECUTABLE_CGI ${EXECUTABLE_CGIs})
     install(TARGETS ${EXECUTABLE_CGI}       DESTINATION		${CGIDIR})
+endforeach()
+
+foreach(EXECUTABLE_CRON ${EXECUTABLE_CRONs})
+    install(TARGETS ${EXECUTABLE_CRON}       DESTINATION     ${CRON_INSTALL_DIR})
 endforeach()
 
 # print_all_variables()

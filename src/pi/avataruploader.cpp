@@ -123,7 +123,6 @@ int main()
 	try
 	{
 		indexPage.ParseURL();
-		indexPage.AddCookie("lng", "ru", "", "", "/");
 
 		if(!indexPage.SetTemplate("index.htmlt"))
 		{
@@ -181,9 +180,7 @@ int main()
 				int			 affected;
 
 				// --- Check the number of files for that user
-				ost.clear();
-				ost << "select id from `users_avatars` where `userid`='" << user.GetID() << "';";
-				affected = db.Query(ost.str());
+				affected = db.Query("select id from `users_avatars` where `userid`=" + quoted(user.GetID()) + ";");
 				if(affected < 4) // --- 1 text avatar and 3 image avatar
 				{ 
 					{
@@ -275,11 +272,29 @@ int main()
 						}
 
 
+						// --- remove previous logo
+						if(db.Query("select * from `users_avatars` where `userid`=\"" + user.GetID() + "\" and `isActive`=\"1\";"))
+						{
+							auto	currLogo = string(IMAGE_AVATAR_DIRECTORY) + "/" + db.Get(0, "folder") + "/" + db.Get(0, "filename");
+							auto	id = db.Get(0, "id");
+
+							if(isFileExists(currLogo)) 
+							{
+								MESSAGE_DEBUG("", "", "remove current logo (" + currLogo + ")");
+								unlink(currLogo.c_str());
+							}
+
+							db.Query("DELETE FROM `users_avatars` WHERE `id`=" + quoted(id) + ";");
+						}
+						else
+						{
+							auto 	error_message = gettext("SQL syntax error");
+							MESSAGE_ERROR("", "", error_message);
+						}
+
 						CopyFile(tmpImageJPG, file2Check);
 
-						ost.str("");
-						ost << "insert into `users_avatars` set `userid`='" << user.GetID() << "', `folder`='" << folderID << "', `filename`='" << filePrefix << ".jpg'";
-						if(unsigned long avatarID = db.InsertQuery(ost.str()))
+						if(auto avatarID = db.InsertQuery("insert into `users_avatars` set `userid`='" + user.GetID() + "', `folder`='" + to_string(folderID) + "', `filename`='" + filePrefix + ".jpg', `isActive`=\"1\";"))
 						{
 							if(filesCounter == 0) ostJSONResult << "[" << std::endl;
 							if(filesCounter  > 0) ostJSONResult << ",";
@@ -292,9 +307,7 @@ int main()
 							if(filesCounter == (indexPage.GetFilesHandler()->Count() - 1)) ostJSONResult << "]";
 
 							// --- Update live feed
-							ost.str("");
-							ost << "insert into `feed` (`title`, `userId`, `actionTypeId`, `actionId`, `eventTimestamp`) values(\"\",\"" << user.GetID() << "\", \"10\", \"" << avatarID << "\", NOW())";
-							if(!db.InsertQuery(ost.str()))
+							if(!db.InsertQuery("insert into `feed` (`title`, `userId`, `actionTypeId`, `actionId`, `eventTimestamp`) values(\"\",\"" + user.GetID() + "\", \"10\", \"" + to_string(avatarID) + "\", NOW())"))
 							{
 								{
 									ostringstream   ostTemp;
