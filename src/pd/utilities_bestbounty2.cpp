@@ -736,12 +736,7 @@ auto GetEventCheckistInJSONFormat(string dbQuery, CMysql *db, CUser *user) -> st
 			result += "{";
 			result += "\"id\": \""				  	+ checklist.id + "\",";
 			result += "\"title\": \""				+ checklist.title + "\",";
-			result += "\"items\": ["				+ GetChecklistItemInJSONFormat(
-															"SELECT * FROM `checklist_items` "
-															"INNER JOIN `checklist_predefined` ON `checklist_predefined`.`id`=`checklist_items`.`checklist_predefined_id` "
-															"WHERE `checklist_items`.`event_checklist_id`=" + quoted(checklist.id) +  " "
-															";", 
-															db, user) + "],";
+			result += "\"items\": ["				+ GetChecklistItemInJSONFormat(Get_ChecklistItemsByChecklistID_sqlquery(checklist.id), db, user) + "],";
 			result += "\"eventTimestamp\": \""		+ checklist.eventTimestamp + "\"";
 			result += "}";
 
@@ -759,3 +754,15 @@ auto GetEventCheckistInJSONFormat(string dbQuery, CMysql *db, CUser *user) -> st
 	return result;
 }
 
+auto amIAllowedToChangeEvent(const string id, CUser *) -> string
+{
+	MESSAGE_DEBUG("", "", "start");
+
+	auto	error_message = ""s;
+
+
+
+	MESSAGE_DEBUG("", "", "finish");
+
+	return error_message;
+}

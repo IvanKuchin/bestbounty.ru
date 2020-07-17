@@ -77,34 +77,39 @@ int main()
 
 			//------- Generate session
 			action = GenerateSession(action, &indexPage, &db, &user);
+			action = LogoutIfGuest(action, &indexPage, &db, &user);
 		}
 		// ------------ end generate common parts
 
 		MESSAGE_DEBUG("", "", "pre-condition if(action == \"" + action + "\")");
 
 
+		if((action.length() > 10) && (action.compare(action.length() - 9, 9, "_template") == 0))
+		{
+			ostringstream	ost;
+			string			strPageToGet, strFriendsOnSinglePage;
+
+			MESSAGE_DEBUG("", action, "start");
+
+			{
+				string		template_name = action.substr(0, action.length() - 9) + ".htmlt";
+
+				if(!indexPage.SetTemplate(template_name))
+				{
+					MESSAGE_ERROR("", action, "can't find template " + template_name);
+				}
+			}
+
+			MESSAGE_DEBUG("", action, "finish");
+		}
+
 		if(action == "events_list")
 		{
 			ostringstream	ost;
 			string			strPageToGet, strFriendsOnSinglePage;
 
-			{
-				MESSAGE_DEBUG("", action, "start");
-			}
+			MESSAGE_DEBUG("", action, "start");
 
-			if(user.GetLogin() == "Guest")
-			{
-				ostringstream	ost;
-
-				{
-					MESSAGE_DEBUG("", action, "re-login required");
-				}
-
-				ost.str("");
-				ost << "/?rand=" << GetRandom(10);
-				indexPage.Redirect(ost.str());
-			}
-			else
 			{
 				indexPage.RegisterVariableForce("title_head", "События");
 
@@ -127,9 +132,7 @@ int main()
 			}
 
 
-			{
-				MESSAGE_DEBUG("", action, "finish");
-			}
+			MESSAGE_DEBUG("", action, "finish");
 		}
 
 		if((action == "AJAX_getFindEventsListAutocomplete") || (action == "AJAX_getFindEventsList") || (action == "AJAX_findEventByID") || (action == "AJAX_getMyEventsList"))
@@ -138,25 +141,10 @@ int main()
 			string			sessid, lookForKey, eventsList;
 			vector<string>	searchWords;
 
-			{
-				MESSAGE_DEBUG("", action, "start");
-			}
+			MESSAGE_DEBUG("", action, "start");
 
 			// --- Initialization
 			ostFinal.str("");
-
-			if(user.GetLogin() == "Guest")
-			{
-				ostringstream	ost;
-
-				{
-					MESSAGE_DEBUG("", action, "re-login required");
-				}
-
-				ost.str("");
-				ost << "/?rand=" << GetRandom(10);
-				indexPage.Redirect(ost.str());
-			}
 
 			lookForKey = CheckHTTPParam_Text(indexPage.GetVarsHandler()->Get("lookForKey"));
 
@@ -225,78 +213,62 @@ int main()
 
 		if((action == "AJAX_blockEvent") || (action == "AJAX_unblockEvent"))
 		{
-			ostringstream   ostResult;
+			MESSAGE_DEBUG("", action, "start");
 
-			{
-				MESSAGE_DEBUG("", action, "start");
-			}
+			ostringstream   ostResult;
+			auto			eventID = CheckHTTPParam_Number(indexPage.GetVarsHandler()->Get("id"));;
 
 			ostResult.str("");
-			if(user.GetLogin() == "Guest")
+
+			if(eventID.length())
 			{
+				if(db.Query("SELECT `id` FROM `event_hosts` WHERE `event_id`=\"" + eventID + "\" AND `user_id`=\"" + user.GetID() + "\";"))
 				{
-					MESSAGE_DEBUG("", action, "re-login required");
-				}
+					string	dbQuery;
 
-				ostResult << "{\"result\":\"error\",\"description\":\"re-login required\"}";
-			}
-			else
-			{
-				string		eventID;
+					if(action == "AJAX_blockEvent")
+						dbQuery = "UPDATE `events` SET `isBlocked`=\"Y\" WHERE `id`=\"" + eventID + "\";";
+					if(action == "AJAX_unblockEvent")
+						dbQuery = "UPDATE `events` SET `isBlocked`=\"N\" WHERE `id`=\"" + eventID + "\";";
 
-				eventID = CheckHTTPParam_Number(indexPage.GetVarsHandler()->Get("id"));
-
-				if(eventID.length())
-				{
-					if(db.Query("SELECT `id` FROM `event_hosts` WHERE `event_id`=\"" + eventID + "\" AND `user_id`=\"" + user.GetID() + "\";"))
+					db.Query(dbQuery);
+					if(!db.isError())
 					{
-						string	dbQuery;
-
-						if(action == "AJAX_blockEvent")
-							dbQuery = "UPDATE `events` SET `isBlocked`=\"Y\" WHERE `id`=\"" + eventID + "\";";
-						if(action == "AJAX_unblockEvent")
-							dbQuery = "UPDATE `events` SET `isBlocked`=\"N\" WHERE `id`=\"" + eventID + "\";";
-
-						db.Query(dbQuery);
-						if(!db.isError())
-						{
-							ostResult	<< "{"
-										<< "\"result\":\"success\","
-										<< "\"events\":[" << GetEventListInJSONFormat("SELECT * FROM `events` WHERE `id`=\"" + eventID + "\";", &db, &user) << "]"
-										<< "}";
-						}
-						else
-						{
-
-							{
-								MESSAGE_ERROR("", action, ":AJAX_blockEvent: updating DB");
-							}
-
-							ostResult.str("");
-							ostResult << "{";
-							ostResult << "\"result\" : \"error\",";
-							ostResult << "\"description\" : \"ошибка БД\"";
-							ostResult << "}";
-						}
+						ostResult	<< "{"
+									<< "\"result\":\"success\","
+									<< "\"events\":[" << GetEventListInJSONFormat("SELECT * FROM `events` WHERE `id`=\"" + eventID + "\";", &db, &user) << "]"
+									<< "}";
 					}
 					else
 					{
-						MESSAGE_ERROR("", action, "AJAX_blockEvent: eventID [" + eventID + "] doesn't belongs to you");
 
-						ostResult << "{\"result\":\"error\",\"description\":\"Вы не можете блокировать событие\",\"events\":[]}";
+						{
+							MESSAGE_ERROR("", action, ":AJAX_blockEvent: updating DB");
+						}
+
+						ostResult.str("");
+						ostResult << "{";
+						ostResult << "\"result\" : \"error\",";
+						ostResult << "\"description\" : \"ошибка БД\"";
+						ostResult << "}";
 					}
-
 				}
 				else
 				{
-					{
-						MESSAGE_DEBUG("", action, "in eventID [" + eventID + "]");
-					}
+					MESSAGE_ERROR("", action, "AJAX_blockEvent: eventID [" + eventID + "] doesn't belongs to you");
 
-					ostResult << "{\"result\":\"error\",\"description\":\"ERROR in eventID\",\"events\":[]}";
+					ostResult << "{\"result\":\"error\",\"description\":\"Вы не можете блокировать событие\",\"events\":[]}";
 				}
-			}
 
+			}
+			else
+			{
+				{
+					MESSAGE_DEBUG("", action, "in eventID [" + eventID + "]");
+				}
+
+				ostResult << "{\"result\":\"error\",\"description\":\"ERROR in eventID\",\"events\":[]}";
+			}
 
 
 			indexPage.RegisterVariableForce("result", ostResult.str());
@@ -307,92 +279,74 @@ int main()
 				throw CException("Template file json_response.htmlt was missing");
 			}  // if(!indexPage.SetTemplate("AJAX_precreateNewOpenVacancy.htmlt"))
 
-			{
-				MESSAGE_DEBUG("", action, "start");
-			}
+			MESSAGE_DEBUG("", action, "start");
 		}
 
 		if(action == "AJAX_updateEventDescription")
 		{
-			ostringstream	ostFinal;
+			MESSAGE_DEBUG("", action, "start");
 
-			{
-				MESSAGE_DEBUG("", action, "start");
-			}
+
+			auto			value = CheckHTTPParam_Text(indexPage.GetVarsHandler()->Get("description"));
+			auto			id = CheckHTTPParam_Number(indexPage.GetVarsHandler()->Get("eventid"));
+			ostringstream	ostFinal;
 
 			ostFinal.str("");
 
-			if(user.GetLogin() == "Guest")
+
+			if(value.length() && id.length()) 
 			{
-				ostringstream	ost;
-
+				if(db.Query("SELECT `event_id` FROM `event_hosts` WHERE `event_id`=\"" + id + "\" AND `user_id`=\"" + user.GetID() + "\";"))
 				{
-					MESSAGE_DEBUG("", action, "re-login required");
-				}
+					db.Query("UPDATE `events` SET `description`=\"" + value + "\"  WHERE `id`=\"" + id + "\";");
 
-				ostFinal << "{\"result\":\"error\",\"description\":\"re-login required\"}";
-			}
-			else
-			{
-				string			value, id;
-
-				value = CheckHTTPParam_Text(indexPage.GetVarsHandler()->Get("description"));
-				id = CheckHTTPParam_Number(indexPage.GetVarsHandler()->Get("eventid"));
-
-				if(value.length() && id.length()) 
-				{
-					if(db.Query("SELECT `event_id` FROM `event_hosts` WHERE `event_id`=\"" + id + "\" AND `user_id`=\"" + user.GetID() + "\";"))
+					if(!db.isError())
 					{
-						db.Query("UPDATE `events` SET `description`=\"" + value + "\"  WHERE `id`=\"" + id + "\";");
-
-						if(!db.isError())
-						{
-							ostFinal.str("");
-							ostFinal << "{";
-							ostFinal << "\"result\" : \"success\",";
-							ostFinal << "\"description\" : \"\"";
-							ostFinal << "}";
-						}
-						else
-						{
-
-							{
-								MESSAGE_ERROR("", action, ":AJAX_updateEventDescription: updating DB");
-							}
-
-							ostFinal.str("");
-							ostFinal << "{";
-							ostFinal << "\"result\" : \"error\",";
-							ostFinal << "\"description\" : \"error updating DB\"";
-							ostFinal << "}";
-						}
+						ostFinal.str("");
+						ostFinal << "{";
+						ostFinal << "\"result\" : \"success\",";
+						ostFinal << "\"description\" : \"\"";
+						ostFinal << "}";
 					}
 					else
 					{
+
 						{
-							MESSAGE_ERROR("", action, ":AJAX_updateEventDescription: user.id(" + user.GetID() + ") is not an event(" + id + ") host");
+							MESSAGE_ERROR("", action, ":AJAX_updateEventDescription: updating DB");
 						}
 
 						ostFinal.str("");
 						ostFinal << "{";
 						ostFinal << "\"result\" : \"error\",";
-						ostFinal << "\"description\" : \"вы не можете изменить данные события\"";
+						ostFinal << "\"description\" : \"error updating DB\"";
 						ostFinal << "}";
 					}
 				}
 				else
 				{
-					ostringstream	ost;
 					{
-						MESSAGE_DEBUG("", action, "AJAX_updateEventDescription: id(" + id + ") or value(" + value + ") is empty");
+						MESSAGE_ERROR("", action, ":AJAX_updateEventDescription: user.id(" + user.GetID() + ") is not an event(" + id + ") host");
 					}
 
 					ostFinal.str("");
 					ostFinal << "{";
 					ostFinal << "\"result\" : \"error\",";
-					ostFinal << "\"description\" : \"пустые параметры id или value\"";
+					ostFinal << "\"description\" : \"вы не можете изменить данные события\"";
 					ostFinal << "}";
 				}
+			}
+			else
+			{
+				ostringstream	ost;
+				{
+					MESSAGE_DEBUG("", action, "AJAX_updateEventDescription: id(" + id + ") or value(" + value + ") is empty");
+				}
+
+				ostFinal.str("");
+				ostFinal << "{";
+				ostFinal << "\"result\" : \"error\",";
+				ostFinal << "\"description\" : \"пустые параметры id или value\"";
+				ostFinal << "}";
 			}
 
 			indexPage.RegisterVariableForce("result", ostFinal.str());
@@ -403,37 +357,19 @@ int main()
 				throw CException("Template file was missing");
 			}
 
-			{
-				MESSAGE_DEBUG("", action, "end");
-			}
+			MESSAGE_DEBUG("", action, "finish");
 
 		}
 
 		if(action == "AJAX_removeEvent")
 		{
+			MESSAGE_DEBUG("", action, "start");
+
 			ostringstream	ostFinal;
-
-			{
-				MESSAGE_DEBUG("", action, "start");
-			}
-
 			ostFinal.str("");
 
-			if(user.GetLogin() == "Guest")
 			{
-				ostringstream	ost;
-
-				{
-					MESSAGE_DEBUG("", action, "re-login required");
-				}
-
-				ostFinal << "{\"result\":\"error\",\"description\":\"re-login required\"}";
-			}
-			else
-			{
-				string	id;
-
-				id = CheckHTTPParam_Number(indexPage.GetVarsHandler()->Get("id"));
+				auto	id = CheckHTTPParam_Number(indexPage.GetVarsHandler()->Get("id"));
 
 				if(id.length()) 
 				{
@@ -508,31 +444,12 @@ int main()
 				throw CException("Template file was missing");
 			}
 
-			{
-				MESSAGE_DEBUG("", action, "end");
-			}
+			MESSAGE_DEBUG("", action, "finish");
 		}
 
 		if(action == "edit_event")
 		{
-			ostringstream	ost;
-
-			{
-				MESSAGE_DEBUG("", action, "start");
-			}
-
-			if(user.GetLogin() == "Guest")
-			{
-				ostringstream	ost;
-
-				{
-					MESSAGE_DEBUG("", action, "re-login required");
-				}
-
-				ost.str("");
-				ost << "/?rand=" << GetRandom(10);
-				indexPage.Redirect(ost.str());
-			}
+			MESSAGE_DEBUG("", action, "start");
 
 			indexPage.RegisterVariableForce("title", "Редактирование события");
 
@@ -540,43 +457,22 @@ int main()
 			{
 				MESSAGE_DEBUG("", action, "template file edit_event.htmlt was missing");
 				throw CException("Template file edit_event.htmlt was missing");
-			}  // if(!indexPage.SetTemplate("edit_event.htmlt"))
-
-			{
-				MESSAGE_DEBUG("", action, "end");
 			}
-		} 	// if(action == "edit_event")
+
+			MESSAGE_DEBUG("", action, "finish");
+		}
 
 		if(action == "AJAX_updateAccessType")
 		{
-			string			value, id;
+			MESSAGE_DEBUG("", action, "start");
+
 			ostringstream	ostFinal;
 
 			{
-				MESSAGE_DEBUG("", action, "start");
-			}
+				auto	value = toLower(CheckHTTPParam_Text(indexPage.GetVarsHandler()->Get("value")));
+				auto	id = CheckHTTPParam_Number(indexPage.GetVarsHandler()->Get("eventid"));
 
-			if(user.GetLogin() == "Guest")
-			{
-				ostringstream	ost;
-
-				{
-					MESSAGE_DEBUG("", action, "re-login required");
-				}
-
-				ost.str("");
-				ostFinal.str("");
-				ostFinal << "{";
-				ostFinal << "\"result\" : \"error\",";
-				ostFinal << "\"description\" : \"re-login required\"";
-				ostFinal << "}";
-			}
-			else
-			{
-
-				value = toLower(CheckHTTPParam_Text(indexPage.GetVarsHandler()->Get("value")));
 				value = value.substr(0, 64);
-				id = CheckHTTPParam_Number(indexPage.GetVarsHandler()->Get("eventid"));
 				ostFinal.str("");
 
 				if(value.length() && id.length()) 
@@ -644,41 +540,20 @@ int main()
 				throw CException("Template file was missing");
 			}
 
-			{
-				MESSAGE_DEBUG("", action, "end");
-			}
+			MESSAGE_DEBUG("", action, "finish");
 
 		}
 
 		if((action == "AJAX_updateStartTime") || (action == "AJAX_updateStartDate"))
 		{
-			string			value, id;
+			MESSAGE_DEBUG("", action, "start");
+
 			ostringstream	ostFinal;
 
 			{
-				MESSAGE_DEBUG("", action, "start");
-			}
+				auto	value = CheckHTTPParam_Number(indexPage.GetVarsHandler()->Get("value"));
+				auto	id = CheckHTTPParam_Number(indexPage.GetVarsHandler()->Get("eventid"));
 
-			if(user.GetLogin() == "Guest")
-			{
-				ostringstream	ost;
-
-				{
-					MESSAGE_DEBUG("", action, "re-login required");
-				}
-
-				ost.str("");
-				ostFinal.str("");
-				ostFinal << "{";
-				ostFinal << "\"result\" : \"error\",";
-				ostFinal << "\"description\" : \"re-login required\"";
-				ostFinal << "}";
-			}
-			else
-			{
-
-				value = CheckHTTPParam_Number(indexPage.GetVarsHandler()->Get("value"));
-				id = CheckHTTPParam_Number(indexPage.GetVarsHandler()->Get("eventid"));
 				ostFinal.str("");
 
 				if(value.length() && id.length()) 
@@ -746,43 +621,21 @@ int main()
 				throw CException("Template file was missing");
 			}
 
-			{
-				MESSAGE_DEBUG("", action, "end");
-			}
+			MESSAGE_DEBUG("", action, "finish");
 
 		}
 
-
 		if(action == "AJAX_updateEventLink")
 		{
-			string			value, id;
+			MESSAGE_DEBUG("", action, "start");
+
 			ostringstream	ostFinal;
 
 			{
-				MESSAGE_DEBUG("", action, "start");
-			}
+				auto	value = toLower(CheckHTTPParam_Text(indexPage.GetVarsHandler()->Get("value")));
+				auto	id = CheckHTTPParam_Number(indexPage.GetVarsHandler()->Get("eventid"));
 
-			if(user.GetLogin() == "Guest")
-			{
-				ostringstream	ost;
-
-				{
-					MESSAGE_DEBUG("", action, "re-login required");
-				}
-
-				ost.str("");
-				ostFinal.str("");
-				ostFinal << "{";
-				ostFinal << "\"result\" : \"error\",";
-				ostFinal << "\"description\" : \"re-login required\"";
-				ostFinal << "}";
-			}
-			else
-			{
-
-				value = toLower(CheckHTTPParam_Text(indexPage.GetVarsHandler()->Get("value")));
 				value = value.substr(0, 64);
-				id = CheckHTTPParam_Number(indexPage.GetVarsHandler()->Get("eventid"));
 				ostFinal.str("");
 
 				if(value.length() && id.length()) 
@@ -917,42 +770,23 @@ int main()
 				throw CException("Template file was missing");
 			}
 
-			{
-				MESSAGE_DEBUG("", action, "end");
-			}
+			MESSAGE_DEBUG("", action, "finish");
 
 		}
 
 		if(action == "AJAX_createEvent")
 		{
-			string			id;
+			MESSAGE_DEBUG("", action, "start");
+
 			ostringstream	ostFinal;
 
 			{
-				MESSAGE_DEBUG("", action, "start");
-			}
 
-			if(user.GetLogin() == "Guest")
-			{
-				{
-					MESSAGE_DEBUG("", action, "re-login required");
-				}
-
-				ostFinal.str("");
-				ostFinal << "{";
-				ostFinal << "\"result\" : \"error\",";
-				ostFinal << "\"description\" : \"re-login required\"";
-				ostFinal << "}";
-			}
-			else
-			{
-				string		title, timestamp, accessType, address, description;
-
-				title = CheckHTTPParam_Text(indexPage.GetVarsHandler()->Get("title"));
-				timestamp = CheckHTTPParam_Number(indexPage.GetVarsHandler()->Get("timestamp"));
-				accessType = CheckHTTPParam_Text(indexPage.GetVarsHandler()->Get("accessType"));
-				address = CheckHTTPParam_Text(indexPage.GetVarsHandler()->Get("address"));
-				description = CheckHTTPParam_Text(indexPage.GetVarsHandler()->Get("description"));
+				auto	title			= CheckHTTPParam_Text(indexPage.GetVarsHandler()->Get("title"));
+				auto	timestamp		= CheckHTTPParam_Number(indexPage.GetVarsHandler()->Get("timestamp"));
+				auto	accessType		= CheckHTTPParam_Text(indexPage.GetVarsHandler()->Get("accessType"));
+				auto	address			= CheckHTTPParam_Text(indexPage.GetVarsHandler()->Get("address"));
+				auto	description		= CheckHTTPParam_Text(indexPage.GetVarsHandler()->Get("description"));
 
 				ostFinal.str("");
 				if(title.length() == 0) 
@@ -1098,39 +932,18 @@ int main()
 				throw CException("Template file was missing");
 			}
 
-			{
-				MESSAGE_DEBUG("", action, "end");
-			}
+			MESSAGE_DEBUG("", action, "finish");
 		}
 
 		if(action == "AJAX_removeEventHost")
 		{
+			MESSAGE_DEBUG("", action, "start");
+
 			ostringstream	ostFinal;
-			auto			id = ""s;
 			auto			error_message = ""s;
 
 			{
-				MESSAGE_DEBUG("", action, "start");
-			}
-
-			if(user.GetLogin() == "Guest")
-			{
-				ostringstream	ost;
-
-				{
-					MESSAGE_DEBUG("", action, "re-login required");
-				}
-
-				ost.str("");
-				ostFinal.str("");
-				ostFinal << "{";
-				ostFinal << "\"result\" : \"error\",";
-				ostFinal << "\"description\" : \"re-login required\"";
-				ostFinal << "}";
-			}
-			else
-			{
-				id = CheckHTTPParam_Number(indexPage.GetVarsHandler()->Get("id"));
+				auto	id = CheckHTTPParam_Number(indexPage.GetVarsHandler()->Get("id"));
 				ostFinal.str("");
 
 				if(id.length()) 
@@ -1255,39 +1068,19 @@ int main()
 				throw CException("Template file was missing");
 			}
 
-			{
-				MESSAGE_DEBUG("", action, "end");
-			}
+			MESSAGE_DEBUG("", action, "finish");
 
 		}
 
 		if(action == "AJAX_removeEventGuest")
 		{
-			string			id;
+			MESSAGE_DEBUG("", action, "start");
+
 			ostringstream	ostFinal;
 
 			{
-				MESSAGE_DEBUG("", action, "start");
-			}
+				auto	id = CheckHTTPParam_Number(indexPage.GetVarsHandler()->Get("id"));
 
-			if(user.GetLogin() == "Guest")
-			{
-				ostringstream	ost;
-
-				{
-					MESSAGE_DEBUG("", action, "re-login required");
-				}
-
-				ost.str("");
-				ostFinal.str("");
-				ostFinal << "{";
-				ostFinal << "\"result\" : \"error\",";
-				ostFinal << "\"description\" : \"re-login required\"";
-				ostFinal << "}";
-			}
-			else
-			{
-				id = CheckHTTPParam_Number(indexPage.GetVarsHandler()->Get("id"));
 				ostFinal.str("");
 
 				if(id.length()) 
@@ -1380,41 +1173,20 @@ int main()
 				throw CException("Template file was missing");
 			}
 
-			{
-				MESSAGE_DEBUG("", action, "end");
-			}
+			MESSAGE_DEBUG("", action, "finish");
 		}
 
 		if(action == "AJAX_updateTitle")
 		{
-			string			value, id;
+			MESSAGE_DEBUG("", action, "start");
+
 			ostringstream	ostFinal;
 
 			{
-				MESSAGE_DEBUG("", action, "start");
-			}
+				auto	value = CheckHTTPParam_Text(indexPage.GetVarsHandler()->Get("value"));
+				auto	id = CheckHTTPParam_Number(indexPage.GetVarsHandler()->Get("eventid"));
 
-			if(user.GetLogin() == "Guest")
-			{
-				ostringstream	ost;
-
-				{
-					MESSAGE_DEBUG("", action, "re-login required");
-				}
-
-				ost.str("");
-				ostFinal.str("");
-				ostFinal << "{";
-				ostFinal << "\"result\" : \"error\",";
-				ostFinal << "\"description\" : \"re-login required\"";
-				ostFinal << "}";
-			}
-			else
-			{
-
-				value = CheckHTTPParam_Text(indexPage.GetVarsHandler()->Get("value"));
 				value = value.substr(0, 512);
-				id = CheckHTTPParam_Number(indexPage.GetVarsHandler()->Get("eventid"));
 				ostFinal.str("");
 
 				if(value.length() && id.length()) 
@@ -1481,41 +1253,18 @@ int main()
 				throw CException("Template file was missing");
 			}
 
-			{
-				MESSAGE_DEBUG("", action, "end");
-			}
+			MESSAGE_DEBUG("", action, "finish");
 		}
 
 		if(action == "AJAX_updateAddress")
 		{
-			string			value, id;
+			MESSAGE_DEBUG("", action, "start");
+
 			ostringstream	ostFinal;
-
 			{
-				MESSAGE_DEBUG("", action, "start");
-			}
+				auto	value = CheckHTTPParam_Text(indexPage.GetVarsHandler()->Get("value")).substr(0, 512);
+				auto	id = CheckHTTPParam_Number(indexPage.GetVarsHandler()->Get("eventid"));
 
-			if(user.GetLogin() == "Guest")
-			{
-				ostringstream	ost;
-
-				{
-					MESSAGE_DEBUG("", action, "re-login required");
-				}
-
-				ost.str("");
-				ostFinal.str("");
-				ostFinal << "{";
-				ostFinal << "\"result\" : \"error\",";
-				ostFinal << "\"description\" : \"re-login required\"";
-				ostFinal << "}";
-			}
-			else
-			{
-
-				value = CheckHTTPParam_Text(indexPage.GetVarsHandler()->Get("value"));
-				value = value.substr(0, 512);
-				id = CheckHTTPParam_Number(indexPage.GetVarsHandler()->Get("eventid"));
 				ostFinal.str("");
 
 				if(value.length() && id.length()) 
@@ -1582,36 +1331,19 @@ int main()
 				throw CException("Template file was missing");
 			}
 
-			{
-				MESSAGE_DEBUG("", action, "end");
-			}
-
+			MESSAGE_DEBUG("", action, "finish");
 		}
 
 
 		if((action == "AJAX_getEventProfile") || (action == "AJAX_getEventProfileAndUser"))
 		{
+			MESSAGE_DEBUG("", action, "start");
+
 			ostringstream   ostResult;
-
-			{
-				MESSAGE_DEBUG("", action, "start");
-			}
-
 			ostResult.str("");
-			if(user.GetLogin() == "Guest")
 			{
-				{
-					MESSAGE_DEBUG("", action, "re-login required");
-				}
-
-				ostResult << "{\"result\":\"error\",\"description\":\"сессия закончилась, необходимо вновь зайти на сайт\"}";
-			}
-			else
-			{
-				string		eventID, eventLink;
-
-				eventID = CheckHTTPParam_Number(indexPage.GetVarsHandler()->Get("id"));
-				eventLink = CheckHTTPParam_Number(indexPage.GetVarsHandler()->Get("link"));
+				auto	eventID = CheckHTTPParam_Number(indexPage.GetVarsHandler()->Get("id"));
+				auto	eventLink = CheckHTTPParam_Number(indexPage.GetVarsHandler()->Get("link"));
 
 				if(eventID.length() || eventLink.length())
 				{
@@ -1651,33 +1383,18 @@ int main()
 				throw CException("Template file json_response.htmlt was missing");
 			}  // if(!indexPage.SetTemplate("AJAX_precreateNewOpenVacancy.htmlt"))
 
-			{
-				MESSAGE_DEBUG("", action, "start");
-			}
+			MESSAGE_DEBUG("", action, "start");
 		}
 
 		if(action == "AJAX_getFriendsNotOnEvent")
 		{
+			MESSAGE_DEBUG("", action, "start");
 
 			ostringstream   ostResult;
-			{
-				MESSAGE_DEBUG("", action, "start");
-			}
 
 			ostResult.str("");
-			if(user.GetLogin() == "Guest")
 			{
-				ostringstream   ost;
-
-				{
-					MESSAGE_DEBUG("", action, "re-login required");
-				}
-
-				ostResult << "{\"result\": \"error\", \"description\": \"session lost. Need to relogin\"}";
-			}
-			else
-			{
-				string		  event_id = CheckHTTPParam_Number(indexPage.GetVarsHandler()->Get("event_id"));
+				auto		  event_id = CheckHTTPParam_Number(indexPage.GetVarsHandler()->Get("event_id"));
 
 				if(event_id.length())
 				{
@@ -1722,34 +1439,19 @@ int main()
 				throw CExceptionHTML("user not activated");
 			}
 
-			{
-				MESSAGE_DEBUG("", action, "finish");
-			}
+			MESSAGE_DEBUG("", action, "finish");
 		}
 
 		if(action == "AJAX_addEventHost")
 		{
+				MESSAGE_DEBUG("", action, "start");
 
 				ostringstream   ostResult;
-				{
-					MESSAGE_DEBUG("", action, "start");
-				}
 
 				ostResult.str("");
-				if(user.GetLogin() == "Guest")
 				{
-					ostringstream   ost;
-
-					{
-						MESSAGE_DEBUG("", action, "re-login required");
-					}
-
-					ostResult << "{\"result\": \"error\", \"description\": \"session lost. Need to relogin\"}";
-				}
-				else
-				{
-					string		  user_id = CheckHTTPParam_Number(indexPage.GetVarsHandler()->Get("user_id"));
-					string		  event_id = CheckHTTPParam_Number(indexPage.GetVarsHandler()->Get("event_id"));
+					auto		  user_id = CheckHTTPParam_Number(indexPage.GetVarsHandler()->Get("user_id"));
+					auto		  event_id = CheckHTTPParam_Number(indexPage.GetVarsHandler()->Get("event_id"));
 
 					if(event_id.length() && user_id.length())
 					{
@@ -1828,29 +1530,14 @@ int main()
 
 		if(action == "AJAX_addEventGuest")
 		{
+			MESSAGE_DEBUG("", action, "start");
 
 			ostringstream   ostResult;
-
-			{
-				MESSAGE_DEBUG("", action, "start");
-			}
-
 			ostResult.str("");
-			if(user.GetLogin() == "Guest")
 			{
-				ostringstream   ost;
-
-				{
-					MESSAGE_DEBUG("", action, "re-login required");
-				}
-
-				ostResult << "{\"result\": \"error\", \"description\": \"session lost. Need to relogin\"}";
-			}
-			else
-			{
-				string		  users_list = CheckHTTPParam_Text(indexPage.GetVarsHandler()->Get("user_id"));
-				string		  event_id = CheckHTTPParam_Number(indexPage.GetVarsHandler()->Get("event_id"));
-				string		  email = CheckHTTPParam_Email(indexPage.GetVarsHandler()->Get("user_email"));
+				auto		  users_list	= CheckHTTPParam_Text(indexPage.GetVarsHandler()->Get("user_id"));
+				auto		  event_id		= CheckHTTPParam_Number(indexPage.GetVarsHandler()->Get("event_id"));
+				auto		  email			= CheckHTTPParam_Email(indexPage.GetVarsHandler()->Get("user_email"));
 
 				if((users_list.length() || email.length()) && event_id.length())
 				{
@@ -2034,35 +1721,17 @@ int main()
 				throw CExceptionHTML("user not activated");
 			}
 
-			{
-				MESSAGE_DEBUG("", action, "finish");
-			}
+			MESSAGE_DEBUG("", action, "finish");
 		}
 
 		if((action == "AJAX_setNoGift_N") || (action == "AJAX_setNoGift_Y"))
 		{
-			ostringstream	ostFinal;
-
 			MESSAGE_DEBUG("", action, "start");
 
-			if(user.GetLogin() == "Guest")
-			{
-				ostringstream	ost;
+			ostringstream	ostFinal;
 
-				{
-					MESSAGE_DEBUG("", action, "re-login required");
-				}
-
-				ost.str("");
-				ostFinal.str("");
-				ostFinal << "{";
-				ostFinal << "\"result\" : \"error\",";
-				ostFinal << "\"description\" : \"re-login required\"";
-				ostFinal << "}";
-			}
-			else
 			{
-				string	id = CheckHTTPParam_Number(indexPage.GetVarsHandler()->Get("event_id"));
+				auto	id = CheckHTTPParam_Number(indexPage.GetVarsHandler()->Get("event_id"));
 
 				if(id.length())
 				{
@@ -2133,34 +1802,14 @@ int main()
 
 		if((action == "AJAX_guestAccept") || (action == "AJAX_guestReject") || (action == "AJAX_updateAdultsCounter") || (action == "AJAX_updateKidsCounter"))
 		{
-			string			kidsCounter, adultsCounter, id;
+			MESSAGE_DEBUG("", action, "start");
+
 			ostringstream	ostFinal;
-
-			{
-				MESSAGE_DEBUG("", action, "start");
-			}
-
-			if(user.GetLogin() == "Guest")
-			{
-				ostringstream	ost;
-
-				{
-					MESSAGE_DEBUG("", action, "re-login required");
-				}
-
-				ost.str("");
-				ostFinal.str("");
-				ostFinal << "{";
-				ostFinal << "\"result\" : \"error\",";
-				ostFinal << "\"description\" : \"re-login required\"";
-				ostFinal << "}";
-			}
-			else
 			{
 
-				kidsCounter = CheckHTTPParam_Number(indexPage.GetVarsHandler()->Get("kidsCounter"));
-				adultsCounter = CheckHTTPParam_Number(indexPage.GetVarsHandler()->Get("adultsCounter"));
-				id = CheckHTTPParam_Number(indexPage.GetVarsHandler()->Get("event_id"));
+				auto	kidsCounter = CheckHTTPParam_Number(indexPage.GetVarsHandler()->Get("kidsCounter"));
+				auto	adultsCounter = CheckHTTPParam_Number(indexPage.GetVarsHandler()->Get("adultsCounter"));
+				auto	id = CheckHTTPParam_Number(indexPage.GetVarsHandler()->Get("event_id"));
 				ostFinal.str("");
 
 				if(id.length())
@@ -2452,186 +2101,12 @@ int main()
 				throw CException("Template file was missing");
 			}
 
-			{
-				MESSAGE_DEBUG("", action, "end");
-			}
+			MESSAGE_DEBUG("", action, "finish");
 		}
-
-		if(action == "getEventWall")
-		{
-			ostringstream	ost;
-			string			id = "", link = "";
-
-			{
-				MESSAGE_DEBUG("", action, "start");
-			}
-
-	/*
-			if(user.GetLogin() == "Guest")
-			{
-				ostringstream	ost;
-
-				{
-					MESSAGE_DEBUG("", action, "re-login required");
-				}
-
-				ost.str("");
-				ost << "/?rand=" << GetRandom(10);
-				indexPage.Redirect(ost.str());
-			}
-	*/
-			id					= CheckHTTPParam_Number(indexPage.GetVarsHandler()->Get("id"));
-			link				= CheckHTTPParam_Text(indexPage.GetVarsHandler()->Get("link"));
-
-			if(link.length())
-			{
-				if(db.Query("SELECT `id` FROM `events` WHERE `link`=\"" + link + "\";"))
-				{
-					id = db.Get(0, "id");
-				}
-				else
-				{
-					{
-						MESSAGE_DEBUG("", action, "event.link(" + link + ") not found");
-					}
-				}
-			}
-			else if(id.length())
-			{
-				if(db.Query("SELECT `link` FROM `events` WHERE `id`=\"" + id + "\";"))
-				{
-					link = db.Get(0, "link");
-				}
-				else
-				{
-					{
-						MESSAGE_DEBUG("", action, "event.id(" + id + ") not found");
-					}
-				}
-			}
-			else
-			{
-				{
-					MESSAGE_DEBUG("", action, "id and link are empty");
-				}
-
-			}
-
-			if(id.length()) indexPage.RegisterVariableForce("id", id);
-			if(link.length()) indexPage.RegisterVariableForce("link", link);
-
-			if(!indexPage.SetTemplate("view_event_profile.htmlt"))
-			{
-				MESSAGE_DEBUG("", action, "template file getEventWall.htmlt was missing");
-				throw CException("Template file was missing");
-			}
-		}
-
-		if(action == "AJAX_getEventWall")
-		{
-			ostringstream	ost;
-			string			strPageToGet, strNewsOnSinglePage;
-			int				currPage = 0, newsOnSinglePage = 0;
-			vector<int>		vectorFriendList;
-			string			eventLink = "", eventID = "", result = "";
-
-			strNewsOnSinglePage = CheckHTTPParam_Number(indexPage.GetVarsHandler()->Get("NewsOnSinglePage"));
-			strPageToGet		= CheckHTTPParam_Number(indexPage.GetVarsHandler()->Get("page"));
-			eventLink			= CheckHTTPParam_Text(indexPage.GetVarsHandler()->Get("link"));
-			eventID				= CheckHTTPParam_Number(indexPage.GetVarsHandler()->Get("id"));
-
-			if(strPageToGet.empty()) strPageToGet = "0";
-
-			{
-				MESSAGE_DEBUG("", action, "page " + strPageToGet + " requested");
-			}
-
-			try{
-				currPage = stoi(strPageToGet);
-			} catch(...) {
-				currPage = 0;
-			}
-
-			try{
-				newsOnSinglePage = stoi(strNewsOnSinglePage);
-			} catch(...) {
-				newsOnSinglePage = 30;
-			}
-
-	/*
-			if(user.GetLogin() == "Guest")
-			{
-				ostringstream   ost;
-
-				{
-					MESSAGE_DEBUG("", action, "re-login required");
-				}
-
-				ost.str("");
-				ost << "/?rand=" << GetRandom(10);
-				indexPage.Redirect(ost.str());
-			}
-	*/
-			
-			// --- define eventID by eventLink
-			if(eventLink.length() && db.Query("SELECT `id`, `isBlocked` FROM `events` WHERE `link`=\"" + eventLink + "\";")) eventID = db.Get(0, "id");
-
-			if(eventID.length())
-			{
-				string	extraFilter = " AND `isBlocked`=\"N\"";
-
-				if(db.Query("SELECT `id` FROM `event_hosts` WHERE `user_id`=\"" + user.GetID() + "\" AND `event_id`=\"" + eventID + "\";"))
-				{
-					extraFilter = "";
-				}
-				else
-				{
-					{
-						MESSAGE_DEBUG("", action, "user(" + user.GetID() + ") is not event(" + eventID + ") host ");
-					}
-					
-				}
-
-				result = GetNewsFeedInJSONFormat(" `feed`.`dstType`=\"event\" AND `feed`.`dstID` IN (SELECT `id` FROM `events` WHERE `id`=\"" + eventID + "\" " + extraFilter + ") ", currPage, newsOnSinglePage, &user, &db);
-			}
-			else
-			{
-				MESSAGE_ERROR("", action, "eventID not found");
-			}
-
-			indexPage.RegisterVariableForce("result", "{"
-														"\"status\":\"success\","
-														"\"feed\":[" + result + "]"
-														"}");
-
-			if(!indexPage.SetTemplate("json_response.htmlt"))
-			{
-				MESSAGE_ERROR("", action, "can't find template json_response.htmlt");
-				throw CExceptionHTML("event not activated");
-			} // if(!indexPage.SetTemplate("json_response.htmlt"))
-		}
-
 
 		if(action == "createnewevent")
 		{
-			ostringstream	ost;
-
-			{
-				MESSAGE_DEBUG("", action, "start");
-			}
-
-			if(user.GetLogin() == "Guest")
-			{
-				ostringstream	ost;
-
-				{
-					MESSAGE_DEBUG("", action, "re-login required");
-				}
-
-				ost.str("");
-				ost << "/?rand=" << GetRandom(10);
-				indexPage.Redirect(ost.str());
-			}
+			MESSAGE_DEBUG("", action, "start");
 
 			indexPage.RegisterVariableForce("title", "Новое событие");
 
@@ -2639,139 +2114,44 @@ int main()
 			{
 				MESSAGE_DEBUG("", action, "template file createnewevent.htmlt was missing");
 				throw CException("Template file createnewevent.htmlt was missing");
-			}  // if(!indexPage.SetTemplate("createnewevent.htmlt"))
+			} 
 
-			{
-				MESSAGE_DEBUG("", action, "end");
-			}
-		} 	// if(action == "createnewevent")
+			MESSAGE_DEBUG("", action, "finish");
+		}
 
-		if(action == "check_initial_action")
+		if(action == "AJAX_switchChecklistItem")
 		{
-			string		invite_hash;
+			MESSAGE_DEBUG("", action, "start");
 
+			auto	success_message	= ""s;
+			auto	error_message	= ""s;
+			auto	id				= CheckHTTPParam_Number(indexPage.GetVarsHandler()->Get("id"));
+			auto	value			= CheckHTTPParam_Text(indexPage.GetVarsHandler()->Get("value"));
+
+			if(id.length() && value.length())
 			{
-				MESSAGE_DEBUG("", action, "start");
-			}
-
-			invite_hash = CheckHTTPParam_Number(indexPage.GetVarsHandler()->Get("id"));
-
-			if(invite_hash.length())
-			{
-
-			if(user.GetLogin() == "Guest")
-			{
-				ostringstream	ost;
-
+				if((error_message = amIAllowedToChangeEvent(GetValueFromDB(Get_EventIDByChecklistItemID(id), &db), &user)).empty())
 				{
-					MESSAGE_DEBUG("", action, "guest workflow");
-				}
 
-				indexPage.Cookie_InitialAction_Assign(invite_hash);
-				indexPage.RegisterVariableForce("redirect_url", "/login?rand=" + GetRandom(10));
-			}
-			else
-			{
-				string		eventLink = "";
-
-				{
-					MESSAGE_DEBUG("", action, "userID(" + user.GetID() + ") workflow");
-				}
-
-				// --- remove "inviteHash" cookie
-				if(!indexPage.Cookie_InitialAction_Expire()) 
-				{
-					MESSAGE_DEBUG("", action, "issue in session expiration");
-				}
-
-				// --- update db
-				indexPage.RegisterVariableForce("redirect_url", "/" + GetDefaultActionLoggedinUser() + "?rand=" + GetRandom(10));
-
-				if(db.Query("SELECT * FROM `quick_registration` WHERE `invite_hash`=\"" + invite_hash + "\";"))
-				{
-					string		quick_registration_id = db.Get(0, "id");
-					string		quick_registration_action = db.Get(0, "action");
-					string		quick_registration_action_id = db.Get(0, "action_id");
-
-					if(quick_registration_action == "event")
-					{
-						if(db.Query("SELECT `event_id` FROM `event_guests` WHERE `quick_registration_id`=\"" + quick_registration_id + "\";"))
-						{
-							string		event_id = db.Get(0, "event_id");
-
-							if(db.Query("SELECT `link` FROM `events` WHERE `id`=\"" + event_id + "\";"))
-							{
-								string		event_link = db.Get(0, "link");
-
-								db.Query("UPDATE `event_guests` SET `user_id`=\"" + user.GetID() + "\" WHERE `quick_registration_id`=\"" + quick_registration_id + "\";");
-								if(db.isError())
-								{
-									{
-										MESSAGE_DEBUG("", action, "issue updating event_guest table");
-									}
-								}
-								else
-								{
-									indexPage.RegisterVariableForce("redirect_url", "/event/" + event_link + "?rand=" + GetRandom(10));
-								}
-							}
-							else
-							{
-								{
-									MESSAGE_DEBUG("", action, "event.id(" + event_id + ") not found");
-								}
-							}
-
-
-							// --- redirect to /event/yyy
-						}
-						else
-						{
-							{
-								MESSAGE_DEBUG("", action, "quick_registration_id(" + quick_registration_id + ") not found");
-							}
-						}
-					}
-					else
-					{
-						{
-							MESSAGE_DEBUG("", action, "unknown action(" + quick_registration_action + ")");
-						}
-					}
 				}
 				else
 				{
-					{
-						MESSAGE_DEBUG("", action, "invite_hash(" + invite_hash + ") not found");
-					}
+					error_message = gettext("you are not authorized");
+					MESSAGE_ERROR("", action, error_message);
 				}
-
-			}
-
-
 			}
 			else
 			{
-				{
-					MESSAGE_DEBUG("", action, "invite_hash[" + indexPage.GetVarsHandler()->Get("id") + "] is not a number");
-				}
-
+				error_message = gettext("mandatory parameter missed");
+				MESSAGE_ERROR("", action, error_message);
 			}
 
-			if(!indexPage.SetTemplate("check_invite.htmlt"))
-			{
-				MESSAGE_DEBUG("", action, "template file check_invite.htmlt was missing");
-				throw CException("Template file check_invite.htmlt was missing");
-			}  // if(!indexPage.SetTemplate("check_invite.htmlt"))
+			AJAX_ResponseTemplate(&indexPage, success_message, error_message);
 
-			{
-				MESSAGE_DEBUG("", action, "end");
-			}
+			MESSAGE_DEBUG("", action, "finish");
 		}
 
-		{
-			MESSAGE_DEBUG("", "", "post-condition if(action == \"" + action + "\")");
-		}
+		MESSAGE_DEBUG("", "", "post-condition if(action == \"" + action + "\")");
 
 		indexPage.OutTemplate();
 

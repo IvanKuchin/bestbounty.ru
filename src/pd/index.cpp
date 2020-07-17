@@ -5568,6 +5568,138 @@ int main()
 			MESSAGE_DEBUG("", action, "finish");
 		}
 
+		if(action == "getEventWall")
+		{
+			ostringstream	ost;
+			string			id = "", link = "";
+
+			MESSAGE_DEBUG("", action, "start");
+
+	/*
+			if(user.GetLogin() == "Guest")
+			{
+				ostringstream	ost;
+
+				{
+					MESSAGE_DEBUG("", action, "re-login required");
+				}
+
+				ost.str("");
+				ost << "/?rand=" << GetRandom(10);
+				indexPage.Redirect(ost.str());
+			}
+	*/
+			id					= CheckHTTPParam_Number(indexPage.GetVarsHandler()->Get("id"));
+			link				= CheckHTTPParam_Text(indexPage.GetVarsHandler()->Get("link"));
+
+			if(link.length())
+			{
+				id = GetValueFromDB("SELECT `id` FROM `events` WHERE `link`=\"" + link + "\";", &db);
+				if(id.empty())
+				{
+					MESSAGE_DEBUG("", action, "event.link(" + link + ") not found");
+				}
+			}
+			else if(id.length())
+			{
+				link = GetValueFromDB("SELECT `link` FROM `events` WHERE `id`=\"" + id + "\";", &db);
+				if(link.empty())
+				{
+					MESSAGE_DEBUG("", action, "event.id(" + id + ") not found");
+				}
+			}
+			else
+			{
+				MESSAGE_DEBUG("", action, "id and link are empty");
+			}
+
+			indexPage.RegisterVariableForce("id", id);
+			indexPage.RegisterVariableForce("link", link);
+
+			if(!indexPage.SetTemplate("view_event_profile.htmlt"))
+			{
+				MESSAGE_DEBUG("", action, "template file getEventWall.htmlt was missing");
+				throw CException("Template file was missing");
+			}
+		}
+
+		if(action == "AJAX_getEventWall")
+		{
+			auto			currPage = 0, newsOnSinglePage = 0;
+			auto			result				= ""s;
+
+			auto			strNewsOnSinglePage = CheckHTTPParam_Number(indexPage.GetVarsHandler()->Get("NewsOnSinglePage"));
+			auto			strPageToGet		= CheckHTTPParam_Number(indexPage.GetVarsHandler()->Get("page"));
+			auto			eventLink			= CheckHTTPParam_Text(indexPage.GetVarsHandler()->Get("link"));
+			auto			eventID				= CheckHTTPParam_Number(indexPage.GetVarsHandler()->Get("id"));
+
+			if(strPageToGet.empty()) strPageToGet = "0";
+
+			MESSAGE_DEBUG("", action, "page " + strPageToGet + " requested");
+
+			try{
+				currPage = stoi(strPageToGet);
+			} catch(...) {
+				currPage = 0;
+			}
+
+			try{
+				newsOnSinglePage = stoi(strNewsOnSinglePage);
+			} catch(...) {
+				newsOnSinglePage = 30;
+			}
+
+	/*
+			if(user.GetLogin() == "Guest")
+			{
+				ostringstream   ost;
+
+				{
+					MESSAGE_DEBUG("", action, "re-login required");
+				}
+
+				ost.str("");
+				ost << "/?rand=" << GetRandom(10);
+				indexPage.Redirect(ost.str());
+			}
+	*/
+			
+			// --- define eventID by eventLink
+			if(eventLink.length() && db.Query("SELECT `id`, `isBlocked` FROM `events` WHERE `link`=\"" + eventLink + "\";")) eventID = db.Get(0, "id");
+
+			if(eventID.length())
+			{
+				auto	extraFilter = " AND `isBlocked`=\"N\""s;
+
+				if(db.Query("SELECT `id` FROM `event_hosts` WHERE `user_id`=\"" + user.GetID() + "\" AND `event_id`=\"" + eventID + "\";"))
+				{
+					extraFilter = "";
+				}
+				else
+				{
+					MESSAGE_DEBUG("", action, "user(" + user.GetID() + ") is not the event(" + eventID + ") host");
+				}
+
+				result = GetNewsFeedInJSONFormat(" `feed`.`dstType`=\"event\" AND `feed`.`dstID` IN (SELECT `id` FROM `events` WHERE `id`=\"" + eventID + "\" " + extraFilter + ") ", currPage, newsOnSinglePage, &user, &db);
+			}
+			else
+			{
+				MESSAGE_ERROR("", action, "eventID not found");
+			}
+
+			indexPage.RegisterVariableForce("result", "{"
+														"\"status\":\"success\","
+														"\"feed\":[" + result + "]"
+														"}");
+
+			if(!indexPage.SetTemplate("json_response.htmlt"))
+			{
+				MESSAGE_ERROR("", action, "can't find template json_response.htmlt");
+				throw CExceptionHTML("event not activated");
+			} // if(!indexPage.SetTemplate("json_response.htmlt"))
+		}
+
+
 		if(action == "find_friends")
 		{
 			string			strPageToGet, strFriendsOnSinglePage, searchText;
@@ -5659,6 +5791,123 @@ int main()
 			}
 
 			indexPage.RegisterVariableForce("content", "На ваш почтовый ящик выслан пароль !");
+		}
+
+		if(action == "check_initial_action")
+		{
+			MESSAGE_DEBUG("", action, "start");
+
+			auto		invite_hash = CheckHTTPParam_Number(indexPage.GetVarsHandler()->Get("id"));
+
+			if(invite_hash.length())
+			{
+
+			if(user.GetLogin() == "Guest")
+			{
+				ostringstream	ost;
+
+				{
+					MESSAGE_DEBUG("", action, "guest workflow");
+				}
+
+				indexPage.Cookie_InitialAction_Assign(invite_hash);
+				indexPage.RegisterVariableForce("redirect_url", "/login?rand=" + GetRandom(10));
+			}
+			else
+			{
+				string		eventLink = "";
+
+				{
+					MESSAGE_DEBUG("", action, "userID(" + user.GetID() + ") workflow");
+				}
+
+				// --- remove "inviteHash" cookie
+				if(!indexPage.Cookie_InitialAction_Expire()) 
+				{
+					MESSAGE_DEBUG("", action, "issue in session expiration");
+				}
+
+				// --- update db
+				indexPage.RegisterVariableForce("redirect_url", "/" + GetDefaultActionLoggedinUser() + "?rand=" + GetRandom(10));
+
+				if(db.Query("SELECT * FROM `quick_registration` WHERE `invite_hash`=\"" + invite_hash + "\";"))
+				{
+					string		quick_registration_id = db.Get(0, "id");
+					string		quick_registration_action = db.Get(0, "action");
+					string		quick_registration_action_id = db.Get(0, "action_id");
+
+					if(quick_registration_action == "event")
+					{
+						if(db.Query("SELECT `event_id` FROM `event_guests` WHERE `quick_registration_id`=\"" + quick_registration_id + "\";"))
+						{
+							string		event_id = db.Get(0, "event_id");
+
+							if(db.Query("SELECT `link` FROM `events` WHERE `id`=\"" + event_id + "\";"))
+							{
+								string		event_link = db.Get(0, "link");
+
+								db.Query("UPDATE `event_guests` SET `user_id`=\"" + user.GetID() + "\" WHERE `quick_registration_id`=\"" + quick_registration_id + "\";");
+								if(db.isError())
+								{
+									{
+										MESSAGE_DEBUG("", action, "issue updating event_guest table");
+									}
+								}
+								else
+								{
+									indexPage.RegisterVariableForce("redirect_url", "/event/" + event_link + "?rand=" + GetRandom(10));
+								}
+							}
+							else
+							{
+								{
+									MESSAGE_DEBUG("", action, "event.id(" + event_id + ") not found");
+								}
+							}
+
+
+							// --- redirect to /event/yyy
+						}
+						else
+						{
+							{
+								MESSAGE_DEBUG("", action, "quick_registration_id(" + quick_registration_id + ") not found");
+							}
+						}
+					}
+					else
+					{
+						{
+							MESSAGE_DEBUG("", action, "unknown action(" + quick_registration_action + ")");
+						}
+					}
+				}
+				else
+				{
+					{
+						MESSAGE_DEBUG("", action, "invite_hash(" + invite_hash + ") not found");
+					}
+				}
+
+			}
+
+
+			}
+			else
+			{
+				{
+					MESSAGE_DEBUG("", action, "invite_hash[" + indexPage.GetVarsHandler()->Get("id") + "] is not a number");
+				}
+
+			}
+
+			if(!indexPage.SetTemplate("check_invite.htmlt"))
+			{
+				MESSAGE_DEBUG("", action, "template file check_invite.htmlt was missing");
+				throw CException("Template file check_invite.htmlt was missing");
+			}  // if(!indexPage.SetTemplate("check_invite.htmlt"))
+
+			MESSAGE_DEBUG("", action, "finish");
 		}
 
 

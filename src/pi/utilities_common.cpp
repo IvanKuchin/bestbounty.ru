@@ -13,7 +13,7 @@ auto LogEnvVariables() -> void
 	return;
 }
 
-static auto LogGitCommitID()
+static auto LogGitCommitID(CCgi *indexPage)
 {
 	// MESSAGE_DEBUG("", "", "start");
 
@@ -31,6 +31,7 @@ static auto LogGitCommitID()
 
 		ifs.close();
 
+		indexPage->RegisterVariableForce("git_commit_id", result);
 		MESSAGE_WARNING("", "", "git commit id: " + result);
 	}
 	else
@@ -50,7 +51,7 @@ auto RegisterInitialVariables(CCgi *indexPage, CMysql *db, CUser *user) -> bool
 	MESSAGE_DEBUG("", "", "start");
 
 	LogEnvVariables();
-	LogGitCommitID();
+	LogGitCommitID(indexPage);
 
 	indexPage->RegisterVariableForce("rand", GetRandom(10));
 	indexPage->RegisterVariableForce("random", GetRandom(10));

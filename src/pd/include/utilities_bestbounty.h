@@ -2,6 +2,7 @@
 #define __UTILITIES_BESTNOUNTY__H__
 
 #include "utilities.h"
+#include "utilities_sql_queries.h"
 
 string      	GetUserListInJSONFormat(string dbQuery, CMysql *, CUser *);
 string 			GetNewsFeedInJSONFormat(string whereStatement, int currPage, int newsOnSinglePage, CUser *, CMysql *);
@@ -51,5 +52,7 @@ auto 			GetCandidatesListAppliedToVacancyInJSONFormat(string dbQuery, CMysql *) 
 auto 			GetOpenVacanciesInJSONFormat(string companyID, CMysql *, CUser * = NULL) -> string;
 
 auto			GetUserListInJSONFormat_BySearchString(const string lookForKey, bool include_myself, CMysql *, CUser *) -> string;
+
+auto			amIAllowedToChangeEvent(const string id, CUser *) -> string;
 
 #endif
