@@ -29,7 +29,7 @@ auto 			GetSchoolListInJSONFormat(string dbQuery, CMysql *, bool includeStudents
 auto			GetGiftListInJSONFormat(string dbQuery, CMysql *, CUser *) -> string;
 auto 			GetGiftToGiveListInJSONFormat(string dbQuery, CMysql *, CUser *) -> string;
 auto			GetEventListInJSONFormat(string dbQuery, CMysql *, CUser *) -> string;
-auto			GetEventCheckistInJSONFormat(string dbQuery, CMysql *, CUser *) -> string;
+auto			GetEventCheckistInJSONFormat(const string &dbQuery, CMysql *, CUser *) -> string;
 auto			GetEventHostsListInJSONFormat(string dbQuery, CMysql *, CUser *) -> string;
 auto 			GetCertificationLikesUsersList(string usersCertificationID, CUser *, CMysql *) -> string;
 auto 			GetCourseLikesUsersList(string usersCourseID, CUser *, CMysql *) -> string;

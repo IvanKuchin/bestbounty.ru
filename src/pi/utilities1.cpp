@@ -60,6 +60,12 @@ string	quoted(string src)
 	return '"' + src + '"';
 }
 
+vector<string>	quoted(vector<string> src)
+{
+	for(auto i = 0u; i < src.size(); ++i) src[i] = '"' + src[i] + '"';
+	return src;
+}
+
 string  toLower(string src)
 {
 	using namespace std::regex_constants;

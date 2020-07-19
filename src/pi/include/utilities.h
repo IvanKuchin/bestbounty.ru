@@ -36,6 +36,7 @@ auto      		rtrim(string& str) -> string;
 auto      		ltrim(string& str) -> string;
 auto      		trim(string& str) -> string;
 auto      		quoted(string src) -> string;
+auto			quoted(vector<string> src) -> vector<string>;
 auto  			toLower(string src) -> string;
 auto      		GetRandom(int len) -> string;
 auto      		DeleteHTML(string src, bool removeBR = true) -> string;

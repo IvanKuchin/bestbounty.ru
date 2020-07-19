@@ -2119,7 +2119,7 @@ int main()
 			MESSAGE_DEBUG("", action, "finish");
 		}
 
-		if(action == "AJAX_switchChecklistItem")
+		if((action == "AJAX_switchChecklistItem") || (action == "AJAX_updateChecklistItemPrice"))
 		{
 			MESSAGE_DEBUG("", action, "start");
 
@@ -2132,7 +2132,10 @@ int main()
 			{
 				if((error_message = amIAllowedToChangeEvent(GetValueFromDB(Get_EventIDByChecklistItemID(id), &db), &user)).empty())
 				{
-
+					if(action == "AJAX_switchChecklistItem")
+						db.Query("UPDATE `checklist_items` SET `state`=" + quoted(value) + " WHERE `id`=" + quoted(id) + ";");
+					if(action == "AJAX_updateChecklistItemPrice")
+						db.Query("UPDATE `checklist_items` SET `price`=" + quoted(value) + " WHERE `id`=" + quoted(id) + ";");
 				}
 				else
 				{
@@ -2145,6 +2148,20 @@ int main()
 				error_message = gettext("mandatory parameter missed");
 				MESSAGE_ERROR("", action, error_message);
 			}
+
+			AJAX_ResponseTemplate(&indexPage, success_message, error_message);
+
+			MESSAGE_DEBUG("", action, "finish");
+		}
+
+		if((action == "AJAX_getFavoriteChecklists"))
+		{
+			MESSAGE_DEBUG("", action, "start");
+
+			auto	success_message	= ""s;
+			auto	error_message	= ""s;
+
+			success_message = "\"favorite_checklist_categories\":[" + join(quoted(GetValuesFromDB("SELECT DISTINCT(`type`) FROM `checklist_predefined` WHERE `favorite`=\"Y\";", &db)), ",") + "]";
 
 			AJAX_ResponseTemplate(&indexPage, success_message, error_message);
 
