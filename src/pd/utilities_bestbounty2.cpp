@@ -749,7 +749,7 @@ auto GetFavoriteChecklistCategoriestInJSONFormat(const string &dbQuery, CMysql *
 	return result;
 }
 
-auto GetEventCheckistInJSONFormat(const string &dbQuery, CMysql *db, CUser *user) -> string
+auto GetEventChecklistInJSONFormat(const string &dbQuery, CMysql *db, CUser *user) -> string
 {
 	MESSAGE_DEBUG("", "", "start");
 
@@ -804,15 +804,176 @@ auto GetEventCheckistInJSONFormat(const string &dbQuery, CMysql *db, CUser *user
 	return result;
 }
 
-auto amIAllowedToChangeEvent(const string id, CUser *) -> string
+auto GetFavoriteChecklistItemsInJSONFormat(const string &dbQuery, CMysql *db, CUser *user) -> string
 {
 	MESSAGE_DEBUG("", "", "start");
 
-	auto	error_message = ""s;
+	struct ItemClass 
+	{
+		string	id;
+		string	category;
+		string	title;
+		string	type;
+		string	favorite;
+	};
+
+	vector<ItemClass>	items;
+	auto				result = ""s;
+	auto				affected = db->Query(dbQuery);
+
+	if(affected)
+	{
+		for(int i = 0; i < affected; i++)
+		{
+			ItemClass	item;
+
+			item.id								= db->Get(i, "id");
+			item.category						= db->Get(i, "category");
+			item.title							= db->Get(i, "title");
+			item.type							= db->Get(i, "type");
+			item.favorite						= db->Get(i, "favorite");
+
+			items.push_back(item);
+		}
+
+		for(auto &item: items)
+		{
+			if(result.length()) result +=",";
+
+			result += "{";
+			result += "\"id\": \""				  	+ item.id + "\",";
+			result += "\"title\": \""				+ item.title + "\",";
+			result += "\"category\": \""			+ item.category + "\",";
+			result += "\"type\": \""				+ item.type + "\",";
+			result += "\"favorite\": \""			+ item.favorite + "\"";
+			result += "}";
+		}
+	}
+	else
+	{
+		MESSAGE_DEBUG("", "", "no items assigned to the checklist");
+	}
 
 
 
 	MESSAGE_DEBUG("", "", "finish");
 
+	return result;
+}
+
+auto GetFavoriteChecklistCategoriesInJSONFormat(const string &dbQuery, CMysql *db, CUser *user) -> string
+{
+	MESSAGE_DEBUG("", "", "start");
+
+	struct ItemClass 
+	{
+		string	id;
+		string	title;
+		string	event_id;
+		string	favorite;
+	};
+
+	vector<ItemClass>	items;
+	auto				result = ""s;
+	auto				affected = db->Query(dbQuery);
+
+	if(affected)
+	{
+		for(int i = 0; i < affected; i++)
+		{
+			ItemClass	item;
+
+			item.id								= db->Get(i, "id");
+			item.title							= db->Get(i, "title");
+			item.event_id						= db->Get(i, "event_id");
+			item.favorite						= db->Get(i, "favorite");
+
+			items.push_back(item);
+		}
+
+		for(auto &item: items)
+		{
+			if(result.length()) result +=",";
+
+			result += "{";
+			result += "\"id\": \""				  	+ item.id + "\",";
+			result += "\"title\": \""				+ item.title + "\",";
+			result += "\"event_id\": \""			+ item.event_id + "\",";
+			result += "\"favorite\": \""			+ item.favorite + "\"";
+			result += "}";
+		}
+	}
+	else
+	{
+		MESSAGE_DEBUG("", "", "no items assigned to the checklist");
+	}
+
+
+
+	MESSAGE_DEBUG("", "", "finish");
+
+	return result;
+}
+
+auto amIAllowedToChangeEvent(const string id, CMysql *db, CUser *user) -> string
+{
+	MESSAGE_DEBUG("", "", "start");
+
+	auto	error_message	= ""s;
+	auto	event_id		= GetValueFromDB("SELECT `id` FROM `events` WHERE `id`=" + quoted(id) + " AND `owner_id`=" + quoted(user->GetID()) + ";", db);
+
+	if(event_id.length())
+	{
+	}
+	else
+	{
+		error_message = gettext("mandatory parameter missed");
+		MESSAGE_ERROR("", "", error_message);
+	}
+
+	MESSAGE_DEBUG("", "", "finish");
+
 	return error_message;
 }
+
+auto addMissedChecklistItems(const string &from_checklist_id, string const &to_checklist_id, CMysql *db) -> string
+{
+	MESSAGE_DEBUG("", "", "start (" + from_checklist_id + " -> " + to_checklist_id + ")");
+
+	auto			error_message		= ""s;
+	auto			item_ids			= GetValuesFromDB("SELECT `checklist_predefined_id` FROM `checklist_items` where `event_checklist_id`=" + quoted(from_checklist_id) + " AND `checklist_predefined_id` not in (SELECT `checklist_predefined_id` FROM `checklist_items` WHERE `event_checklist_id`=" + quoted(to_checklist_id) + ")", db);
+	auto			sql_query			= "INSERT INTO `checklist_items` (`event_checklist_id`, `checklist_predefined_id`, `eventTimestamp`) VALUES ";
+	vector<string>	sql_values;
+
+	for(auto &item_id: item_ids)
+	{
+		sql_values.push_back("(" + quoted(to_checklist_id) + ", " + quoted(item_id) + ", UNIX_TIMESTAMP())");
+	}
+
+	if(sql_values.size())
+	{
+		db->Query(sql_query + join(sql_values, ","));
+	}
+
+	MESSAGE_DEBUG("", "", "finish");
+
+	return error_message;
+}
+
+
+auto GetChecklistIDByEventID_CreateIfMissed(const string &event_id, CMysql *db, CUser *user) -> string
+{
+	MESSAGE_DEBUG("", "", "start (" + event_id + ")");
+
+	auto	checklist_id		= GetValueFromDB("SELECT `id` FROM `event_checklists` WHERE `event_id`=" + quoted(event_id) + ";", db);
+
+	if(checklist_id.empty())
+	{
+		checklist_id = to_string(db->InsertQuery("INSERT INTO `event_checklists` (`event_id`, `eventTimestamp`) VALUES (" + quoted(event_id) + ", UNIX_TIMESTAMP());"));
+	}
+
+	MESSAGE_DEBUG("", "", "finish (checklist_id = " + checklist_id + ")");
+
+	return checklist_id;
+}
+

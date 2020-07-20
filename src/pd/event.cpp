@@ -2130,7 +2130,7 @@ int main()
 
 			if(id.length() && value.length())
 			{
-				if((error_message = amIAllowedToChangeEvent(GetValueFromDB(Get_EventIDByChecklistItemID(id), &db), &user)).empty())
+				if((error_message = amIAllowedToChangeEvent(GetValueFromDB(Get_EventIDByChecklistItemID(id), &db), &db, &user)).empty())
 				{
 					if(action == "AJAX_switchChecklistItem")
 						db.Query("UPDATE `checklist_items` SET `state`=" + quoted(value) + " WHERE `id`=" + quoted(id) + ";");
@@ -2139,7 +2139,6 @@ int main()
 				}
 				else
 				{
-					error_message = gettext("you are not authorized");
 					MESSAGE_ERROR("", action, error_message);
 				}
 			}
@@ -2154,14 +2153,125 @@ int main()
 			MESSAGE_DEBUG("", action, "finish");
 		}
 
-		if((action == "AJAX_getFavoriteChecklists"))
+		if((action == "AJAX_getFavoriteChecklistsCategories"))
 		{
 			MESSAGE_DEBUG("", action, "start");
 
 			auto	success_message	= ""s;
 			auto	error_message	= ""s;
 
-			success_message = "\"favorite_checklist_categories\":[" + join(quoted(GetValuesFromDB("SELECT DISTINCT(`type`) FROM `checklist_predefined` WHERE `favorite`=\"Y\";", &db)), ",") + "]";
+			success_message = "\"checklists\":[" + GetFavoriteChecklistCategoriesInJSONFormat("SELECT * FROM `event_checklists` WHERE `favorite`=\"Y\";", &db, &user) + "]";
+
+			AJAX_ResponseTemplate(&indexPage, success_message, error_message);
+
+			MESSAGE_DEBUG("", action, "finish");
+		}
+
+		if((action == "AJAX_getFavoriteChecklistItems"))
+		{
+			MESSAGE_DEBUG("", action, "start");
+
+			auto	success_message	= ""s;
+			auto	error_message	= ""s;
+			auto	id				= CheckHTTPParam_Number(indexPage.GetVarsHandler()->Get("id"));
+
+			if(id.length())
+			{
+				success_message = "\"checklists\":[" + GetEventChecklistInJSONFormat("SELECT * FROM `event_checklists` WHERE `id`=" + quoted(id) + ";", &db, &user) + "]";
+			}
+			else
+			{
+				error_message = gettext("mandatory parameter missed");
+				MESSAGE_ERROR("", action, error_message);
+			}
+
+			AJAX_ResponseTemplate(&indexPage, success_message, error_message);
+
+			MESSAGE_DEBUG("", action, "finish");
+		}
+
+		if((action == "AJAX_addFavoriteChecklistItems"))
+		{
+			MESSAGE_DEBUG("", action, "start");
+
+			auto	success_message		= ""s;
+			auto	error_message		= ""s;
+			auto	event_id			= CheckHTTPParam_Number(indexPage.GetVarsHandler()->Get("event_id"));
+			auto	from_checklist_id	= CheckHTTPParam_Number(indexPage.GetVarsHandler()->Get("from_checklist_id"));
+
+			if(event_id.length() && from_checklist_id.length())
+			{
+				if((error_message = amIAllowedToChangeEvent(event_id, &db, &user)).empty())
+				{
+					auto	to_checklist_id = GetChecklistIDByEventID_CreateIfMissed(event_id, &db, &user);
+
+					if(to_checklist_id.length())
+					{
+						if((error_message = addMissedChecklistItems(from_checklist_id, to_checklist_id, &db)).empty())
+						{
+
+						}
+						else
+						{
+							MESSAGE_ERROR("", action, error_message);
+						}
+					}
+					else
+					{
+						error_message = gettext("");
+						MESSAGE_ERROR("", action, error_message);
+					}
+				}
+				else
+				{
+					MESSAGE_ERROR("", action, error_message);
+				}
+			}
+			else
+			{
+				error_message = gettext("mandatory parameter missed");
+				MESSAGE_ERROR("", action, error_message);
+			}
+
+			AJAX_ResponseTemplate(&indexPage, success_message, error_message);
+
+			MESSAGE_DEBUG("", action, "finish");
+		}
+
+		if((action == "AJAX_deleteChecklistItem"))
+		{
+			MESSAGE_DEBUG("", action, "start");
+
+			auto	success_message		= ""s;
+			auto	error_message		= ""s;
+			auto	id					= CheckHTTPParam_Number(indexPage.GetVarsHandler()->Get("id"));
+
+			if(id.length())
+			{
+				auto	event_id	= GetValueFromDB(Get_EventIDByChecklistItemID(id), &db);
+
+				if(event_id.length())
+				{
+					if((error_message = amIAllowedToChangeEvent(event_id, &db, &user)).empty())
+					{
+						db.Query("DELETE FROM `checklist_items` WHERE `id`=" + quoted(id) + ";");
+					}
+					else
+					{
+						MESSAGE_ERROR("", action, error_message);
+					}
+				}
+				else
+				{
+					error_message = gettext("mandatory parameter missed");
+					MESSAGE_ERROR("", action, error_message);
+				}
+			}
+			else
+			{
+				error_message = gettext("mandatory parameter missed");
+				MESSAGE_ERROR("", action, error_message);
+			}
 
 			AJAX_ResponseTemplate(&indexPage, success_message, error_message);
 

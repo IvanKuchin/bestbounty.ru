@@ -1141,7 +1141,7 @@ string GetEventListInJSONFormat(string dbQuery, CMysql *db, CUser *user)
 				ostFinal << "\"isMine\": \""				<< (user ? eventsList[i].owner_id == user->GetID() : false) << "\",";
 				ostFinal << "\"hosts\": ["					<< GetEventHostsListInJSONFormat("SELECT * FROM `event_hosts` WHERE `event_id`=\"" + eventsList[i].id + "\";", db, user) << "],";
 				ostFinal << "\"guests\": ["					<< GetEventGuestsListInJSONFormat("SELECT * FROM `event_guests` WHERE `event_id`=\"" + eventsList[i].id + "\";", db, user) << "],";
-				ostFinal << "\"checklists\": ["				<< GetEventCheckistInJSONFormat("SELECT * FROM `event_checklists` WHERE `event_id`=\"" + eventsList[i].id + "\";", db, user) << "],";
+				ostFinal << "\"checklists\": ["				<< GetEventChecklistInJSONFormat("SELECT * FROM `event_checklists` WHERE `event_id`=\"" + eventsList[i].id + "\";", db, user) << "],";
 				ostFinal << "\"hideGifts\": \""				<< eventsList[i].hideGifts << "\",";
 				ostFinal << "\"isBlocked\": \""				<< eventsList[i].isBlocked << "\",";
 				ostFinal << "\"eventTimestampCreation\": \""<< eventsList[i].eventTimestampCreation << "\",";
