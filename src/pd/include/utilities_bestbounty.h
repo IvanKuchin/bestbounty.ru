@@ -53,6 +53,7 @@ auto			GetCompanyPositionIDByTitle(string title, CMysql *) -> string;
 auto 			GetCandidatesListAppliedToVacancyInJSONFormat(string dbQuery, CMysql *) -> string;
 auto 			GetOpenVacanciesInJSONFormat(string companyID, CMysql *, CUser * = NULL) -> string;
 auto			addMissedChecklistItems(const string &from_checklist_id, string const &to_checklist_id, CMysql *) -> string;
+auto 			addChecklistItem(string const &to_checklist_id, const string &title, const string &category, CMysql *, CUser *) -> string;
 auto 			GetChecklistIDByEventID_CreateIfMissed(const string &event_id, CMysql *, CUser *) -> string;
 
 auto			GetUserListInJSONFormat_BySearchString(const string lookForKey, bool include_myself, CMysql *, CUser *) -> string;

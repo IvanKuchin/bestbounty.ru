@@ -960,6 +960,30 @@ auto addMissedChecklistItems(const string &from_checklist_id, string const &to_c
 	return error_message;
 }
 
+auto addChecklistItem(string const &to_checklist_id, const string &title, const string &category, CMysql *db, CUser *user) -> string
+{
+	MESSAGE_DEBUG("", "", "start (" + to_checklist_id + ", " + title + ", " + category + ")");
+
+	auto	error_message				= ""s;
+	auto	checklist_predefined_id		= GetValueFromDB("SELECT `id` FROM `checklist_predefined` where `title`=" + quoted(title) + " AND `category`=" + quoted(category) + ";", db);
+
+	if(checklist_predefined_id.empty())
+	{
+		checklist_predefined_id = to_string(db->InsertQuery("INSERT INTO `checklist_predefined` (`category`, `title`) VALUES (" + quoted(category) + ", " + quoted(title) + ");"));
+	}
+
+	auto	checklist_item_id			= GetValueFromDB("SELECT `id` FROM `checklist_items` WHERE `event_checklist_id`=" + quoted(to_checklist_id) + " AND `checklist_predefined_id`=" + quoted(checklist_predefined_id) + ";", db);
+
+	if(checklist_item_id.empty())
+	{
+		checklist_predefined_id = to_string(db->InsertQuery("INSERT INTO `checklist_items` (`event_checklist_id`, `checklist_predefined_id`, `eventTimestamp`) VALUES (" + quoted(to_checklist_id) + ", " + quoted(checklist_predefined_id) + ", UNIX_TIMESTAMP());"));
+	}
+
+	MESSAGE_DEBUG("", "", "finish");
+
+	return error_message;
+}
+
 
 auto GetChecklistIDByEventID_CreateIfMissed(const string &event_id, CMysql *db, CUser *user) -> string
 {

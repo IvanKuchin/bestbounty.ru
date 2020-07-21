@@ -2238,6 +2238,55 @@ int main()
 			MESSAGE_DEBUG("", action, "finish");
 		}
 
+		if(action == "AJAX_addChecklistItem")
+		{
+			MESSAGE_DEBUG("", action, "start");
+
+			auto	success_message		= ""s;
+			auto	error_message		= ""s;
+			auto	event_id			= CheckHTTPParam_Number(indexPage.GetVarsHandler()->Get("event_id"));
+			auto	category			= CheckHTTPParam_Text(indexPage.GetVarsHandler()->Get("category"));
+			auto	title				= CheckHTTPParam_Text(indexPage.GetVarsHandler()->Get("title"));
+
+			if(event_id.length() && category.length() && title.length())
+			{
+				if((error_message = amIAllowedToChangeEvent(event_id, &db, &user)).empty())
+				{
+					auto	to_checklist_id = GetChecklistIDByEventID_CreateIfMissed(event_id, &db, &user);
+
+					if(to_checklist_id.length())
+					{
+						if((error_message = addChecklistItem(to_checklist_id, title, category, &db, &user)).empty())
+						{
+
+						}
+						else
+						{
+							MESSAGE_ERROR("", action, error_message);
+						}
+					}
+					else
+					{
+						error_message = gettext("");
+						MESSAGE_ERROR("", action, error_message);
+					}
+				}
+				else
+				{
+					MESSAGE_ERROR("", action, error_message);
+				}
+			}
+			else
+			{
+				error_message = gettext("mandatory parameter missed");
+				MESSAGE_ERROR("", action, error_message);
+			}
+
+			AJAX_ResponseTemplate(&indexPage, success_message, error_message);
+
+			MESSAGE_DEBUG("", action, "finish");
+		}
+
 		if((action == "AJAX_deleteChecklistItem"))
 		{
 			MESSAGE_DEBUG("", action, "start");
@@ -2277,6 +2326,98 @@ int main()
 
 			MESSAGE_DEBUG("", action, "finish");
 		}
+
+		if(action == "AJAX_getChecklistCategoryAutocompleteList")
+		{
+			auto	term			= CheckHTTPParam_Text(indexPage.GetVarsHandler()->Get("term"));
+			auto	template_name	= "json_response.htmlt"s;
+			auto	error_message	= ""s;
+			auto	success_message	= ""s;
+			auto	result			= ""s;
+
+			if(term.length())
+			{
+				auto	affected = db.Query("SELECT DISTINCT(`category`) FROM `checklist_predefined` WHERE `category` LIKE \"%" + term + "%\" LIMIT 0, 20;");
+				if(affected)
+				{
+					for(int i = 0; i < affected; ++i)
+					{
+						if(i) success_message += ",";
+						success_message += "{\"id\":\"0\",\"label\":\"" + db.Get(i, "category") + "\"}";
+					}
+				}
+				else
+				{
+					error_message = gettext("category not found");
+					MESSAGE_DEBUG("", "", error_message);
+				}	
+			}
+			else
+			{
+				MESSAGE_DEBUG("", "", "term is empty");
+			}
+
+			if(error_message.empty())
+			{
+				result = "[" + success_message + "]";
+			}
+			else
+			{
+				MESSAGE_DEBUG("", action, "failed");
+				result = "[]";
+			}
+
+			indexPage.RegisterVariableForce("result", result);
+
+			if(!indexPage.SetTemplate(template_name)) MESSAGE_ERROR("", action, "can't find template " + template_name);
+		}
+
+		if(action == "AJAX_getChecklistTitleAutocompleteList")
+		{
+			auto	term			= CheckHTTPParam_Text(indexPage.GetVarsHandler()->Get("term"));
+			auto	template_name	= "json_response.htmlt"s;
+			auto	error_message	= ""s;
+			auto	success_message	= ""s;
+			auto	result			= ""s;
+
+			if(term.length())
+			{
+				auto	affected = db.Query("SELECT DISTINCT(`title`) FROM `checklist_predefined` WHERE `title` LIKE \"%" + term + "%\" LIMIT 0, 20;");
+				if(affected)
+				{
+					for(int i = 0; i < affected; ++i)
+					{
+						if(i) success_message += ",";
+						success_message += "{\"id\":\"0\",\"label\":\"" + db.Get(i, "title") + "\"}";
+					}
+				}
+				else
+				{
+					error_message = gettext("title not found");
+					MESSAGE_DEBUG("", "", error_message);
+				}	
+			}
+			else
+			{
+				MESSAGE_DEBUG("", "", "term is empty");
+			}
+
+			if(error_message.empty())
+			{
+				result = "[" + success_message + "]";
+			}
+			else
+			{
+				MESSAGE_DEBUG("", action, "failed");
+				result = "[]";
+			}
+
+			indexPage.RegisterVariableForce("result", result);
+
+			if(!indexPage.SetTemplate(template_name)) MESSAGE_ERROR("", action, "can't find template " + template_name);
+		}
+
+
 
 		MESSAGE_DEBUG("", "", "post-condition if(action == \"" + action + "\")");
 
