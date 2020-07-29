@@ -40,7 +40,7 @@
 #define	DB_LOGIN									"bestbounty"
 #define	DB_PASSWORD									"bestbounty"
 #define	DB_HOST										"localhost"
-#define	DB_CHARSET									"utf8"s
+#define	DB_CHARSET									"utf8mb4"s
 
 #define	DOMAIN_NAME									string(DB_NAME)
 

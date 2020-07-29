@@ -2119,7 +2119,7 @@ int main()
 			MESSAGE_DEBUG("", action, "finish");
 		}
 
-		if((action == "AJAX_switchChecklistItem") || (action == "AJAX_updateChecklistItemPrice"))
+		if((action == "AJAX_switchChecklistItem") || (action == "AJAX_updateChecklistItemPrice") || (action == "AJAX_updateChecklistItemComment"))
 		{
 			MESSAGE_DEBUG("", action, "start");
 
@@ -2136,6 +2136,8 @@ int main()
 						db.Query("UPDATE `checklist_items` SET `state`=" + quoted(value) + " WHERE `id`=" + quoted(id) + ";");
 					if(action == "AJAX_updateChecklistItemPrice")
 						db.Query("UPDATE `checklist_items` SET `price`=" + quoted(value) + " WHERE `id`=" + quoted(id) + ";");
+					if(action == "AJAX_updateChecklistItemComment")
+						db.Query("UPDATE `checklist_items` SET `comment`=" + quoted(value) + " WHERE `id`=" + quoted(id) + ";");
 				}
 				else
 				{
@@ -2248,7 +2250,7 @@ int main()
 			auto	category			= CheckHTTPParam_Text(indexPage.GetVarsHandler()->Get("category"));
 			auto	title				= CheckHTTPParam_Text(indexPage.GetVarsHandler()->Get("title"));
 
-			if(event_id.length() && category.length() && title.length())
+			if(event_id.length() && title.length())
 			{
 				if((error_message = amIAllowedToChangeEvent(event_id, &db, &user)).empty())
 				{
