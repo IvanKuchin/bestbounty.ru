@@ -121,5 +121,8 @@ msgstr "пользователь не найден"
 msgid "checklist not found"
 msgstr "checklist не найден"
 
+msgid "gift not found"
+msgstr "подарок не найден"
+
 msgid "you are not authorized"
 msgstr "у Вас недостаточно прав"

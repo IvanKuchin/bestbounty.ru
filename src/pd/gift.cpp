@@ -285,10 +285,7 @@ int main()
 		ostringstream   ostResult;
 		string		    loginFromUser;
 
-		{
-			CLog	log;
-			log.Write(DEBUG, string(__func__) + "[" + to_string(__LINE__) + "]:action == " + action + ": start");
-		}
+		MESSAGE_DEBUG("", action, "start");
 
 		ostResult.str("");
 		if(user.GetLogin() == "Guest")
@@ -357,45 +354,33 @@ int main()
 			throw CException("Template file json_response.htmlt was missing");
 		}  // if(!indexPage.SetTemplate("AJAX_addGift.htmlt"))
 
-		{
-			CLog	log;
-			log.Write(DEBUG, string(__func__) + "[" + to_string(__LINE__) + "]:action == " + action + ": end");
-		}
-	}   // if(action == "AJAX_addGift")
+		MESSAGE_DEBUG("", action, "finish");
+	}
 
 	if((action == "updateGiftTitle") || (action == "updateGiftPrice") || (action == "updateGiftRequestedQuantity") || (action == "updateGiftLink") || (action == "updateGiftDescription"))
 	{
-		ostringstream   ostResult;
-		string		    loginFromUser;
+		MESSAGE_DEBUG("", action, "start");
 
-		{
-			CLog	log;
-			log.Write(DEBUG, string(__func__) + "[" + to_string(__LINE__) + "]:action == " + action + ": start");
-		}
+		auto	success_message = ""s;
+		auto	error_message = ""s;
+
+		ostringstream   ostResult;
 
 		ostResult.str("");
 		if(user.GetLogin() == "Guest")
 		{
-			{
-				CLog	log;
-				log.Write(DEBUG, string(__func__) + string("[") + to_string(__LINE__) + "]:action == " + action + ": re-login required");
-			}
-
-			ostResult << "{\"result\":\"error\",\"description\":\"re-login required\"}";
+			error_message = gettext("you are not authorized");
+			MESSAGE_DEBUG("", action, "start");
 		}
 		else
 		{
-			string	giftID = CheckHTTPParam_Number(indexPage.GetVarsHandler()->Get("id"));
-			string	value = CheckHTTPParam_Text(indexPage.GetVarsHandler()->Get("value"));
+			auto	giftID = CheckHTTPParam_Number(indexPage.GetVarsHandler()->Get("id"));
+			auto	value = CheckHTTPParam_Text(indexPage.GetVarsHandler()->Get("value"));
 
 			if(giftID.empty())
 			{
-				{
-					CLog	log;
-					log.Write(DEBUG, string(__func__) + string("[") + to_string(__LINE__) + "]:action == " + action + ": id should not be ampty");
-				}
-
-				ostResult << "{\"result\":\"error\",\"description\":\"ошибка передачи параметров\"}";
+				error_message = gettext("mandatory parameter missed");
+				MESSAGE_DEBUG("", action, "start");
 			}
 			else
 			{
@@ -413,82 +398,48 @@ int main()
 					{
 						if(value.length() <= 11)
 						{
-							try
+							auto	requested_quantity_new = stod_noexcept(value);
+							auto	gained_quantity = stod_noexcept(db.Get(0, "gained_quantity"));
+
+							if(requested_quantity_new >= gained_quantity)
 							{
-								unsigned long	requested_quantity_new = stol(value);
-								unsigned long	gained_quantity = stol(db.Get(0, "gained_quantity"));
+								db.Query("UPDATE `gifts` SET `requested_quantity`=\"" + value + "\" WHERE `id`=\"" + giftID + "\";");
 
-								if(requested_quantity_new >= gained_quantity)
+								if(db.isError())
 								{
-									db.Query("UPDATE `gifts` SET `requested_quantity`=\"" + value + "\" WHERE `id`=\"" + giftID + "\";");
-
-									if(db.isError())
-									{
-										{
-											CLog		log;
-											log.Write(ERROR, string(__func__) + "[" + to_string(__LINE__) + "]:ERROR: removing form `gifts` table (" + db.GetErrorMessage() + ")");
-										}
-										ostResult << "{\"result\":\"error\",\"description\":\"ошибка БД\"}";
-									}
-									else
-									{
-										ostResult << "{\"result\":\"success\",\"gifts\":[" + GetGiftListInJSONFormat("SELECT * FROM `gifts` WHERE `user_id`=\"" + user.GetID() + "\";", &db, &user) + "]}";
-									}
+									error_message = gettext("SQL syntax error");
+									MESSAGE_ERROR("", action, "start");
 								}
 								else
 								{
-									{
-										CLog	log;
-										log.Write(DEBUG, string(__func__) + string("[") + to_string(__LINE__) + "]:action == " + action + ": requested_quantity_new MUST be greater than gained_quantity");
-									}
-									ostResult << "{\"result\":\"error\",\"description\":\"ОШИБКА: Вам уже подарили больше чем нужно\"}";
+									success_message = "\"gifts\":[" + GetGiftListInJSONFormat("SELECT * FROM `gifts` WHERE `user_id`=\"" + user.GetID() + "\";", &db, &user) + "]";
 								}
 							}
-							catch(...)
+							else
 							{
-								{
-									CLog	log;
-									log.Write(DEBUG, string(__func__) + string("[") + to_string(__LINE__) + "]:action == " + action + ": caught exception on stol(" + value + ")");
-								}
-								ostResult << "{\"result\":\"error\",\"description\":\"ОШИБКА: параметр должен быть числом\"}";
+								error_message = "Вам уже подарили больше чем нужно";
+								MESSAGE_DEBUG("", "", error_message);
 							}
 						}
 						else
 						{
-							{
-								CLog	log;
-								log.Write(DEBUG, string(__func__) + string("[") + to_string(__LINE__) + "]:action == " + action + ": quantity(" + value + ") longer than 11 symbols");
-							}
-							ostResult << "{\"result\":\"error\",\"description\":\"ОШИБКА: слишком длинное число\"}";
+							error_message = "слишком длинное число";
+							MESSAGE_ERROR("", "", error_message);
 						}
 					}
 
 				}
 				else
 				{
-					{
-						CLog	log;
-						log.Write(ERROR, string(__func__) + string("[") + to_string(__LINE__) + "]:action == " + action + ":ERROR: gift(" + giftID + ") not found or doesn't belongs to user(" + user.GetID() + ")");
-					}
-					ostResult << "{\"result\":\"error\",\"description\":\"подарок отсутствует в БД\"}";
+					error_message = gettext("gift not found");
+					MESSAGE_ERROR("", "", error_message);
 				}
 			}
 		}
 
-		indexPage.RegisterVariableForce("result", ostResult.str());
+		AJAX_ResponseTemplate(&indexPage, success_message, error_message);
 
-		if(!indexPage.SetTemplate("json_response.htmlt"))
-		{
-			CLog	log;
-
-			log.Write(ERROR, string(__func__) + "[" + to_string(__LINE__) + "]:ERROR: template file json_response.htmlt was missing");
-			throw CException("Template file json_response.htmlt was missing");
-		}  // if(!indexPage.SetTemplate("updateGiftTitle.htmlt"))
-
-		{
-			CLog	log;
-			log.Write(DEBUG, string(__func__) + "[" + to_string(__LINE__) + "]:action == " + action + ": end");
-		}
+		MESSAGE_DEBUG("", action, "finish");
 	}   // if(action == "updateGiftTitle")
 
 	if((action == "AJAX_giveGiftVisible") || (action == "AJAX_giveGiftAnonymous"))
@@ -496,10 +447,7 @@ int main()
 		ostringstream   ostResult;
 		string		    loginFromUser;
 
-		{
-			CLog	log;
-			log.Write(DEBUG, string(__func__) + "[" + to_string(__LINE__) + "]:action == " + action + ": start");
-		}
+		MESSAGE_DEBUG("", action, "start");
 
 		if(user.GetLogin() == "Guest")
 		{
@@ -608,10 +556,7 @@ int main()
 			throw CException("Template file json_response.htmlt was missing");
 		}  // if(!indexPage.SetTemplate("AJAX_giveGiftVisible.htmlt"))
 
-		{
-			CLog	log;
-			log.Write(DEBUG, string(__func__) + "[" + to_string(__LINE__) + "]:action == " + action + ": end");
-		}
+		MESSAGE_DEBUG("", action, "finish");
 	}   // if(action == "AJAX_giveGiftVisible")
 
 
@@ -620,10 +565,7 @@ int main()
 		ostringstream   ostFinal;
 		string		    loginFromUser;
 
-		{
-			CLog	log;
-			log.Write(DEBUG, string(__func__) + "[" + to_string(__LINE__) + "]:action == " + action + ": start");
-		}
+		MESSAGE_DEBUG("", action, "start");
 
 		if(user.GetLogin() == "Guest")
 		{
@@ -826,10 +768,7 @@ int main()
 			throw CException("Template file json_response.htmlt was missing");
 		}  // if(!indexPage.SetTemplate("json_response.htmlt"))
 
-		{
-			CLog	log;
-			log.Write(DEBUG, string(__func__) + "[" + to_string(__LINE__) + "]:action == " + action + ": end");
-		}
+		MESSAGE_DEBUG("", action, "finish");
 	}   // if(action == "AJAX_getURLMetaData")
 
 	if(action == "AJAX_GotIt")
@@ -837,10 +776,7 @@ int main()
 		ostringstream   ostResult;
 		string		    loginFromUser;
 
-		{
-			CLog	log;
-			log.Write(DEBUG, string(__func__) + "[" + to_string(__LINE__) + "]:action == " + action + ": start");
-		}
+		MESSAGE_DEBUG("", action, "start");
 
 		ostResult.str("");
 		if(user.GetLogin() == "Guest")
@@ -933,10 +869,7 @@ int main()
 			throw CException("Template file json_response.htmlt was missing");
 		}  // if(!indexPage.SetTemplate("AJAX_GotIt.htmlt"))
 
-		{
-			CLog	log;
-			log.Write(DEBUG, string(__func__) + "[" + to_string(__LINE__) + "]:action == " + action + ": end");
-		}
+		MESSAGE_DEBUG("", action, "finish");
 	}   // if(action == "AJAX_GotIt")
 
 	if(action == "AJAX_GiftThank")
@@ -944,10 +877,7 @@ int main()
 		ostringstream   ostResult;
 		string		    loginFromUser;
 
-		{
-			CLog	log;
-			log.Write(DEBUG, string(__func__) + "[" + to_string(__LINE__) + "]:action == " + action + ": start");
-		}
+		MESSAGE_DEBUG("", action, "start");
 
 		ostResult.str("");
 		if(user.GetLogin() == "Guest")
@@ -1016,10 +946,7 @@ int main()
 			throw CException("Template file json_response.htmlt was missing");
 		}  // if(!indexPage.SetTemplate("AJAX_GiftThank.htmlt"))
 
-		{
-			CLog	log;
-			log.Write(DEBUG, string(__func__) + "[" + to_string(__LINE__) + "]:action == " + action + ": end");
-		}
+		MESSAGE_DEBUG("", action, "finish");
 	}   // if(action == "AJAX_GiftThank")giftID
 
 	if(action == "AJAX_removeGiftEntry")
@@ -1027,10 +954,7 @@ int main()
 		ostringstream   ostResult;
 		string		    loginFromUser;
 
-		{
-			CLog	log;
-			log.Write(DEBUG, string(__func__) + "[" + to_string(__LINE__) + "]:action == " + action + ": start");
-		}
+		MESSAGE_DEBUG("", action, "start");
 
 		ostResult.str("");
 		if(user.GetLogin() == "Guest")
@@ -1131,10 +1055,7 @@ int main()
 			throw CException("Template file json_response.htmlt was missing");
 		}  // if(!indexPage.SetTemplate("AJAX_removeGiftEntry.htmlt"))
 
-		{
-			CLog	log;
-			log.Write(DEBUG, string(__func__) + "[" + to_string(__LINE__) + "]:action == " + action + ": end");
-		}
+		MESSAGE_DEBUG("", action, "finish");
 	}   // if(action == "AJAX_removeGiftEntry")
 
 
