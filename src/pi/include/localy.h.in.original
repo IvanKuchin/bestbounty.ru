@@ -197,7 +197,7 @@
 #define	DEFAULT_SITE_THEME							".regular"
 
 // --- actions allowed w/o session cookie
-#define	ALLOWED_NO_SESSION_ACTION					{ "getUserWall" }
+#define	ALLOWED_NO_SESSION_ACTION					{ }
 
 #define	SMSC_LOGIN									"ivan.kuchin"s
 #define	SMSC_PASSWORD								"KaramBamBam"s
