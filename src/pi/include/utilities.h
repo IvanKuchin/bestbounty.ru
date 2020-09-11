@@ -133,6 +133,9 @@ auto			GetNumberOfDigits (const  string &src) -> unsigned int;
 auto			GetNumberOfLetters(const wstring &src) -> unsigned int;
 auto			GetNumberOfLetters(const  string &src) -> unsigned int;
 
+// --- file system functions
+auto			CleanupFilename(string	filename) -> string;
+
 // --- SMS functions
 auto			SendPhoneConfirmationCode(const string &country_code, const string &phone_number, const string &session, CMysql *db, CUser *user) -> string;
 auto			CheckPhoneConfirmationCode(const string &confirmation_code, const string &session, CMysql *, CUser *) -> vector<pair<string, string>>;

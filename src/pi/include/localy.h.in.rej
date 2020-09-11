@@ -1,0 +1,30 @@
+--- pi/include/localy.h.in	2020-09-11 13:11:33.815463050 -0400
++++ pi/include/localy.h.in.new	2020-09-11 13:13:50.697259456 -0400
+@@ -61,13 +61,7 @@
+ 
+ #define BROWSER_FILE_PREFIX							"/"	// for instance "\\server\folder" or "http://file.serever/com"
+ 
+-#define	DB_NAME										"${MAIN_DOMAIN_NAME}"
+-#define	DB_LOGIN									"${PROJECT_NAME}"
+-#define	DB_PASSWORD									"${PROJECT_NAME}"
+-#define	DB_HOST										"localhost"
+-#define	DB_CHARSET									"utf8"s
+-
+-#define	DOMAIN_NAME									string(DB_NAME)
++#define	DOMAIN_NAME									"${MAIN_DOMAIN_NAME}"s
+ 
+ #define	LOCALE_RUSSIAN								"ru_RU.UTF-8"s
+ #define	LOCALE_ENGLISH								"en_US.UTF-8"s
+@@ -278,12 +272,6 @@
+ 
+ #define	TIMECARD_ENTRY_TITLE_SEPARATOR				" / "s
+ 
+-#define	SMSC_LOGIN									"ivan.kuchin"s
+-#define	SMSC_PASSWORD								"KaramBamBam"s
+-#define	SMSC_SENDER_NAME							GetDomain()					// --- check sender name in smsc.ru control panel
+-#define	SMSC_EXPIRATION								120
+-#define	SMSC_CHARSET								"utf-8"s
+-
+ #define	GIT_COMMIT_ID_FILE_NAME						"${GIT_INSTALL_DIR}/git_commit_id"s
+ 
+ #endif
