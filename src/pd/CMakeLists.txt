@@ -13,7 +13,7 @@ set(EXECUTABLE_CGIs_with_PI_LIBS
     )
 
 # --- Libraries
-# ---- big joint librabry
+# ---- joint librabry
 set(JOINT_LIBRARY_SRCs
     utilities_bestbounty1.cpp
     utilities_bestbounty2.cpp

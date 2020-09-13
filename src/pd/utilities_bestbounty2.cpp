@@ -416,7 +416,6 @@ string GetMessageSpamUser(string messageID, string userID, CMysql *db)
 	return GetValueFromDB("select count(*) from `feed_message_params` where `parameter`='spam' and `messageID`='" + messageID + "' and `userID`='" + userID + "' ;", db);
 }
 
-
 auto GetUsersID_BySearchString(const string &lookForKey, bool include_myself, CMysql *db, CUser *user) -> vector<string>
 {
 	MESSAGE_DEBUG("", "", "start(" + lookForKey + ")");
@@ -565,98 +564,8 @@ auto GetUsersID_BySearchString(const string &lookForKey, bool include_myself, CM
 						")"
 					")";
 
-
-
-
-
-
 			result = GetValuesFromDB(query, db);
 		}
-/*
-		// --- three words searching through DB 
-		if(searchWords.size() == 3)
-		{
-			MESSAGE_DEBUG("", "", "three words search");
-
-			// --- Looking through user name,surname and company title
-			ost.str("");
-			ost << "SELECT * FROM `users` \
-					left join `users_company` on `users_company`.`user_id` = `users`.`id` \
-					left join `company` on `company`.`id`=`users_company`.`company_id` \
-					where \
-					`users`.`isActivated`='Y' and `users`.`isblocked`='N' and `users`.`id`!=\"" << user->GetID() << "\" and \
-					`users_company`.`current_company`='1' and \
-					( \
-						`company`.`name` like \"%" 		<< searchWords[0] << "%\" or \
-						`company`.`name` like \"%" 		<< searchWords[1] << "%\" or \
-						`company`.`name` like \"%" 		<< searchWords[2] << "%\" \
-					) and ( \
-						`users`.`name` like \"%" 		<< searchWords[0] << "%\" or \
-						`users`.`name` like \"%" 		<< searchWords[1] << "%\" or \
-						`users`.`name` like \"%" 		<< searchWords[2] << "%\" or \
-						`users`.`nameLast` like \"%" 	<< searchWords[0] << "%\" or \
-						`users`.`nameLast` like \"%" 	<< searchWords[1] << "%\" or \
-						`users`.`nameLast` like \"%" 	<< searchWords[2] << "%\" \
-					) LIMIT 0, 20;";
-
-			userList = GetUserListInJSONFormat(ost.str(), db, user);
-			if(userList.length() > 0) 
-			{
-				// --- comma required only if previous text is exists
-				if(ostFinal.str().length() > 10) ostFinal << ","; 
-				ostFinal  << std::endl << userList; 
-			}
-			else
-			{
-				// --- here code will be run only if multiwork search was not sucessfull on previous step
-				// --- earlier: user _and_ company is not success
-				// --- here: user _or_ company
-				MESSAGE_DEBUG("", "", "(user _and_ company) has fail, try (user _without_ company) ");
-
-				ost.str("");
-				ost << "SELECT * FROM `users` WHERE `isActivated`='Y' and `isblocked`='N' and `id`!=\"" << user->GetID() << "\" and ( \
-						( \
-							`users`.`name` like \"%" 		<< searchWords[1] << "%\" and \
-							`users`.`nameLast` like \"%" 	<< searchWords[0] << "%\" \
-						) \
-						or \
-						( \
-							`users`.`name` like \"%" 		<< searchWords[0] << "%\" and \
-							`users`.`nameLast` like \"%" 	<< searchWords[1] << "%\" \
-						) \
-						or \
-						( \
-							`users`.`name` like \"%" 		<< searchWords[2] << "%\" and \
-							`users`.`nameLast` like \"%" 	<< searchWords[0] << "%\" \
-						) \
-						or \
-						( \
-							`users`.`name` like \"%" 		<< searchWords[0] << "%\" and \
-							`users`.`nameLast` like \"%" 	<< searchWords[2] << "%\" \
-						) \
-						or \
-						( \
-							`users`.`name` like \"%" 		<< searchWords[1] << "%\" and \
-							`users`.`nameLast` like \"%" 	<< searchWords[2] << "%\" \
-						) \
-						or \
-						( \
-							`users`.`name` like \"%" 		<< searchWords[2] << "%\" and \
-							`users`.`nameLast` like \"%" 	<< searchWords[1] << "%\" \
-						) \
-						) LIMIT 0, 20;";
-
-				userList = GetUserListInJSONFormat(ost.str(), db, user);
-				if(userList.length() > 0) 
-				{
-					// --- comma required only if previous text is exists
-					if(ostFinal.str().length() > 10) ostFinal << ","; 
-					ostFinal  << std::endl << userList; 
-				}
-			}
-
-		}
-*/
 	}
 	else
 	{

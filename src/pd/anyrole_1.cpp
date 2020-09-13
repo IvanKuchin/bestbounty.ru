@@ -92,13 +92,10 @@ int main(void)
 
 		if(action == "AJAX_getUserAutocompleteList")
 		{
-			string			term = CheckHTTPParam_Text(indexPage.GetVarsHandler()->Get("term"));
-			string			template_name = "json_response.htmlt";
-			string			success_message = "";
-			string			error_message = "";
-			ostringstream	ostResult;
-
-			ostResult.str("");
+			auto			term = CheckHTTPParam_Text(indexPage.GetVarsHandler()->Get("term"));
+			auto			template_name = "json_response.htmlt";
+			auto			success_message = ""s;
+			auto			error_message = ""s;
 
 			if(term.length())
 			{
