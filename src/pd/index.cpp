@@ -1108,7 +1108,7 @@ int main()
 							}
 
 							ost.str("");
-							ost << "insert into `feed_images` set "
+							ost << "INSERT INTO `feed_images` set "
 								<< "`tempSet`='" << imageTempSet << "', "
 								<< "`userID`='" << user.GetID() << "',  "
 								<< "`folder`='', "
@@ -1160,7 +1160,7 @@ int main()
 								CopyFile(tmpImageJPG, finalFile);
 
 								ost.str("");
-								ost << "insert into `feed_images` set "
+								ost << "INSERT INTO `feed_images` set "
 									<< "`tempSet`='" << imageTempSet << "', "
 									<< "`userID`='" << user.GetID() << "',  "
 									<< "`folder`='" << html.GetPreviewImageFolder() << "', "
@@ -1402,35 +1402,26 @@ int main()
 		// --- AJAX change in friendship status
 		if(action == "AJAX_setFindFriend_FriendshipStatus") 
 		{
-			ostringstream	ost, result;
-			string			sessid, friendID, currentFriendshipStatus, requestedFriendshipStatus;
+			MESSAGE_DEBUG("", action, "start");
 
-			MESSAGE_DEBUG("", "", "start");
+			auto			sessid						= ""s;
+			auto			friendID					= CheckHTTPParam_Number(indexPage.GetVarsHandler()->Get("friendID"));
+			auto			requestedFriendshipStatus	= CheckHTTPParam_Text(indexPage.GetVarsHandler()->Get("status"));
+			auto			currentFriendshipStatus		= ""s;
+			auto			success_message				= ""s;
+			auto			error_message				= ""s;
 
 			if(user.GetLogin() == "Guest")
 			{
 				MESSAGE_DEBUG("", action, "re-login required");
 
-				indexPage.Redirect("/" + GUEST_USER_DEFAULT_ACTION + "?rand=" + GetRandom(10));
+				indexPage.Redirect("/autologin?rand=" + GetRandom(10));
 			}
-
-			friendID = CheckHTTPParam_Number(indexPage.GetVarsHandler()->Get("friendID"));
-			requestedFriendshipStatus = CheckHTTPParam_Text(indexPage.GetVarsHandler()->Get("status"));
-			result.str("");
 
 			if((friendID.length() == 0) || (requestedFriendshipStatus.length() == 0))
 			{
-				ostringstream	ost2;
-				ost2.str("");
-				ost2 << string(__func__) + "[" + to_string(__LINE__) + "]" + action + ": friendID [" << friendID << "] or status [" << requestedFriendshipStatus << "] is empty";
-
-				result.str("");
-				result << "{ \"result\":\"error\", \"description\":\"" << ost2.str() << "\" }";
-
-				{
-					CLog	log;
-					log.Write(ERROR, ost2.str());
-				}
+				error_message = gettext("mandatory parameter missed");
+				MESSAGE_ERROR("", action, error_message);
 			}
 			else
 			{
@@ -1443,50 +1434,21 @@ int main()
 				{
 					if((currentFriendshipStatus == "empty") || (currentFriendshipStatus == "ignored"))
 					{
-						ost.str("");
-						ost << "START TRANSACTION;";
-						ost << "insert into `users_friends` (`userID`, `friendID`, `state`, `date`) \
-								VALUES (\
-								\"" << user.GetID() << "\", \
-								\"" << friendID << "\", \
-								\"requesting\", \
-								NOW() \
-								);";
-						ost << "insert into `users_friends` (`userID`, `friendID`, `state`, `date`) \
-								VALUES (\
-								\"" << friendID << "\", \
-								\"" << user.GetID() << "\", \
-								\"requested\", \
-								NOW() \
-								);";
-						ost << "INSERT INTO `feed` (`title`, `userId`, `actionTypeId`, `actionId`, `eventTimestamp`) \
-								VALUES(\
-								\"\", \
-								\"" << user.GetID() << "\", \
-								\"16\", \
-								\"" << friendID << "\",  \
-								NOW());";
-						ost << "COMMIT;";
-						db.Query(ost.str());
-
-						result.str("");
-						result << "{ \"result\":\"ok\", \"description\":\"\" }";
+						db.Query(
+								"START TRANSACTION;"
+								"INSERT INTO `users_friends` (`userID`, `friendID`, `state`, `date`) "
+								"VALUES (" + quoted(user.GetID()) + "," + quoted(friendID) + ", \"requesting\", NOW());"
+								"INSERT INTO `users_friends` (`userID`, `friendID`, `state`, `date`) "
+								"VALUES (" + quoted(friendID) + ", " + quoted(user.GetID()) + ", \"requested\", NOW());"
+								"INSERT INTO `feed` (`title`, `userId`, `actionTypeId`, `actionId`, `eventTimestamp`) "
+								"VALUES(\"\", " + quoted(user.GetID()) + ", \"16\", " + quoted(friendID) + ",  NOW());"
+								"COMMIT;"
+						);
 					}
 					else
 					{
-						ostringstream	ost2;
-						ost2.str("");
-						ost2 << string(__func__) + "[" + to_string(__LINE__) + "]" + action + ": can't move "
-								"FROM (" << user.GetID() << " " << currentFriendshipStatus << " " << friendID << ") "
-								"TO (" << friendID << " " << requestedFriendshipStatus << " " << user.GetID() << ") ";
-
-						result.str("");
-						result << "{ \"result\":\"error\", \"description\":\"" << ost2.str() << "\" }";
-
-						{
-							CLog	log;
-							log.Write(ERROR, ost2.str());
-						} // CLog
+						error_message = gettext("friendship status can't be changed") + " ("s + currentFriendshipStatus + " -> " + requestedFriendshipStatus + ")";
+						MESSAGE_ERROR("", action, error_message);
 					}
 				}
 				else if (requestedFriendshipStatus == "disconnect")
@@ -1494,33 +1456,24 @@ int main()
 
 					if((currentFriendshipStatus == "requested") || (currentFriendshipStatus == "requesting") || (currentFriendshipStatus == "confirmed") || (currentFriendshipStatus == "blocked"))
 					{
-						ost.str("");
-						ost << "DELETE FROM `users_friends` WHERE  \
-								(`userID`=\"" << user.GetID() << "\" and `friendID`=\"" << friendID << "\" ) \
-								OR \
-								(`friendID`=\"" << user.GetID() << "\" and `userID`=\"" << friendID << "\" );";
-						db.Query(ost.str());
+						db.Query(
+								"DELETE FROM `users_friends` WHERE "
+								"(`userID`=\"" + user.GetID() + "\" AND `friendID`=\"" + friendID + "\" ) "
+								"OR "
+								"(`friendID`=\"" + user.GetID() + "\" AND `userID`=\"" + friendID + "\" );"
+								);
 
-/*						ost.str("");
-						ost << "INSERT INTO `feed` (`title`, `userId`, `actionTypeId`, `actionId`, `eventTimestamp`) values(\"\",\"" << user.GetID() << "\", \"15\", \"" << friendID << "\", NOW())";
-						db.Query(ost.str());
-*/
-						result.str("");
-						result << "{ \"result\":\"ok\", \"description\":\"\" }";
+						db.Query(
+								"DELETE FROM `feed` WHERE "
+								"(`userId`=\"" + user.GetID() + "\" AND `actionId`=\"" + friendID + "\" AND `actionTypeId` IN (14, 15, 16)) "
+								"OR "
+								"(`actionId`=\"" + user.GetID() + "\" AND `userId`=\"" + friendID + "\" AND `actionTypeId` IN (14, 15, 16)) "
+								);
 					}
 					else
 					{
-						ostringstream	ost2;
-						ost2.str("");
-						ost2 << string(__func__) + "[" + to_string(__LINE__) + "]" + action + ": can't move FROM " << currentFriendshipStatus << " to " << requestedFriendshipStatus << " ";
-
-						result.str("");
-						result << "{ \"result\":\"error\", \"description\":\"" << ost2.str() << "\" }";
-
-						{
-							CLog	log;
-							log.Write(ERROR, ost2.str());
-						} // CLog
+						error_message = gettext("friendship status can't be changed") + " ("s + currentFriendshipStatus + " -> " + requestedFriendshipStatus + ")";
+						MESSAGE_ERROR("", action, error_message);
 					}
 
 				}
@@ -1528,87 +1481,51 @@ int main()
 				{
 					if((currentFriendshipStatus == "requested") || (currentFriendshipStatus == "requesting") || (currentFriendshipStatus == "confirmed") || (currentFriendshipStatus == "blocked"))
 					{
-						db.Query("update `users_friends` set `state`='confirmed', `date`=NOW() WHERE  "
-								 "(`userID`=\"" + user.GetID() + "\" and `friendID`=\"" + friendID + "\") "
-								 "OR "
-								 "(`friendID`=\"" + user.GetID() + "\" and `userID`=\"" + friendID + "\" );");
-						db.Query("INSERT INTO `feed` (`title`, `userId`, `actionTypeId`, `actionId`, `eventTimestamp`) values(\"\",\"" + user.GetID() + "\", \"14\", \"" + friendID + "\", NOW());");
-						db.Query("INSERT INTO `feed` (`title`, `userId`, `actionTypeId`, `actionId`, `eventTimestamp`) values(\"\",\"" + friendID + "\", \"14\", \"" + user.GetID() + "\", NOW());");
+						db.Query(
+								"update `users_friends` set `state`='confirmed', `date`=NOW() WHERE  "
+								"(`userID`=\"" + user.GetID() + "\" and `friendID`=\"" + friendID + "\") "
+								"OR "
+								"(`friendID`=\"" + user.GetID() + "\" and `userID`=\"" + friendID + "\" );"
+						);
 
-						result.str("");
-						result << "{ \"result\":\"ok\", \"description\":\"\"}";
+						if(db.InsertQuery("INSERT INTO `feed` (`title`, `userId`, `actionTypeId`, `actionId`, `eventTimestamp`) values(\"\",\"" + user.GetID() + "\", \"14\", \"" + friendID + "\", NOW())")) {}
+						else
+						{
+							MESSAGE_ERROR("", action, "inserting into `feed`");
+						}
+
+						if(db.InsertQuery("INSERT INTO `feed` (`title`, `userId`, `actionTypeId`, `actionId`, `eventTimestamp`) values(\"\",\"" + friendID + "\", \"14\", \"" + user.GetID() + "\", NOW())")) {}
+						else
+						{
+							MESSAGE_ERROR("", action, "inserting into `feed`");
+						}
 					}
 					if(currentFriendshipStatus == "empty")
 					{
-						ost.str("");
-						ost << "START TRANSACTION;"
-								"insert into `users_friends` (`userID`, `friendID`, `state`, `date`) "
-								"VALUES ("
-								"\"" << user.GetID() << "\", "
-								"\"" << friendID << "\", "
-								"\"confirmed\", "
-								"NOW() "
-								");"
-								"insert into `users_friends` (`userID`, `friendID`, `state`, `date`) "
-								"VALUES ("
-								"\"" << friendID << "\", "
-								"\"" << user.GetID() << "\", "
-								"\"confirmed\", "
-								"NOW() "
-								");"
+						db.Query(
+								"START TRANSACTION;"
+								"INSERT INTO `users_friends` (`userID`, `friendID`, `state`, `date`) "
+								"VALUES (" + quoted(user.GetID()) + ", " + quoted(friendID) + ", \"confirmed\", NOW());"
+								"INSERT INTO `users_friends` (`userID`, `friendID`, `state`, `date`) "
+								"VALUES (" + quoted(friendID) + ", " + quoted(user.GetID()) + ", \"confirmed\", NOW());"
 								"INSERT INTO `feed` (`title`, `userId`, `actionTypeId`, `actionId`, `eventTimestamp`) "
-								"VALUES("
-								"\"\", "
-								"\"" << user.GetID() << "\", "
-								"\"14\", "
-								"\"" << friendID << "\",  "
-								"NOW());"
-								"COMMIT;";
-						db.Query(ost.str());
-
-						result.str("");
-						result << "{ \"result\":\"ok\", \"description\":\"\" }";
+								"VALUES(\"\", " + quoted(user.GetID()) + ", \"14\", " + quoted(friendID) + ", NOW());"
+								"COMMIT;"
+						);
 					}
 					else
 					{
-						ostringstream	ost2;
-						ost2.str("");
-						ost2 << string(__func__) + "[" + to_string(__LINE__) + "]" + action + ": can't move FROM " << currentFriendshipStatus << " to " << requestedFriendshipStatus << " ";
-
-						result.str("");
-						result << "{ \"result\":\"error\", \"description\":\"" << ost2.str() << "\" }";
-
-						{
-							CLog	log;
-							log.Write(ERROR, ost2.str());
-						} // CLog
+						error_message = gettext("friendship status can't be changed") + " ("s + currentFriendshipStatus + " -> " + requestedFriendshipStatus + ")";
+						MESSAGE_ERROR("", action, error_message);
 					}
 				}
 				else
 				{
-					ostringstream	ost2;
-					ost2.str("");
-					ost2 << string(__func__) + "[" + to_string(__LINE__) + "]" + action + ": requested friendship status is unknown [" << requestedFriendshipStatus << "] friendID [" << friendID << "]";
-
-					result.str("");
-					result << "{ \"result\":\"error\", \"description\":\"" << ost2.str() << "\" }";
-
-					{
-						CLog	log;
-						log.Write(ERROR, ost2.str());
-					} // CLog
-				} // Check friendship status
-			} // if((friendID.length() == 0) || (status.length() == 0))
-
-			indexPage.RegisterVariableForce("result", result.str());
-
-			if(!indexPage.SetTemplate("json_response.htmlt"))
-			{
-				CLog	log;
-
-				log.Write(ERROR, string(__func__) + string("[") + to_string(__LINE__) + string("] template file ajax_response.htmlt was missing"));
-				throw CException("Template file was missing");
+					error_message = gettext("requested friendship status is unknown") + " ("s + currentFriendshipStatus + " -> " + requestedFriendshipStatus + ")";
+					MESSAGE_ERROR("", action, error_message);
+				}
 			}
+			AJAX_ResponseTemplate(&indexPage, success_message, error_message);
 		}
 
 		// --- AJAX block user account
@@ -1876,7 +1793,7 @@ int main()
 						{
 							// --- user notification for message like
 							
-							if(db.InsertQuery("insert into `users_notification` (`userId`, `actionTypeId`, `actionId`, `eventTimestamp`) VALUES (\"" + userIDtoNotify + "\", \"49\", \"" + to_string(feed_message_params_id) + "\", UNIX_TIMESTAMP());"))
+							if(db.InsertQuery("INSERT INTO `users_notification` (`userId`, `actionTypeId`, `actionId`, `eventTimestamp`) VALUES (\"" + userIDtoNotify + "\", \"49\", \"" + to_string(feed_message_params_id) + "\", UNIX_TIMESTAMP());"))
 							{
 							}
 							else
@@ -3404,7 +3321,7 @@ int main()
 					{
 						// --- insert comment
 						ost.str("");
-						ost << "insert into `feed_message_comment` (`messageID`, `userID`, `comment`, `type`, `eventTimestamp`) VALUES (\"" << newsFeedMessageID << "\", \"" << user.GetID() << "\", \"" << newsFeedMessageComment << "\", \"" << newsFeedMessageCommentType << "\", NOW());";
+						ost << "INSERT INTO `feed_message_comment` (`messageID`, `userID`, `comment`, `type`, `eventTimestamp`) VALUES (\"" << newsFeedMessageID << "\", \"" << user.GetID() << "\", \"" << newsFeedMessageComment << "\", \"" << newsFeedMessageCommentType << "\", NOW());";
 						feed_message_comment_id = db.InsertQuery(ost.str());
 						if(feed_message_comment_id)
 						{
@@ -3421,7 +3338,7 @@ int main()
 							for(auto &replyUserID: replyToUsers)
 							{
 								ost.str("");
-								ost << "insert into `users_notification` (`userID`, `actionTypeId`, `actionId`, `eventTimestamp`) VALUES ('" << replyUserID << "', \"19\", '" << feed_message_comment_id << "', UNIX_TIMESTAMP() );";
+								ost << "INSERT INTO `users_notification` (`userID`, `actionTypeId`, `actionId`, `eventTimestamp`) VALUES ('" << replyUserID << "', \"19\", '" << feed_message_comment_id << "', UNIX_TIMESTAMP() );";
 								if(db.InsertQuery(ost.str()))
 								{
 									{
