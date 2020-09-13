@@ -57,7 +57,8 @@ auto 			addChecklistItem(string const &to_checklist_id, const string &title, con
 auto 			GetChecklistIDByEventID_CreateIfMissed(const string &event_id, CMysql *, CUser *) -> string;
 auto			RemoveChecklistsByEventID(const string &event_id, CMysql *db, CUser *user) -> string;
 
-auto			GetUserListInJSONFormat_BySearchString(const string lookForKey, bool include_myself, CMysql *, CUser *) -> string;
+auto			GetUserListInJSONFormat_BySearchString(const string &lookForKey, bool include_myself, CMysql *, CUser *) -> string;
+auto			GetUsersID_BySearchString(const string &lookForKey, bool include_myself, CMysql *db, CUser *user) -> vector<string>;
 
 auto			amIAllowedToChangeEvent(const string id, CMysql *, CUser *) -> string;
 

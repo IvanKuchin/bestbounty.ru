@@ -6,16 +6,20 @@ set(EXECUTABLE_CGIs_with_PD_PI_LIBS
     gift.cgi
     group.cgi
     system.cgi
+    anyrole_1.cgi
     )
 set(EXECUTABLE_CGIs_with_PI_LIBS
     cron_daily_pd
     )
 
 # --- Libraries
-# ---- list of independent libraries
-set(INDEPENDENT_LIBRARIES_SRCs
+# ---- big joint librabry
+set(JOINT_LIBRARY_SRCs
     utilities_bestbounty1.cpp
     utilities_bestbounty2.cpp
+)
+# ---- list of independent libraries
+set(INDEPENDENT_LIBRARIES_SRCs
     )
 
 # --- MACROSes start ---
@@ -49,6 +53,8 @@ foreach(INDEPENDENT_LIBRARY_SRC ${INDEPENDENT_LIBRARIES_SRCs})
     set_pd_lib_properties(${file_without_ext} "${file_without_ext}.cpp" "${PROJECT_ALL_INCLUDE_DIRECTORIES}" "${project_link_libraries}")
 endforeach()
 
+set_pd_lib_properties(__joint_pd "${JOINT_LIBRARY_SRCs}" "${PROJECT_ALL_INCLUDE_DIRECTORIES}" "")
+
 # --- MSVC grouping
 source_group("Headers Private"  FILES ${HDR_PRIVATE})
 source_group("Headers Public"   FILES ${HDR_PUBLIC})
@@ -80,6 +86,7 @@ install(TARGETS event.cgi	        DESTINATION		${CGIDIR})
 install(TARGETS gift.cgi            DESTINATION     ${CGIDIR})
 install(TARGETS group.cgi           DESTINATION		${CGIDIR})
 install(TARGETS system.cgi          DESTINATION     ${CGIDIR})
+install(TARGETS anyrole_1.cgi       DESTINATION     ${CGIDIR})
 
 install(TARGETS admin.cgi           DESTINATION     ${CGIADMINDIR})
 

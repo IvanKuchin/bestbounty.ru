@@ -1526,7 +1526,7 @@ int main()
 					}
 				}
 			}
-			
+
 			AJAX_ResponseTemplate(&indexPage, success_message, error_message);
 		}
 
@@ -1933,8 +1933,8 @@ int main()
 			}
 			else
 */
-			auto	lookForKey = CheckHTTPParam_Text(indexPage.GetVarsHandler()->Get("lookForKey"));
 			auto	error_message = ""s;
+			auto	lookForKey = CheckHTTPParam_Text(indexPage.GetVarsHandler()->Get("lookForKey"));
 			auto	success_message = "\"users\":[" + GetUserListInJSONFormat_BySearchString(lookForKey, false, &db, &user) + "]";
 
 			AJAX_ResponseTemplate(&indexPage, success_message, error_message);

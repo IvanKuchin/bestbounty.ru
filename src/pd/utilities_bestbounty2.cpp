@@ -417,13 +417,11 @@ string GetMessageSpamUser(string messageID, string userID, CMysql *db)
 }
 
 
-auto GetUserListInJSONFormat_BySearchString(const string lookForKey, bool include_myself, CMysql *db, CUser *user) -> string
+auto GetUsersID_BySearchString(const string &lookForKey, bool include_myself, CMysql *db, CUser *user) -> vector<string>
 {
 	MESSAGE_DEBUG("", "", "start(" + lookForKey + ")");
 
-	ostringstream	ostFinal, ost;
-	vector<string>	searchWords;
-	auto			userList		= ""s;
+	vector<string>	result, searchWords;
 
 	if(qw(lookForKey, searchWords))
 	{
@@ -432,112 +430,149 @@ auto GetUserListInJSONFormat_BySearchString(const string lookForKey, bool includ
 		{
 			MESSAGE_DEBUG("", "", "single word search");
 
-			// --- Looking through name, surname
-			ost.str("");
-			ost << "SELECT * FROM `users` WHERE "
-					" `isActivated`='Y' and `isblocked`='N' "
-					<< (include_myself ? "" : " and `users`.`id`!=\"" + user->GetID() + "\" ") <<
-					" and (`name` like \"%" 	<< lookForKey << "%\" or `nameLast` like \"%" 	<< lookForKey << "%\") LIMIT 0, 20;";
+			// --- Looking through name, last name
+			auto query = 
+					"SELECT `users`.`id` FROM `users`"
+					"LEFT JOIN `users_company` on `users_company`.`user_id` = `users`.`id` "
+					"LEFT JOIN `company` on `company`.`id`=`users_company`.`company_id` "
+					"WHERE "
+					"("
+						" `users`.`isActivated`='Y' AND `users`.`isblocked`='N' "
+						+ (include_myself ? "" : " AND `users`.`id`!=\"" + user->GetID() + "\" ") +
+					") "
+					" AND "
+					"("
+						"("
+							"`users`.`name` LIKE \"%" 	+ lookForKey + "%\" or `users`.`nameLast` LIKE \"%" 	+ lookForKey + "%\""
+						")"
+						" OR "
+						"("
+							"`users_company`.`current_company`='1' AND `company`.`name` LIKE \"%" + lookForKey + "%\""
+						")"
+					")";
 
-			userList = GetUserListInJSONFormat(ost.str(), db, user);
-			if(userList.length() > 0) 
-			{
-				// --- comma required only if previous text is exists
-				if(ostFinal.str().length() > 10) ostFinal << ","; 
-				ostFinal  << std::endl << userList; 
-			}
-
-			// --- Looking through company title
-			ost.str("");
-			ost << "SELECT * FROM `users` "
-					"left join `users_company` on `users_company`.`user_id` = `users`.`id` "
-					"left join `company` on `company`.`id`=`users_company`.`company_id` "
-					"where "
-					"`users`.`isActivated`='Y' "
-					" and `users`.`isblocked`='N' "
-					<< (include_myself ? "" : " and `users`.`id`!=\"" + user->GetID() + "\" ") <<
-					" and `users_company`.`current_company`='1' "
-					" and `company`.`name` like \"%" 	<< lookForKey << "%\" LIMIT 0, 20;";
-
-			userList = GetUserListInJSONFormat(ost.str(), db, user);
-			if(userList.length() > 0) 
-			{
-				// --- comma required only if previous text is exists
-				if(ostFinal.str().length() > 10) ostFinal << ","; 
-				ostFinal  << std::endl << userList; 
-			}
-
+			result = GetValuesFromDB(query, db);
 		}
-
-		// --- two words searching through DB 
 		if(searchWords.size() == 2)
 		{
 			MESSAGE_DEBUG("", "", "two words search");
 
-			// --- Looking through user name,surname and company title
-			ost.str("");
-			ost << "SELECT * FROM `users` "
-					" left join `users_company` on `users_company`.`user_id` = `users`.`id` "
-					" left join `company` on `company`.`id`=`users_company`.`company_id` "
-					" where "
-					" `users`.`isActivated`='Y' "
-					" and `users`.`isblocked`='N' "
-					<< (include_myself ? "" : " and `users`.`id`!=\"" + user->GetID() + "\" ") <<
-					" and `users_company`.`current_company`='1' "
-					" and ( "
-					" 	`company`.`name` like \"%" 	<< searchWords[0] << "%\" or "
-					" 	`company`.`name` like \"%" 	<< searchWords[1] << "%\" "
-					" ) and ( "
-					" 	`users`.`name` like \"%" 		<< searchWords[0] << "%\" or "
-					" 	`users`.`name` like \"%" 		<< searchWords[1] << "%\" or "
-					" 	`users`.`nameLast` like \"%" 	<< searchWords[0] << "%\" or "
-					" 	`users`.`nameLast` like \"%" 	<< searchWords[1] << "%\" "
-					" ) LIMIT 0, 20;";
+			auto query = 
+					"SELECT `users`.`id` FROM `users` "
+					" LEFT JOIN `users_company` on `users_company`.`user_id` = `users`.`id` "
+					" LEFT JOIN `company` on `company`.`id`=`users_company`.`company_id` "
+					" WHERE "
+					"("
+						" `users`.`isActivated`='Y' AND `users`.`isblocked`='N' "
+						+ (include_myself ? "" : " AND `users`.`id`!=\"" + user->GetID() + "\" ") +
+					") "
+					" AND "
+					"("
+						"("
+							" `users_company`.`current_company`='1' "
+							" AND "
+							"( "
+							" 	`company`.`name` like \"%" 	+ searchWords[0] + "%\" or "
+							"	`company`.`name` like \"%" 	+ searchWords[1] + "%\" "
+							")"
+							" AND "
+							"( "
+							" 	`users`.`name` like \"%" 		+ searchWords[0] + "%\" or "
+							" 	`users`.`name` like \"%" 		+ searchWords[1] + "%\" or "
+							" 	`users`.`nameLast` like \"%" 	+ searchWords[0] + "%\" or "
+							" 	`users`.`nameLast` like \"%" 	+ searchWords[1] + "%\" "
+							" )"
+						")"
+						" OR "
+						"("
+							" ( "
+							" 	`users`.`name` like \"%" 		+ searchWords[1] + "%\" AND "
+							" 	`users`.`nameLast` like \"%" 	+ searchWords[0] + "%\" "
+							" ) "
+							" or "
+							" ( "
+							" 	`users`.`name` like \"%" 		+ searchWords[0] + "%\" AND "
+							" 	`users`.`nameLast` like \"%" 	+ searchWords[1] + "%\" "
+							" ) "
+						")"
+					")";
 
-			userList = GetUserListInJSONFormat(ost.str(), db, user);
-			if(userList.length() > 0) 
-			{
-				// --- comma required only if previous text is exists
-				if(ostFinal.str().length() > 10) ostFinal << ","; 
-				ostFinal  << std::endl << userList; 
-			}
-			else
-			{
-				// --- here code will be run only if multiwork search was not sucessfull on previous step
-				// --- earlier: user _and_ company is not success
-				// --- here: user _or_ company
-				{
-					MESSAGE_DEBUG("", "", "(user _and_ company) has fail, try (user _without_ company) ");
-				}
-
-				ost.str("");
-				ost << "SELECT * FROM `users` "
-						" WHERE `isActivated`='Y' "
-						" and `isblocked`='N' "
-						<< (include_myself ? "" : " and `users`.`id`!=\"" + user->GetID() + "\" ") <<
-						" and ( "
-						" ( "
-						" 	`users`.`name` like \"%" 		<< searchWords[1] << "%\" and "
-						" 	`users`.`nameLast` like \"%" 	<< searchWords[0] << "%\" "
-						" ) "
-						" or "
-						" ( "
-						" 	`users`.`name` like \"%" 		<< searchWords[0] << "%\" and "
-						" 	`users`.`nameLast` like \"%" 	<< searchWords[1] << "%\" "
-						" ) "
-						" ) LIMIT 0, 20;";
-
-				userList = GetUserListInJSONFormat(ost.str(), db, user);
-				if(userList.length() > 0) 
-				{
-					// --- comma required only if previous text is exists
-					if(ostFinal.str().length() > 10) ostFinal << ","; 
-					ostFinal  << std::endl << userList; 
-				}
-			}
-
+			result = GetValuesFromDB(query, db);
 		}
+		if(searchWords.size() == 3)
+		{
+			MESSAGE_DEBUG("", "", "three words search");
 
+			auto	query = 
+					"SELECT `users`.`id` FROM `users` "
+					" LEFT JOIN `users_company` on `users_company`.`user_id` = `users`.`id` "
+					" LEFT JOIN `company` on `company`.`id`=`users_company`.`company_id` "
+					" WHERE "
+					"("
+						" `users`.`isActivated`='Y' AND `users`.`isblocked`='N' "
+						+ (include_myself ? "" : " AND `users`.`id`!=\"" + user->GetID() + "\" ") +
+					") "
+					" AND "
+					"("
+						"("
+							"`users_company`.`current_company`='1' and "
+							"( "
+							"	`company`.`name` like \"%" 		+ searchWords[0] + "%\" or "
+							"	`company`.`name` like \"%" 		+ searchWords[1] + "%\" or "
+							"	`company`.`name` like \"%" 		+ searchWords[2] + "%\" "
+							")"
+							" AND "
+							"( "
+							"	`users`.`name` like \"%" 		+ searchWords[0] + "%\" or "
+							"	`users`.`name` like \"%" 		+ searchWords[1] + "%\" or "
+							"	`users`.`name` like \"%" 		+ searchWords[2] + "%\" or "
+							"	`users`.`nameLast` like \"%" 	+ searchWords[0] + "%\" or "
+							"	`users`.`nameLast` like \"%" 	+ searchWords[1] + "%\" or "
+							"	`users`.`nameLast` like \"%" 	+ searchWords[2] + "%\""
+							")"
+						")"
+						" OR "
+						"("
+							"("
+							"	`users`.`name` like \"%" 		+ searchWords[1] + "%\" and "
+							"	`users`.`nameLast` like \"%" 	+ searchWords[0] + "%\" "
+							")"
+							" OR "
+							"("
+							"	`users`.`name` like \"%" 		+ searchWords[0] + "%\" and "
+							"	`users`.`nameLast` like \"%" 	+ searchWords[1] + "%\" "
+							")"
+							" OR "
+							"("
+							"	`users`.`name` like \"%" 		+ searchWords[2] + "%\" and "
+							"	`users`.`nameLast` like \"%" 	+ searchWords[0] + "%\" "
+							")"
+							" OR "
+							"("
+							"	`users`.`name` like \"%" 		+ searchWords[0] + "%\" and "
+							"	`users`.`nameLast` like \"%" 	+ searchWords[2] + "%\" "
+							")"
+							" OR "
+							"("
+							"	`users`.`name` like \"%" 		+ searchWords[1] + "%\" and "
+							"	`users`.`nameLast` like \"%" 	+ searchWords[2] + "%\" "
+							")"
+							" OR "
+							"("
+							"	`users`.`name` like \"%" 		+ searchWords[2] + "%\" and "
+							"	`users`.`nameLast` like \"%" 	+ searchWords[1] + "%\" "
+							")"
+						")"
+					")";
+
+
+
+
+
+
+			result = GetValuesFromDB(query, db);
+		}
+/*
 		// --- three words searching through DB 
 		if(searchWords.size() == 3)
 		{
@@ -621,6 +656,7 @@ auto GetUserListInJSONFormat_BySearchString(const string lookForKey, bool includ
 			}
 
 		}
+*/
 	}
 	else
 	{
@@ -629,7 +665,19 @@ auto GetUserListInJSONFormat_BySearchString(const string lookForKey, bool includ
 
 	MESSAGE_DEBUG("", "", "finish");
 
-	return ostFinal.str();
+	return result;
+}
+
+auto GetUserListInJSONFormat_BySearchString(const string &lookForKey, bool include_myself, CMysql *db, CUser *user) -> string
+{
+	MESSAGE_DEBUG("", "", "start(" + lookForKey + ")");
+
+	auto			users_id	= GetUsersID_BySearchString(lookForKey, include_myself, db, user);
+	auto			result		= (users_id.size() ? GetUserListInJSONFormat("SELECT * FROM `users` WHERE `id` IN (" + join(users_id, ",") + ");", db, user) : "");
+
+	MESSAGE_DEBUG("", "", "finish");
+
+	return result;
 }
 
 static auto GetChecklistItemInJSONFormat(string dbQuery, CMysql *db, CUser *user) -> string
