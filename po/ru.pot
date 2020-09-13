@@ -40,6 +40,9 @@ msgstr "Логин должен содержать английские букв
 msgid "SQL syntax error"
 msgstr "Ошибка БД"
 
+msgid "error deleting event"
+msgstr "неудалось удалить событие"
+
 msgid "Sent by"
 msgstr "Отправлено"
 

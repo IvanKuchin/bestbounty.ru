@@ -1001,3 +1001,37 @@ auto GetChecklistIDByEventID_CreateIfMissed(const string &event_id, CMysql *db, 
 	return checklist_id;
 }
 
+
+auto RemoveChecklistsByEventID(const string &event_id, CMysql *db, CUser *user) -> string
+{
+	MESSAGE_DEBUG("", "", "start (" + event_id + ")");
+
+	auto	error_message		= ""s;
+	auto	checklist_items_id	= GetValuesFromDB(Get_ChecklistItemsIDByChecklistID_sqlquery(Get_ChecklistItemsIDByEventID(event_id)), db);
+
+	if(checklist_items_id.size())
+	{
+		db->Query("DELETE FROM `checklist_items` WHERE `id` IN (" + join(checklist_items_id, ",") + ")");
+		if(db->isError())
+		{
+			error_message = gettext("SQL syntax error");
+		}
+
+		if(error_message.empty())
+		{
+			db->Query("DELETE FROM `event_checklists` WHERE `event_id` IN (" + event_id + ")");
+			if(db->isError())
+			{
+				error_message = gettext("SQL syntax error");
+			}
+		}
+	}
+	else
+	{
+		MESSAGE_DEBUG("", "", "no checklists associated with event.id(" + event_id + ")");
+	}
+
+	MESSAGE_DEBUG("", "", "finish");
+
+	return error_message;
+}

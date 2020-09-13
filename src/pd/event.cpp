@@ -365,17 +365,17 @@ int main()
 		{
 			MESSAGE_DEBUG("", action, "start");
 
-			ostringstream	ostFinal;
-			ostFinal.str("");
+			auto	success_message = ""s;
+			auto	error_message = ""s;
+			auto	id = CheckHTTPParam_Number(indexPage.GetVarsHandler()->Get("id"));
 
+			if(id.length()) 
 			{
-				auto	id = CheckHTTPParam_Number(indexPage.GetVarsHandler()->Get("id"));
-
-				if(id.length()) 
+				if(db.Query("SELECT `id` FROM `events` WHERE `id`=\"" + id + "\" AND `owner_id`=\"" + user.GetID() + "\";"))
 				{
-					if(db.Query("SELECT `id` FROM `events` WHERE `id`=\"" + id + "\" AND `owner_id`=\"" + user.GetID() + "\";"))
+					error_message = RemoveChecklistsByEventID(id, &db, &user);
+					if(error_message.empty())
 					{
-
 						db.Query("DELETE FROM `users_notification` WHERE `actionTypeId`=\"70\" AND `actionId`=\"" + id + "\";");
 						db.Query("DELETE FROM `users_notification` WHERE `actionTypeId`=\"69\" AND (`actionId` IN (SELECT `id` FROM `event_guests` WHERE `event_id`=\"" + id + "\"));");
 						db.Query("DELETE FROM `users_notification` WHERE `actionTypeId`=\"68\" AND (`actionId` IN (SELECT `id` FROM `event_guests` WHERE `event_id`=\"" + id + "\"));");
@@ -384,65 +384,34 @@ int main()
 						db.Query("DELETE FROM `event_hosts` WHERE `event_id`=\"" + id + "\";");
 						db.Query("DELETE FROM `event_guests` WHERE `event_id`=\"" + id + "\";");
 
+						db.Query("DELETE FROM `event_guests` WHERE `event_id`=\"" + id + "\";");
+
 						db.Query("DELETE FROM `events` WHERE `id`=\"" + id + "\";");
 
 						if(db.isError())
 						{
-
-							{
-								MESSAGE_DEBUG("", action, "updating DB");
-							}
-
-							ostFinal.str("");
-							ostFinal << "{";
-							ostFinal << "\"result\" : \"error\",";
-							ostFinal << "\"description\" : \"error deleting event DB\"";
-							ostFinal << "}";
-						}
-						else
-						{
-							ostFinal.str("");
-							ostFinal << "{";
-							ostFinal << "\"result\" : \"success\",";
-							ostFinal << "\"description\" : \"\"";
-							ostFinal << "}";
+							error_message = gettext("error deleting event");
+							MESSAGE_ERROR("", action, "updating DB");
 						}
 					}
 					else
 					{
-						{
-							MESSAGE_DEBUG("", action, "user.id(" + user.GetID() + ") is not an event(" + id + ") host");
-						}
-
-						ostFinal.str("");
-						ostFinal << "{";
-						ostFinal << "\"result\" : \"error\",";
-						ostFinal << "\"description\" : \"Удалить событие может только владелец\"";
-						ostFinal << "}";
+						MESSAGE_ERROR("", action, error_message);
 					}
 				}
 				else
 				{
-					ostringstream	ost;
-					{
-						MESSAGE_DEBUG("", action, "id is empty");
-					}
-
-					ostFinal.str("");
-					ostFinal << "{";
-					ostFinal << "\"result\" : \"error\",";
-					ostFinal << "\"description\" : \"event_id не задан\"";
-					ostFinal << "}";
+					error_message = gettext("Access prohibited");
+					MESSAGE_DEBUG("", action, "user.id(" + user.GetID() + ") is not an event(" + id + ") host");
 				}
 			}
-
-			indexPage.RegisterVariableForce("result", ostFinal.str());
-
-			if(!indexPage.SetTemplate("json_response.htmlt"))
+			else
 			{
-				MESSAGE_DEBUG("", action, "template file json_response.htmlt was missing");
-				throw CException("Template file was missing");
+				error_message = gettext("mandatory parameter missed");
+				MESSAGE_DEBUG("", action, error_message);
 			}
+
+			AJAX_ResponseTemplate(&indexPage, success_message, error_message);
 
 			MESSAGE_DEBUG("", action, "finish");
 		}

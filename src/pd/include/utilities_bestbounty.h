@@ -55,6 +55,7 @@ auto 			GetOpenVacanciesInJSONFormat(string companyID, CMysql *, CUser * = NULL)
 auto			addMissedChecklistItems(const string &from_checklist_id, string const &to_checklist_id, CMysql *) -> string;
 auto 			addChecklistItem(string const &to_checklist_id, const string &title, const string &category, CMysql *, CUser *) -> string;
 auto 			GetChecklistIDByEventID_CreateIfMissed(const string &event_id, CMysql *, CUser *) -> string;
+auto			RemoveChecklistsByEventID(const string &event_id, CMysql *db, CUser *user) -> string;
 
 auto			GetUserListInJSONFormat_BySearchString(const string lookForKey, bool include_myself, CMysql *, CUser *) -> string;
 
