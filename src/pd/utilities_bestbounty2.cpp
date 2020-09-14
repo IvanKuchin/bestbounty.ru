@@ -184,11 +184,8 @@ string GetUserListInJSONFormat(string dbQuery, CMysql *db, CUser *user)
 						  "\"birthdayAccess\": \""				<< itemsList[i].userBirthdayAccess << "\","
 						  "\"sex\": \""							<< userSex << "\","
 						  "\"userSex\": \""						<< userSex << "\","
-
 						  "\"gifts\": ["						<< GetGiftListInJSONFormat("SELECT * FROM `gifts` WHERE `user_id`=\"" + userID + "\";", db, user) << "],"
 						  "\"gifts_to_give\": ["				<< GetGiftToGiveListInJSONFormat("SELECT * FROM `gifts_to_give` WHERE `gift_id` in (SELECT `id` FROM `gifts` WHERE `user_id`=\"" + userID + "\");", db, user) << "],"
-
-						  // "\"appliedVacanciesRender\": \""		<< userAppliedVacanciesRender << "\","
 						  "\"last_online\": \""					<< userLastOnline << "\","
 						  "\"last_online_diff\": \""			<< to_string(GetTimeDifferenceFromNow(userLastOnline)) << "\","
 						  "\"last_onlineSecondsSinceY2k\": \""  << userLastOnlineSecondSinceY2k << "\","
