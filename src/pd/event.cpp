@@ -2342,7 +2342,6 @@ int main()
 
 			if(!indexPage.SetTemplate(template_name)) MESSAGE_ERROR("", action, "can't find template " + template_name);
 		}
-
 		if(action == "AJAX_getChecklistTitleAutocompleteList")
 		{
 			auto	term			= CheckHTTPParam_Text(indexPage.GetVarsHandler()->Get("term"));
@@ -2387,8 +2386,6 @@ int main()
 
 			if(!indexPage.SetTemplate(template_name)) MESSAGE_ERROR("", action, "can't find template " + template_name);
 		}
-
-
 
 		MESSAGE_DEBUG("", "", "post-condition if(action == \"" + action + "\")");
 

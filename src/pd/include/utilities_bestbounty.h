@@ -52,13 +52,14 @@ auto			GetSkillIDByTitle(string title, CMysql *) -> string;
 auto			GetCompanyPositionIDByTitle(string title, CMysql *) -> string;
 auto 			GetCandidatesListAppliedToVacancyInJSONFormat(string dbQuery, CMysql *) -> string;
 auto 			GetOpenVacanciesInJSONFormat(string companyID, CMysql *, CUser * = NULL) -> string;
+
 auto			addMissedChecklistItems(const string &from_checklist_id, string const &to_checklist_id, CMysql *) -> string;
 auto 			addChecklistItem(string const &to_checklist_id, const string &title, const string &category, CMysql *, CUser *) -> string;
 auto 			GetChecklistIDByEventID_CreateIfMissed(const string &event_id, CMysql *, CUser *) -> string;
-auto			RemoveChecklistsByEventID(const string &event_id, CMysql *db, CUser *user) -> string;
+auto			RemoveChecklistsByEventID(const string &event_id, CMysql *, CUser *) -> string;
 
 auto			GetUserListInJSONFormat_BySearchString(const string &lookForKey, bool include_myself, CMysql *, CUser *) -> string;
-auto			GetUsersID_BySearchString(const string &lookForKey, bool include_myself, CMysql *db, CUser *user) -> vector<string>;
+auto			GetUsersID_BySearchString(const string &lookForKey, bool include_myself, CMysql *, CUser *) -> vector<string>;
 
 auto			amIAllowedToChangeEvent(const string id, CMysql *, CUser *) -> string;
 
