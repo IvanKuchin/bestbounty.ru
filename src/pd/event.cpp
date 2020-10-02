@@ -2115,8 +2115,16 @@ int main()
 			}
 			else
 			{
-				error_message = gettext("mandatory parameter missed");
-				MESSAGE_ERROR("", action, error_message);
+				if(value.empty())
+				{
+					error_message = gettext("cost not found");
+					MESSAGE_DEBUG("", action, error_message);
+				}
+				else
+				{
+					error_message = gettext("mandatory parameter missed");
+					MESSAGE_ERROR("", action, error_message);
+				}
 			}
 
 			AJAX_ResponseTemplate(&indexPage, success_message, error_message);
@@ -2189,7 +2197,7 @@ int main()
 					}
 					else
 					{
-						error_message = gettext("");
+						error_message = gettext("checklist not found");
 						MESSAGE_ERROR("", action, error_message);
 					}
 				}
@@ -2238,7 +2246,7 @@ int main()
 					}
 					else
 					{
-						error_message = gettext("");
+						error_message = gettext("checklist not found");
 						MESSAGE_ERROR("", action, error_message);
 					}
 				}

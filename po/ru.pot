@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2020-02-13 11:00-0500\n"
+"POT-Creation-Date: 2020-10-02 19:49-0400\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -28,6 +28,9 @@ msgstr[2] "%d заказчикам"
 msgid "Access prohibited"
 msgstr "Нет доступа"
 
+msgid "Automatic message"
+msgstr ""
+
 msgid "Login contains illegal characters"
 msgstr "Логин должен состоять из английских букв и цифр"
 
@@ -39,9 +42,6 @@ msgstr "Логин должен содержать английские букв
 
 msgid "SQL syntax error"
 msgstr "Ошибка БД"
-
-msgid "error deleting event"
-msgstr "неудалось удалить событие"
 
 msgid "Sent by"
 msgstr "Отправлено"
@@ -61,14 +61,44 @@ msgstr "не удалось создать архив"
 msgid "case"
 msgstr "случай"
 
+msgid "case closed"
+msgstr ""
+
+msgid "category not found"
+msgstr ""
+
+msgid "checklist not found"
+msgstr "checklist не найден"
+
+msgid "cost not found"
+msgstr "не указана стоимость"
+
 msgid "db is not initialized"
 msgstr "БД не инициализирована"
+
+msgid "email already exists"
+msgstr ""
 
 msgid "email is empty"
 msgstr "не указан email"
 
+msgid "error deleting event"
+msgstr "неудалось удалить событие"
+
+msgid "exceeds allowed size"
+msgstr ""
+
 msgid "fail to insert to db"
 msgstr "не удалось добавить запись в БД"
+
+msgid "file size"
+msgstr ""
+
+msgid "friendship status can't be changed"
+msgstr ""
+
+msgid "gift not found"
+msgstr "подарок не найден"
 
 msgid "helpdesk ticket not found"
 msgstr "тикет не найден"
@@ -84,6 +114,15 @@ msgstr "логин"
 
 msgid "mandatory parameter missed"
 msgstr "не указан обязательный параметер"
+
+msgid "move case to the Close_Pending state due to long waiting period"
+msgstr ""
+
+msgid "no active avatar found"
+msgstr ""
+
+msgid "number uploaded images must be 1"
+msgstr ""
 
 msgid "opened"
 msgstr "открыт"
@@ -103,8 +142,26 @@ msgstr "попробуйте еще раз"
 msgid "re-login required"
 msgstr "требуется войти на сайт"
 
+msgid "requested friendship status is unknown"
+msgstr ""
+
+msgid "service credentials not found"
+msgstr ""
+
+msgid "session not found"
+msgstr ""
+
+msgid "sms sending error"
+msgstr ""
+
 msgid "there was created more token than allowed"
 msgstr "было создано слишком много токенов"
+
+msgid "title not found"
+msgstr ""
+
+msgid "token expired"
+msgstr ""
 
 msgid "token not found"
 msgstr "токен не найден"
@@ -118,14 +175,17 @@ msgstr "неизвстный тип фаила"
 msgid "updated"
 msgstr "изменено"
 
+msgid "user id not found"
+msgstr ""
+
 msgid "user not found"
 msgstr "пользователь не найден"
 
-msgid "checklist not found"
-msgstr "checklist не найден"
+msgid "wrong format"
+msgstr ""
 
-msgid "gift not found"
-msgstr "подарок не найден"
+msgid "you are already subscribed"
+msgstr ""
 
 msgid "you are not authorized"
 msgstr "у Вас недостаточно прав"
