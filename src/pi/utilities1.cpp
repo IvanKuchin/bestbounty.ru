@@ -234,9 +234,9 @@ string	GetPasswordAdjectivesList(CMysql *db)
 	return result;
 }
 
-string GetRandom(int len)
+auto GetRandom(int len) -> string
 {
-	string	result;
+	auto	result = ""s;
 	int	i;
 
 	for(i = 0; i < len; i++)
