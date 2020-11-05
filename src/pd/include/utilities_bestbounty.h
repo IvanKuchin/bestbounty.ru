@@ -4,6 +4,8 @@
 #include "utilities.h"
 #include "utilities_sql_queries.h"
 
+string			GetDefaultActionLoggedinUser(void);
+
 string      	GetUserListInJSONFormat(string dbQuery, CMysql *, CUser *);
 string 			GetNewsFeedInJSONFormat(string whereStatement, int currPage, int newsOnSinglePage, CUser *, CMysql *);
 string      	GetMessageLikesUsersList(string messageID, CUser *, CMysql *);
@@ -60,6 +62,9 @@ auto			RemoveChecklistsByEventID(const string &event_id, CMysql *, CUser *) -> s
 
 auto			GetUserListInJSONFormat_BySearchString(const string &lookForKey, bool include_myself, CMysql *, CUser *) -> string;
 auto			GetUsersID_BySearchString(const string &lookForKey, bool include_myself, CMysql *, CUser *) -> vector<string>;
+
+auto	      	GetChatMessagesInJSONFormat(string dbQuery, CMysql *) -> string;
+auto	      	GetUnreadChatMessagesInJSONFormat(CUser *, CMysql *) -> string;
 
 auto			amIAllowedToChangeEvent(const string id, CMysql *, CUser *) -> string;
 

@@ -18,6 +18,7 @@
 #include <Magick++.h>
 #include <codecvt>		// --- codecvt_utf8
 
+#include "c_date_spelling.h"
 #include "c_smsc.h"
 #include "cfiles.h"
 #include "cmysql.h"
@@ -35,9 +36,10 @@ auto			multibyte_to_wide(std::string const& s) -> wstring;
 auto      		rtrim(string& str) -> string;
 auto      		ltrim(string& str) -> string;
 auto      		trim(string& str) -> string;
-auto      		quoted(string src) -> string;
-auto			quoted(vector<string> src) -> vector<string>;
-auto  			toLower(string src) -> string;
+auto	      	quoted(string src) -> string;
+auto			quoted(const vector<string> &) -> vector<string>;
+auto	  		toUpper(const string &src) -> string;
+auto	  		toLower(const string &src) -> string;
 auto      		GetRandom(int len) -> string;
 auto      		DeleteHTML(string src, bool removeBR = true) -> string;
 auto      		RemoveQuotas(string src) -> string;
@@ -54,12 +56,11 @@ auto      		CleanUPText(const string messageBody, bool removeBR = true) -> strin
 auto      		RemoveAllNonAlphabetSymbols(const wstring &src) -> wstring;
 auto      		RemoveAllNonAlphabetSymbols(const string &src) -> string;
 auto      		ConvertTextToHTML(const string &messageBody) -> string;
-auto 			CheckHTTPParam_Text(string srcText) -> string;
-auto 			CheckHTTPParam_Number(string srcText) -> string;
+auto	 		CheckHTTPParam_Text(const string &srcText) -> string;
+auto 			CheckHTTPParam_Number(const string &srcText) -> string;
 auto	 		CheckHTTPParam_Date(string srcText) -> string;
 auto	 		CheckHTTPParam_Float(const string &srcText) -> string;
-auto 			CheckHTTPParam_Email(string srcText) -> string;
-auto      		CheckIfFurtherThanNow(string occupationStart_cp1251)  -> string;
+auto	 		CheckHTTPParam_Email(const string &srcText) -> string;
 auto			GetDefaultActionFromUserType(const string &role, CMysql *) -> string;
 auto			GetDefaultActionFromUserType(CUser *, CMysql *) -> string;
 auto    	  	GetSecondsSinceY2k() -> double;
@@ -72,7 +73,7 @@ auto    	  	GetMonthsDeclension(const int value) -> string;
 auto    	  	GetYearsDeclension(const int value) -> string;
 auto    	  	GetHumanReadableTimeDifferenceFromNow (const string timeAgo) -> string;
 auto    	  	SymbolReplace(const string where, const string src, const string dst) -> string;
-auto    	  	SymbolReplace_KeepDigitsOnly(const string where) -> string;
+auto    	  	SymbolReplace_KeepDigitsOnly(const string &where) -> string;
 auto         	qw(const string src, vector<string> &dst) -> int;
 auto			split(const string& s, const char& c) -> vector<string>;
 auto			join(const vector<string>& vec, string separator) -> string;
@@ -87,15 +88,13 @@ auto			MaskSymbols(string src, int first_pos, int last_pos) -> string;
 
 auto      		GetBaseUserInfoInJSONFormat(string dbQuery, CMysql *, CUser *) -> string;
 auto      		GetGeoCountryListInJSONFormat(string dbQuery, CMysql *, CUser *) -> string;
-auto	      	GetChatMessagesInJSONFormat(string dbQuery, CMysql *) -> string;
-auto	      	GetUnreadChatMessagesInJSONFormat(CUser *, CMysql *) -> string;
 auto			GetGeoLocalityIDByCityAndRegion(string regionName, string cityName, CMysql *) -> string;
 bool        	AllowMessageInNewsFeed(CUser *me, const string messageOwnerID, const string messageAccessRights, vector<string> *messageFriendList);
 bool        	isPersistenceRateLimited(string REMOTE_ADDR, CMysql *);
 bool        	isFileExists(const std::string& name);
 off_t			getFileSize(const std::string& name);
-bool			isFilenameImage(string	filename);
-bool			isFilenameVideo(string	filename);
+bool			isFilenameImage(const string &filename);
+bool			isFilenameVideo(const string &filename);
 void        	CopyFile(const string src, const string dst);
 string      	GetCompanyDuplicates(CMysql *);
 string      	GetPicturesWithEmptySet(CMysql *);
@@ -119,7 +118,6 @@ string			SubscribeToGroup(string groupID, CUser *, CMysql *);
 string			UnsubscribeFromGroup(string groupID, CUser *, CMysql *);
 bool 			isBotIP(string ip);
 bool 			isAdverseWordsHere(string text, CMysql *);
-string			GetDefaultActionLoggedinUser(void);
 auto			CutTrailingZeroes(string number) -> string;
 auto			GetSiteThemesInJSONFormat(string sqlQuery, CMysql *, CUser *) -> string;
 
@@ -159,6 +157,9 @@ auto			GetFAQInJSONFormat(string sqlQuery, CMysql *db, CUser *user) -> string;
 
 // --- date functions
 struct tm		GetTMObject(string date);
+auto			GetSpellingDate(long int seconds_since_epoch) -> string;
+auto			GetSpellingFormattedDate(string date, string format) -> string;
+auto			GetSpellingFormattedDate(struct tm, string format) -> string;
 auto			operator <(const struct tm &tm_1, const struct tm &tm_2) -> bool;
 auto			operator <=(const struct tm &tm_1, const struct tm &tm_2) -> bool;
 auto			operator >(const struct tm &tm_1, const struct tm &tm_2) -> bool;
@@ -168,6 +169,8 @@ auto			PrintDate(const struct tm &_tm) -> string;
 auto			PrintSQLDate(const struct tm &_tm) -> string;
 auto			PrintDateTime(const struct tm &_tm) -> string;
 auto			PrintTime(const struct tm &_tm, string format) -> string;
+auto			stod_noexcept(const string &) noexcept -> double;
+auto			MaskSymbols(string src, int first_pos, int last_pos) -> string;
 
 // --- function set for image upload/removal
 auto 			GetSpecificData_GetNumberOfFolders(string itemType) -> int;

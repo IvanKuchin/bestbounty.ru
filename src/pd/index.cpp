@@ -3000,9 +3000,7 @@ int main()
 							ost << "}";
 							ost << "]";
 
-							{
-								MESSAGE_ERROR("", action, " can't post message due to adverse words");
-							}
+							MESSAGE_ERROR("", action, " can't post message due to adverse words");
 						}
 					}
 					else
@@ -3786,60 +3784,35 @@ int main()
 
 			if(user.GetLogin() == "Guest")
 			{
-				ostringstream	ost;
-				string		sessid;
-				string		randomValue = GetRandom(4);
-				string 		captchaFile = GenerateImage(randomValue);
-				int 		affected;
+				auto			sessid = indexPage.GetCookie("sessid");
 
-				sessid = indexPage.GetCookie("sessid");
-
-				if(sessid.length() < 5) {
+				if(sessid.length() < 5) 
+				{
 					MESSAGE_ERROR("", action, "session.id [" + sessid + "] must be 20 symbols long");
 					throw CException("Please enable cookie in browser.");
 				}
-
+				else
 				{
 					MESSAGE_DEBUG("", action, "get login captcha for session " + sessid);
+
+					auto		randomValue = GetRandom(4);
+					auto 		captchaFile = GenerateImage(randomValue);
+					auto		captcha_id	= GetValueFromDB("SELECT `id` FROM captcha WHERE `session`=\"" + sessid + "\" and `purpose`='regNewUser'", &db);
+					auto		sql_query	= captcha_id.length()
+												? "UPDATE `captcha` SET `code`='" + randomValue + "', `filename`='" + captchaFile + "', `timestamp`=NOW() WHERE `session`=\"" + sessid + "\" AND `purpose`='regNewUser'"
+												: "INSERT INTO  `captcha` (`session` ,`code` ,`filename` ,`purpose`, `timestamp`) VALUES ('" + sessid + "',  '" + randomValue + "',  '" + captchaFile + "',  'regNewUser', NOW());"
+												;
+
+					db.Query(sql_query);
+
+					indexPage.RegisterVariableForce("noun_list", GetPasswordNounsList(&db));
+					indexPage.RegisterVariableForce("adjectives_list", GetPasswordAdjectivesList(&db));
+
+					indexPage.RegisterVariableForce("title", "Добро пожаловать");
+					indexPage.RegisterVariable("regEmail_checked", "0");
+
+					indexPage.RegisterVariableForce("securityFile", captchaFile);
 				}
-
-
-				ost.str("");
-				ost << "SELECT id FROM captcha WHERE `session`=\"" << sessid << "\" and `purpose`='regNewUser'";
-
-				if((affected = db.Query(ost.str())) > 0) {
-					// ------ Update session
-					{
-						MESSAGE_DEBUG("", action, "update session.id(" + sessid + ") captcha");
-					}
-
-					ost.str("");
-					ost << "UPDATE `captcha` SET `code`='" << randomValue << "', `filename`='" << captchaFile << "', `timestamp`=NOW() WHERE `session`=\"" << sessid << "\" AND `purpose`='regNewUser'";
-				}
-				else {
-					// ------ Create new session
-					{
-						MESSAGE_DEBUG("", action, "create new session.id(" + sessid + ") captcha");
-					}
-
-
-					ost.str("");
-					ost << "INSERT INTO  `captcha` (`session` ,`code` ,`filename` ,`purpose`, `timestamp`) VALUES ('" << sessid << "',  '" << randomValue << "',  '" << captchaFile << "',  'regNewUser', NOW());";
-				}
-				db.Query(ost.str());
-
-				{
-					MESSAGE_DEBUG("", action, "register variables");
-				}
-
-				indexPage.RegisterVariableForce("noun_list", GetPasswordNounsList(&db));
-				indexPage.RegisterVariableForce("adjectives_list", GetPasswordAdjectivesList(&db));
-
-				indexPage.RegisterVariableForce("title", "Добро пожаловать");
-				indexPage.RegisterVariable("regEmail_checked", "0");
-
-
-				indexPage.RegisterVariableForce("securityFile", captchaFile);
 
 
 				if(!indexPage.SetTemplate("login.htmlt"))
@@ -3852,7 +3825,7 @@ int main()
 			{
 				MESSAGE_ERROR("", action, "(not an error, severity error to monitor) registered user(" + user.GetLogin() + ") attempts to access login page, redirect to default page");
 
-				indexPage.Redirect("/" + GetDefaultActionFromUserType(user.GetType(), &db) + "?rand=" + GetRandom(10));
+				indexPage.Redirect("/" + GetDefaultActionFromUserType(&user, &db) + "?rand=" + GetRandom(10));
 			}
 
 			MESSAGE_DEBUG("", action, "finish");
@@ -4483,7 +4456,7 @@ int main()
 			{
 				MESSAGE_ERROR("", action, "(not an error, severity should be monitor) registered user(" + user.GetLogin() + ") attempts to access activateNewUser page, redirect to default page");
 
-				indexPage.Redirect("/" + GetDefaultActionFromUserType(user.GetType(), &db) + "?rand=" + GetRandom(10));
+				indexPage.Redirect("/" + GetDefaultActionFromUserType(&user, &db) + "?rand=" + GetRandom(10));
 			}
 
 
@@ -5495,7 +5468,6 @@ int main()
 	/*
 			if(user.GetLogin() == "Guest")
 			{
-				ostringstream	ost;
 
 				{
 					MESSAGE_DEBUG("", action, "re-login required");
@@ -5664,7 +5636,7 @@ int main()
 			{
 				MESSAGE_ERROR("", action, "(not an error, severity error to monitor) registered user(" + user.GetLogin() + ") attempts to access showmain page, redirect to default page");
 
-				indexPage.Redirect("/" + GetDefaultActionFromUserType(user.GetType(), &db) + "?rand=" + GetRandom(10));
+				indexPage.Redirect("/" + GetDefaultActionFromUserType(&user, &db) + "?rand=" + GetRandom(10));
 			}
 		}
 
@@ -5721,11 +5693,7 @@ int main()
 
 			if(user.GetLogin() == "Guest")
 			{
-				ostringstream	ost;
-
-				{
-					MESSAGE_DEBUG("", action, "guest workflow");
-				}
+				MESSAGE_DEBUG("", action, "guest workflow");
 
 				indexPage.Cookie_InitialAction_Assign(invite_hash);
 				indexPage.RegisterVariableForce("redirect_url", "/login?rand=" + GetRandom(10));
@@ -5734,9 +5702,7 @@ int main()
 			{
 				string		eventLink = "";
 
-				{
-					MESSAGE_DEBUG("", action, "userID(" + user.GetID() + ") workflow");
-				}
+				MESSAGE_DEBUG("", action, "userID(" + user.GetID() + ") workflow");
 
 				// --- remove "inviteHash" cookie
 				if(!indexPage.Cookie_InitialAction_Expire()) 

@@ -1566,6 +1566,28 @@ string GetBookLikesUsersList(string usersBookID, CUser *user, CMysql *db)
 	return result;
 }
 
+string GetMessageCommentsCount(string messageID, CMysql *db)
+{
+	ostringstream   ost;
+	int			 affected;
+	string		  result = "0";
+
+	MESSAGE_DEBUG("", "", "start");
+
+	ost.str("");
+	ost << "select count(*) as `counter` from `feed_message_comment` where `type`=\"message\" and `messageID`='" << messageID << "';";
+	affected = db->Query(ost.str());
+	if(affected > 0)
+	{
+		result = db->Get(0, "counter");
+	}
+
+	MESSAGE_DEBUG("", "", "finish");
+
+
+	return result;
+}
+
 string GetCompanyCommentsCount(string messageID, CMysql *db)
 {
 	ostringstream   ost;

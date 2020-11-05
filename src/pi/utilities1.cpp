@@ -13,19 +13,14 @@ void crash_handler(int sig)
 	fprintf(stderr, "Error: signal %d:\n", sig);
 	backtrace_symbols_fd(array, nptrs, STDERR_FILENO);
 
-	{
-		CLog  log;
-		log.Write(ERROR, string(__func__) + "[" + to_string(__LINE__) + "]:ERROR: core dumped");
-	}
 
-	// --- try to print out to the CLog	
+	// --- try to print out to the CLog
 	strings = backtrace_symbols(array, nptrs);
 	if(strings)
 	{
 		for(unsigned int i = 0; i < nptrs; i++)
 		{
-			CLog log;
-			log.Write(ERROR, string(__func__) + "[" + to_string(__LINE__) + "]:ERROR: " + string(strings[i]));
+			MESSAGE_ERROR("", "", string(strings[i]));
 		}
 
 		free(strings);
@@ -34,7 +29,20 @@ void crash_handler(int sig)
 	exit(1);
 }
 
+auto GetLocale()
+{
+	auto	result = ""s;
 
+	// MESSAGE_DEBUG("", "", "start");
+
+	result = setlocale(LC_ALL, NULL);
+
+	if(result.empty()) MESSAGE_ERROR("", "", "fail to define locale");
+
+	// MESSAGE_DEBUG("", "", "finish(result length is " + to_string(result.length()) + ")");
+
+	return result;
+}
 
 std::string rtrim(std::string& str)
 {
@@ -60,105 +68,84 @@ string	quoted(string src)
 	return '"' + src + '"';
 }
 
-vector<string>	quoted(vector<string> src)
+vector<string>	quoted(const vector<string> &src)
 {
-	for(auto i = 0u; i < src.size(); ++i) src[i] = '"' + src[i] + '"';
-	return src;
+	vector<string>	result;
+	result.reserve(src.size()); // --- reduce probablity of memory reallocation
+
+	for(const string &item: src)
+	{
+		result.push_back(quoted(item));
+	}
+
+	return result;
 }
 
-string  toLower(string src)
+auto toUpper(const string &src) -> string
 {
-	using namespace std::regex_constants;
+	auto	result(""s);
+	auto	locale_str = GetLocale();
 
-	string  result = src;
-	regex	r1("А");
-	regex	r2("Б");
-	regex	r3("В");
-	regex	r4("Г");
-	regex	r5("Д");
-	regex	r6("Е");
-	regex	r7("Ё");
-	regex	r8("Ж");
-	regex	r9("З");
-	regex	r10("И");
-	regex	r11("Й");
-	regex	r12("К");
-	regex	r13("Л");
-	regex	r14("М");
-	regex	r15("Н");
-	regex	r16("О");
-	regex	r17("П");
-	regex	r18("Р");
-	regex	r19("С");
-	regex	r20("Т");
-	regex	r21("У");
-	regex	r22("Ф");
-	regex	r23("Х");
-	regex	r24("Ц");
-	regex	r25("Ч");
-	regex	r26("Ш");
-	regex	r27("Щ");
-	regex	r28("Ь");
-	regex	r29("Ы");
-	regex	r30("Ъ");
-	regex	r31("Э");
-	regex	r32("Ю");
-	regex	r33("Я");
+	MESSAGE_DEBUG("", "", "start");
 
-	src = regex_replace(src, r1, "а");
-	src = regex_replace(src, r2, "б");
-	src = regex_replace(src, r3, "в");
-	src = regex_replace(src, r4, "г");
-	src = regex_replace(src, r5, "д");
-	src = regex_replace(src, r6, "е");
-	src = regex_replace(src, r7, "ё");
-	src = regex_replace(src, r8, "ж");
-	src = regex_replace(src, r9, "з");
-	src = regex_replace(src, r10, "и");
-	src = regex_replace(src, r11, "й");
-	src = regex_replace(src, r12, "к");
-	src = regex_replace(src, r13, "л");
-	src = regex_replace(src, r14, "м");
-	src = regex_replace(src, r15, "н");
-	src = regex_replace(src, r16, "о");
-	src = regex_replace(src, r17, "п");
-	src = regex_replace(src, r18, "р");
-	src = regex_replace(src, r19, "с");
-	src = regex_replace(src, r20, "т");
-	src = regex_replace(src, r21, "у");
-	src = regex_replace(src, r22, "ф");
-	src = regex_replace(src, r23, "х");
-	src = regex_replace(src, r24, "ц");
-	src = regex_replace(src, r25, "ч");
-	src = regex_replace(src, r26, "ш");
-	src = regex_replace(src, r27, "щ");
-	src = regex_replace(src, r28, "ь");
-	src = regex_replace(src, r29, "ы");
-	src = regex_replace(src, r30, "ъ");
-	src = regex_replace(src, r31, "э");
-	src = regex_replace(src, r32, "ю");
-	src = regex_replace(src, r33, "я");
+	if(locale_str.length())
+	{
+		auto	wtemp = multibyte_to_wide(src);
+		locale	loc(locale_str.c_str());
 
-	transform(src.begin(), src.end(), result.begin(), (int(*)(int))tolower);
+		for(auto &c: wtemp) c = toupper(c, loc);
+
+		result = wide_to_multibyte(wtemp);
+	}
+	else
+	{
+		MESSAGE_ERROR("", "", "fail to define locale. Impossible run toUpper")
+	}
+
+	MESSAGE_DEBUG("", "", "finish");
+
+	return result;
+}
+
+auto toLower(const string &src) -> string
+{
+	auto	result(""s);
+	auto	locale_str = GetLocale();
+
+	MESSAGE_DEBUG("", "", "start");
+
+	if(locale_str.length())
+	{
+		auto	wtemp = multibyte_to_wide(src);
+		locale	loc(locale_str.c_str());
+
+		for(auto &c: wtemp) c = tolower(c, loc);
+
+		result = wide_to_multibyte(wtemp);
+	}
+	else
+	{
+		MESSAGE_ERROR("", "", "fail to define locale. Impossible run toLower")
+	}
+
+	MESSAGE_DEBUG("", "", "finish");
 
 	return result;
 }
 
 string	GetPasswordNounsList(CMysql *db)
 {
-	string 	result = "";
-	int		affected;
-
 	MESSAGE_DEBUG("", "", "start");
 
-	affected = db->Query("SELECT COUNT(*) as `total` FROM `password_dictionary_nouns`;");
+	auto 	result = ""s;
+	auto	affected = db->Query("SELECT COUNT(*) as `total` FROM `password_dictionary_nouns`;");
+
 	if(affected)
 	{
-		// int		total_number_of_words = atoi(db->Get(0, "total")) - 1;
 		auto		total_number_of_words = stoi(db->Get(0, "total")) - 1;
 
 		affected = db->Query("SELECT * FROM `password_dictionary_nouns` WHERE `id` in (round(rand()*" + to_string(total_number_of_words) + ") + 1, round(rand()*" + to_string(total_number_of_words) + ") + 1,round(rand()*" + to_string(total_number_of_words) + ") + 1,round(rand()*" + to_string(total_number_of_words) + ") + 1,round(rand()*" + to_string(total_number_of_words) + ") + 1,round(rand()*" + to_string(total_number_of_words) + ") + 1,round(rand()*" + to_string(total_number_of_words) + ") + 1)");
-		for(int i = 0; i < affected; ++i)
+		for(auto i = 0; i < affected; ++i)
 		{
 			if(result.length()) result += ",";
 			result += string("\"") + db->Get(i, "word") + "\"";
@@ -176,19 +163,17 @@ string	GetPasswordNounsList(CMysql *db)
 
 string	GetPasswordCharacteristicsList(CMysql *db)
 {
-	string 	result = "";
-	int		affected;
-
 	MESSAGE_DEBUG("", "", "start");
 
-	affected = db->Query("SELECT COUNT(*) as `total` FROM `password_dictionary_characteristics`;");
+	auto 	result = ""s;
+	auto	affected = db->Query("SELECT COUNT(*) as `total` FROM `password_dictionary_characteristics`;");
+
 	if(affected)
 	{
-		// int		total_number_of_words = atoi(db->Get(0, "total"));
 		auto		total_number_of_words = stoi(db->Get(0, "total"));
 
 		affected = db->Query("SELECT * FROM `password_dictionary_characteristics` WHERE `id` in (round(rand()*" + to_string(total_number_of_words) + ") + 1, round(rand()*" + to_string(total_number_of_words) + ") + 1,round(rand()*" + to_string(total_number_of_words) + ") + 1,round(rand()*" + to_string(total_number_of_words) + ") + 1,round(rand()*" + to_string(total_number_of_words) + ") + 1,round(rand()*" + to_string(total_number_of_words) + ") + 1,round(rand()*" + to_string(total_number_of_words) + ") + 1)");
-		for(int i = 0; i < affected; ++i)
+		for(auto i = 0; i < affected; ++i)
 		{
 			if(result.length()) result += ",";
 			result += string("\"") + db->Get(i, "word") + "\"";
@@ -206,19 +191,17 @@ string	GetPasswordCharacteristicsList(CMysql *db)
 
 string	GetPasswordAdjectivesList(CMysql *db)
 {
-	string 	result = "";
-	int		affected;
-
 	MESSAGE_DEBUG("", "", "start");
 
-	affected = db->Query("SELECT COUNT(*) as `total` FROM `password_dictionary_adjectives`;");
+	auto 	result = ""s;
+	auto	affected = db->Query("SELECT COUNT(*) as `total` FROM `password_dictionary_adjectives`;");
+
 	if(affected)
 	{
-		// int		total_number_of_words = atoi(db->Get(0, "total"));
 		auto		total_number_of_words = stoi(db->Get(0, "total"));
 
 		affected = db->Query("SELECT * FROM `password_dictionary_adjectives` WHERE `id` in (round(rand()*" + to_string(total_number_of_words) + ") + 1, round(rand()*" + to_string(total_number_of_words) + ") + 1,round(rand()*" + to_string(total_number_of_words) + ") + 1,round(rand()*" + to_string(total_number_of_words) + ") + 1,round(rand()*" + to_string(total_number_of_words) + ") + 1,round(rand()*" + to_string(total_number_of_words) + ") + 1,round(rand()*" + to_string(total_number_of_words) + ") + 1)");
-		for(int i = 0; i < affected; ++i)
+		for(auto i = 0; i < affected; ++i)
 		{
 			if(result.length()) result += ",";
 			result += string("\"") + db->Get(i, "word") + "\"";
@@ -234,26 +217,16 @@ string	GetPasswordAdjectivesList(CMysql *db)
 	return result;
 }
 
-auto GetRandom(int len) -> string
+string GetRandom(int len)
 {
 	auto	result = ""s;
-	int	i;
 
-	for(i = 0; i < len; i++)
+	for(auto i = 0; i < len; i++)
 	{
 		result += (char)('0' + (int)(rand()/(RAND_MAX + 1.0) * 10));
 	}
 
 	return result;
-}
-
-string GetDefaultActionLoggedinUser(void)
-{
-	MESSAGE_DEBUG("", "", "start");
-
-	MESSAGE_DEBUG("", "", "finish");
-
-	return LOGGEDIN_USER_DEFAULT_ACTION;
 }
 
 string DeleteHTML(string src, bool removeBR /* = true*/)
@@ -391,7 +364,7 @@ auto RemoveSpecialHTMLSymbols(const string &src) -> string
 */
 string ReplaceDoubleQuoteToQuote(string src)
 {
-	string		result = src;
+	auto				result = src;
 	string::size_type	pos = 0;
 
 	while((pos = result.find("\"", pos)) != string::npos)
@@ -403,56 +376,43 @@ string ReplaceDoubleQuoteToQuote(string src)
 	return result;
 }
 
+
 /*
 	Change CR/CRLF symbol to <BR> from string src
 */
-string ReplaceCRtoHTML(string src)
+auto ReplaceCRtoHTML(wstring src) -> wstring
 {
-	string		result = src;
-	string::size_type	pos = 0;
 
-	{
-		CLog	log;
-		log.Write(DEBUG, string(__func__) + "[" + to_string(__LINE__) + "]: start");
-	}
-
-
-	pos = 0;
-	while((pos = result.find("\r\n", pos)) != string::npos)
-	{
-		result.replace(pos, 2, "<br>");
-		// pos += 1;
-	}
-
-	pos = 0;
-	while((pos = result.find("\n", pos)) != string::npos)
-	{
-		result.replace(pos, 1, "<bR>");
-	}
-
-	pos = 0;
-	while((pos = result.find("\r", pos)) != string::npos)
-	{
-		result.replace(pos, 1, "<Br>");
-	}
+	auto					result = src;
+	map<wstring, wstring>	map_replacement_1 = {
+		{L"\r\n", L"<br>"}
+	};
+	map<wstring, wstring>	map_replacement_2 = {
+		{L"\n", L"<bR>"},
+		{L"\r", L"<Br>"}
+	};
 
 
-	{
-		CLog	log;
-		log.Write(DEBUG, string(__func__) + "[" + to_string(__LINE__) + "]: finish");
-	}
+	MESSAGE_DEBUG("", "", "start");
+
+	result = ReplaceWstringAccordingToMap(result, map_replacement_1);
+	result = ReplaceWstringAccordingToMap(result, map_replacement_2);
+
+	MESSAGE_DEBUG("", "", "finish");
 
 	return result;
 }
 
+auto ReplaceCRtoHTML(string src) -> string
+{
+	return(wide_to_multibyte(ReplaceCRtoHTML(multibyte_to_wide(src))));
+}
+
 string CleanUPText(const string messageBody, bool removeBR/* = true*/)
 {
-	string	  result = messageBody;
+	auto	  result = messageBody;
 
-	{
-		CLog	log;
-		log.Write(DEBUG, string(__func__) + string("[") + to_string(__LINE__) + string("]: start"));
-	}
+	MESSAGE_DEBUG("", "", "start");
 
 	result = DeleteHTML(result, removeBR);
 	result = ReplaceDoubleQuoteToQuote(result);
@@ -460,10 +420,7 @@ string CleanUPText(const string messageBody, bool removeBR/* = true*/)
 	result = RemoveSpecialSymbols(result);
 	trim(result);
 
-	{
-		CLog	log;
-		log.Write(DEBUG, string(__func__) + string("[") + to_string(__LINE__) + string("]: end"));
-	}
+	MESSAGE_DEBUG("", "", "finish");
 
 	return result;
 }
@@ -522,30 +479,31 @@ auto RemoveAllNonAlphabetSymbols(const string &src) -> string
 	return(wide_to_multibyte(RemoveAllNonAlphabetSymbols(multibyte_to_wide(src))));
 }
 
+
 string ConvertTextToHTML(const string &messageBody)
 {
-	MESSAGE_DEBUG("", "", "start");
-	
 	auto 		result = messageBody;
+
+	MESSAGE_DEBUG("", "", "start");
 
 	result = RemoveSpecialHTMLSymbols(result);
 	result = DeleteHTML(result);
 	result = ReplaceCRtoHTML(result);
 	trim(result);
 
-	MESSAGE_DEBUG("", "", "end (result length = " + to_string(result.length()) + ")");
+	MESSAGE_DEBUG("", "", "finish ( result length = " + to_string(result.length()) + ")");
 
 	return result;
 }
 
-string CheckHTTPParam_Text(string srcText)
+auto CheckHTTPParam_Text(const string &srcText) -> string
 {
 	return	ConvertTextToHTML(srcText);
 }
 
-string CheckHTTPParam_Number(string srcText)
+auto CheckHTTPParam_Number(const string &srcText) -> string
 {
-	string	result = "";
+	auto	result = ""s;
 
 	MESSAGE_DEBUG("", "", "start param(" + srcText + ")");
 
@@ -564,7 +522,7 @@ string CheckHTTPParam_Number(string srcText)
 		}
 	}
 
-	MESSAGE_DEBUG("", "", "end ( result length = " + to_string(result.length()) + ")");
+	MESSAGE_DEBUG("", "", "finish ( result length = " + to_string(result.length()) + ")");
 
 	return	result;
 }
@@ -596,7 +554,7 @@ string CheckHTTPParam_Float(const string &srcText)
 
 string CheckHTTPParam_Date(string srcText)
 {
-	string	result = "";
+	auto	result = ""s;
 
 	MESSAGE_DEBUG("", "", "start param(" + srcText + ")");
 
@@ -606,7 +564,7 @@ string CheckHTTPParam_Date(string srcText)
 		smatch	sm;
 
 		trim(srcText);
-		
+
 		if(regex_match(srcText, sm, r))
 		{
 			auto	date	= stoi(sm[1]);
@@ -655,16 +613,14 @@ string CheckHTTPParam_Date(string srcText)
 		}
 	}
 
-	{
-		MESSAGE_DEBUG("", "", "finish (result length = " + to_string(result.length()) + ")");
-	}
+	MESSAGE_DEBUG("", "", "finish (result length = " + result + ")");
 
 	return	result;
 }
 
-string CheckHTTPParam_Email(string srcText)
+string CheckHTTPParam_Email(const string &srcText)
 {
-	string		result = "";
+	auto		result = ""s;
 
     regex       positionRegex(".*([+-][[:digit:]]+\\.[[:digit:]]+)([+-][[:digit:]]+\\.[[:digit:]]+)([+-][[:digit:]]+\\.[[:digit:]]+).*");
     smatch      matchResult;
@@ -695,67 +651,6 @@ string CheckHTTPParam_Email(string srcText)
 	MESSAGE_DEBUG("", "", "finish ( result length = " + to_string(result.length()) + ")");
 
 	return	result;
-}
-
-string CheckIfFurtherThanNow(string timestamp_to_check) 
-{
-	time_t	  now_t, checked_t;
-	// char		utc_str[100];
-	struct tm   *local_tm, check_tm;
-	ostringstream	ost;
-
-	MESSAGE_DEBUG("", "", "start (date: " + timestamp_to_check + ")");
-
-	now_t = time(NULL);
-	local_tm = localtime(&now_t);
-	if(local_tm == NULL) 
-	{
-		MESSAGE_ERROR("", "", "ERROR in running localtime(&t)");
-	}
-
-	sscanf(timestamp_to_check.c_str(), "%4d-%2d-%2d", &check_tm.tm_year, &check_tm.tm_mon, &check_tm.tm_mday);
-
-	MESSAGE_DEBUG("", "", "checked year = " + to_string(check_tm.tm_year) + " checked month = " + to_string(check_tm.tm_mon) + " checked day = " + to_string(check_tm.tm_mday) + "");
-
-	check_tm.tm_year -= 1900;
-	check_tm.tm_mon -= 1;
-	check_tm.tm_hour = 23;
-	check_tm.tm_min = 59;
-	check_tm.tm_isdst = 0;	// --- Summer time is OFF. Be carefull with it.
-
-	checked_t = mktime(&check_tm);
-
-	if(difftime(now_t, checked_t) <= 0)
-	{
-		MESSAGE_DEBUG("", "", "clicked date further in futer than now, therefore considered as a 0000-00-00");
-
-		return "0000-00-00";
-	}
-
-	return timestamp_to_check;
-}
-
-string	GetDefaultActionFromUserType(const string &role, CMysql *db)
-{
-	string	result = GUEST_USER_DEFAULT_ACTION;
-
-	MESSAGE_DEBUG("", "", "start");
-
-	if(role == "guest") result = GUEST_USER_DEFAULT_ACTION;
-	else if(role == "user") result = LOGGEDIN_USER_DEFAULT_ACTION;
-	else
-	{
-		MESSAGE_ERROR("", "", "unknown user type (" + role + ")");
-	}
-
-	MESSAGE_DEBUG("", "", "finish (result = " + result + ")");
-
-	return result;
-}
-
-string	GetDefaultActionFromUserType(CUser *user, CMysql *db)
-{
-	return GetDefaultActionFromUserType(user->GetType(), db);
 }
 
 double GetSecondsSinceY2k()
@@ -789,11 +684,11 @@ string GetLocalFormattedTimestamp()
 	time_t	  now_t;
 	struct tm   *local_tm;
 	char		buffer[80];
-	string		result = "";
+	auto		result = ""s;
 
 	now_t = time(NULL);
 	local_tm = localtime(&now_t);
-	if(local_tm == NULL) 
+	if(local_tm == NULL)
 	{
 		CLog	log;
 		ostringstream	ost;
@@ -802,7 +697,7 @@ string GetLocalFormattedTimestamp()
 		ost << "GetLocalFormatedTimestamp(): ERROR in running localtime(&t)";
 		log.Write(ERROR, ost.str());
 	}
-	
+
 	memset(buffer, 0, 80);
 	strftime(buffer,80,"%Y-%m-%02d %T", local_tm);
 	result = buffer;
@@ -822,7 +717,7 @@ string GetLocalFormattedTimestamp()
 }
 
 // --- input format: "2015-06-10 00:00:00"
-// --- return: number of second difference from now 
+// --- return: number of second difference from now
 double GetTimeDifferenceFromNow(const string timeAgo)
 {
 	time_t	  now_t, checked_t;
@@ -842,7 +737,7 @@ double GetTimeDifferenceFromNow(const string timeAgo)
 
 	now_t = time(NULL);
 	local_tm = localtime(&now_t);
-	if(local_tm == NULL) 
+	if(local_tm == NULL)
 	{
 		CLog	log;
 		ostringstream	ost;
@@ -923,7 +818,7 @@ string GetMinutesDeclension(const int value)
 		{3, "минут"}
 	};
 
-	string				result;
+	auto				result = ""s;
 
 	if(value % 10 == 0) 						{ result = mapDeclension.at(3); };
 	if(value % 10 == 1) 						{ result = mapDeclension.at(1); };
@@ -941,7 +836,7 @@ string GetHoursDeclension(const int value)
 		{2, "часа"},
 		{3, "часов"}
 	};
-	string				result;
+	auto				result = ""s;
 
 	if(value % 10 == 0) 						{ result = mapDeclension.at(3); };
 	if(value % 10 == 1) 						{ result = mapDeclension.at(1); };
@@ -958,7 +853,7 @@ string GetDaysDeclension(const int value)
 		{2, "дня"},
 		{3, "дней"}
 	};
-	string				result;
+	auto				result = ""s;
 
 	if(value % 10 == 0) 						{ result = mapDeclension.at(3); };
 	if(value % 10 == 1) 						{ result = mapDeclension.at(1); };
@@ -975,7 +870,7 @@ string GetMonthsDeclension(const int value)
 		{2, "месяца"},
 		{3, "месяцев"}
 	};
-	string				result;
+	auto				result = ""s;
 
 	if(value % 10 == 0) 						{ result = mapDeclension.at(3); };
 	if(value % 10 == 1) 						{ result = mapDeclension.at(1); };
@@ -992,7 +887,7 @@ string GetYearsDeclension(const int value)
 		{2, "года"},
 		{3, "лет"}
 	};
-	string				result;
+	auto				result = ""s;
 
 	if(value % 10 == 0) 						{ result = mapDeclension.at(3); };
 	if(value % 10 == 1) 						{ result = mapDeclension.at(1); };
@@ -1018,7 +913,7 @@ string GetHumanReadableTimeDifferenceFromNow (const string timeAgo)
 	if(years >= 1)
 	{
 		ost << (int)years << " " << GetYearsDeclension(years);
-	} 
+	}
 	else if(months >= 1)
 	{
 		ost << (int)months << " " << GetMonthsDeclension(months);
@@ -1053,47 +948,28 @@ string GetHumanReadableTimeDifferenceFromNow (const string timeAgo)
 	return ost.str();
 }
 
-off_t getFileSize(const std::string& name) 
-{
-	off_t			result = -1;
-	struct stat		buffer;
-
-	if(stat(name.c_str(), &buffer) == -1)
-	{
-		MESSAGE_ERROR("", "", "fail to get file size (" + name + "), probably file doesn't exists");
-	}
-	else
-	{
-		result = buffer.st_size;
-	}
-
-	return result;
-}
-
 string SymbolReplace(const string where, const string src, const string dst)
 {
-	string				  result;
-	string::size_type	   pos;
-		
-	result = where;
-		
-	pos = result.find(src);
+	auto	  result(where);
+	auto	  pos = result.find(src);
+
 	while(pos != string::npos)
 	{
 		result.replace(pos, src.length(), dst);
 		pos = result.find(src, pos + 1);
 	}
+
 	return result;
 }
 
-string SymbolReplace_KeepDigitsOnly(const string where)
+auto SymbolReplace_KeepDigitsOnly(const string &where) -> string
 {
-	string				  result = where;
-	unsigned int			i = 0;
+	auto	  	result = where;
+	auto		i = 0u;
 
 	while(i < result.length())
 	{
-		char	currSymb = result.at(i);
+		auto	currSymb = result.at(i);
 
 		if((currSymb >= static_cast<char>('0')) && (currSymb <= static_cast<char>('9')))
 			i++;
@@ -1107,27 +983,22 @@ string SymbolReplace_KeepDigitsOnly(const string where)
 bool CheckUserEmailExisting(string userNameToCheck, CMysql *db) {
 	CUser		user;
 
-	{
-		CLog	log;
-		log.Write(DEBUG, string(__func__) + "[" + to_string(__LINE__) + "]: start");
-	}
+	MESSAGE_DEBUG("", "", "start");
 
 	user.SetDB(db);
 	user.SetLogin(userNameToCheck);
 	user.SetEmail(userNameToCheck);
 
-	if(user.isLoginExist() or user.isEmailDuplicate()) {
-		{
-			CLog	log;
-			log.Write(DEBUG, string(__func__) + "[" + to_string(__LINE__) + "]: login or email already registered");
-		}
+	if(user.isLoginExist() or user.isEmailDuplicate()) 
+	{
+		MESSAGE_DEBUG("", "", "login or email already registered");
+
 		return true;
 	}
-	else {
-		{
-			CLog	log;
-			log.Write(DEBUG, string(__func__) + "[" + to_string(__LINE__) + "]: login or email not yet exists");
-		}
+	else 
+	{
+		MESSAGE_DEBUG("", "", "login or email not yet exists");
+
 		return false;
 	}
 }
@@ -1135,13 +1006,10 @@ bool CheckUserEmailExisting(string userNameToCheck, CMysql *db) {
 string UniqueUserIDInUserIDLine(string userIDLine) //-> decltype(static_cast<string>("123"))
 {
 	list<long int>	listUserID;
-	string			result {""};
+	auto			result = ""s;
 	std::size_t		prevPointer {0}, nextPointer;
 
-	{
-		CLog	log;
-		log.Write(DEBUG, string(__func__) + "[" + to_string(__LINE__) + "]: start (", userIDLine, ")");
-	}
+	MESSAGE_DEBUG("", "", "start (" + userIDLine + ")");
 
 	do
 	{
@@ -1165,57 +1033,15 @@ string UniqueUserIDInUserIDLine(string userIDLine) //-> decltype(static_cast<str
 	}
 
 	{
-		CLog	log;
-		log.Write(DEBUG, string(__func__) + "[" + to_string(__LINE__) + "]: end (result ", result, ")");
+		MESSAGE_DEBUG("", "", "finish (result " + result + ")");
 	}
 
-	return result;	
+	return result;
 }
 
-
-string GetChatMessagesInJSONFormat(string dbQuery, CMysql *db)
+bool	isFilenameImage(const string &filename)
 {
-	ostringstream	result, ost;
-	int				affected;
-
-	{
-		CLog	log;
-		log.Write(DEBUG, string(__func__) + "[" + to_string(__LINE__) + "]: start");
-	}
-	result.str("");
-
-	affected = db->Query(dbQuery);
-	if(affected)
-	{
-		for(int i = 0; i < affected; i++)
-		{
-			result << (i ? "," : "") << "{\
-				\"id\": \""						<< db->Get(i, "id") << "\", \
-				\"message\": \"" 				<< ReplaceDoubleQuoteToQuote(db->Get(i, "message")) << "\", \
-				\"fromType\": \"" 				<< db->Get(i, "fromType") << "\",\
-				\"fromID\": \""					<< db->Get(i, "fromID") << "\",\
-				\"toType\": \""			 		<< db->Get(i, "toType") << "\",\
-				\"toID\": \""	 				<< db->Get(i, "toID") << "\",\
-				\"messageStatus\": \""		  << db->Get(i, "messageStatus") << "\",\
-				\"messageType\": \""			<< db->Get(i, "messageType") << "\",\
-				\"eventTimestampDelta\": \""	<< GetHumanReadableTimeDifferenceFromNow(db->Get(i, "eventTimestamp")) << "\",\
-				\"secondsSinceY2k\": \""		<< db->Get(i, "secondsSinceY2k") << "\",\
-				\"eventTimestamp\": \""			<< db->Get(i, "eventTimestamp") << "\"\
-			}";
-		}
-	}
-	
-	{
-		CLog	log;
-		log.Write(DEBUG, __func__ + string("[") + to_string(__LINE__) + string("]: end"));
-	}
-
-	return  result.str();
-}
-
-bool	isFilenameImage(string filename)
-{
-	bool	result = false;
+	auto	result = false;
 	regex   e1("[.](gif|jpg|jpeg|png)$", regex_constants::icase);
 	{
 		CLog	log;
@@ -1225,15 +1051,14 @@ bool	isFilenameImage(string filename)
 	result = regex_search(filename, e1);
 
 	{
-		CLog	log;
-		log.Write(DEBUG, string(__func__) + string("[") + to_string(__LINE__) + string("]: end (result: ") + (result ? "true" : "false") + ")" );
+		MESSAGE_DEBUG("", "", "finish (result: " + (result ? "true" : "false") + ")");
 	}
 	return  result;
 }
 
-bool	isFilenameVideo(string filename)
+bool	isFilenameVideo(const string &filename)
 {
-	bool	result = false;
+	auto	result = false;
 	regex   e1("[.](mov|avi|mp4|webm)$", regex_constants::icase);
 	{
 		CLog	log;
@@ -1243,10 +1068,40 @@ bool	isFilenameVideo(string filename)
 	result = regex_search(filename, e1);
 
 	{
-		CLog	log;
-		log.Write(DEBUG, string(__func__) + string("[") + to_string(__LINE__) + string("]: end (result: ") + (result ? "true" : "false") + ")" );
+		MESSAGE_DEBUG("", "", "finish (result: " + (result ? "true" : "false") + ")");
 	}
 	return  result;
+}
+
+string GetFileExtension(const string &filename)
+{
+	MESSAGE_DEBUG("", "", "start (" + filename + ")");
+
+	auto	result = ""s;
+	auto	dot_pos = filename.find(".");
+
+	if(dot_pos != string::npos) result = filename.substr(dot_pos + 1);
+
+	MESSAGE_DEBUG("", "", "finish (" + result + ")");
+
+	return result;
+}
+
+off_t getFileSize(const std::string& name) 
+{
+	off_t			result = -1;
+	struct stat		buffer;
+
+	if(stat(name.c_str(), &buffer) == -1)
+	{
+		MESSAGE_ERROR("", "", "fail to get file size (" + name + "), probably file doesn't exists");
+	}
+	else
+	{
+		result = buffer.st_size;
+	}
+
+	return result;
 }
 
 // --- extrasct all @[[:digit:]] patterns form srcMessage
@@ -1255,10 +1110,7 @@ vector<string> GetUserTagsFromText(string srcMessage)
 	vector<string>  result;
 	regex		   exp1("@([[:digit:]]+)");
 
-	{
-		CLog	log;
-		log.Write(DEBUG, string(__func__) + string("[") + to_string(__LINE__) + string("]: start"));
-	}
+	MESSAGE_DEBUG("", "", "start");
 
 	regex_token_iterator<string::iterator>   rItr(srcMessage.begin(), srcMessage.end(), exp1, 1);
 	regex_token_iterator<string::iterator>   rItrEnd;
@@ -1280,65 +1132,17 @@ string	AutodetectSexByName(string name, CMysql *db)
 {
 	string		result = "";
 
-	{
-		CLog	log;
-		log.Write(DEBUG, string(__func__) + "[" + to_string(__LINE__) + "]: start");
-	}
+	MESSAGE_DEBUG("", "", "start");
 
 	if(db->Query("SELECT * FROM `name_sex` WHERE `name`=\"" + name + "\";"))
 		result = db->Get(0, "sex");
 
 	{
-		CLog	log;
-		log.Write(DEBUG, string(__func__) + "[" + to_string(__LINE__) + "]: finish (result = " + result + ")");
+		MESSAGE_DEBUG("", "", "finish (result = " + result + ")");
 	}
 
 	return result;
 }
-
-
-string GetUnreadChatMessagesInJSONFormat(CUser *user, CMysql *db)
-{
-	ostringstream	result, ost;
-	int				affected;
-
-	{
-		CLog	log;
-		log.Write(DEBUG, string(__func__) + "[" + to_string(__LINE__) + "]: start");
-	}
-
-	result.str("");
-
-	ost.str("");
-	ost << "select * from `chat_messages` where `toID`='" << user->GetID() << "' and (`messageStatus`='unread' or `messageStatus`='delivered' or `messageStatus`='sent');";
-	affected = db->Query(ost.str());
-	if(affected)
-	{
-		for(int i = 0; i < affected; i++)
-		{
-			result << (i ? "," : "") << "{\
-				\"id\": \""					<< db->Get(i, "id") << "\", \
-				\"message\": \"" 			<< ReplaceDoubleQuoteToQuote(db->Get(i, "message")) << "\", \
-				\"fromType\": \"" 			<< db->Get(i, "fromType") << "\",\
-				\"fromID\": \""				<< db->Get(i, "fromID") << "\",\
-				\"toType\": \""			 	<< db->Get(i, "toType") << "\",\
-				\"toID\": \""	 			<< db->Get(i, "toID") << "\",\
-				\"messageType\": \""		<< db->Get(i, "messageType") << "\",\
-				\"messageStatus\": \""		<< db->Get(i, "messageStatus") << "\",\
-				\"eventTimestamp\": \""		<< db->Get(i, "eventTimestamp") << "\"\
-			}";
-		}
-	}
-	
-	{
-		CLog	log;
-		log.Write(DEBUG, string(__func__) + "[" + to_string(__LINE__) + "]: end");
-	}
-
-	return	result.str();
-}
-
-
 
 string GetGeoLocalityIDByCityAndRegion(string regionName, string cityName, CMysql *db)
 {
@@ -1346,10 +1150,7 @@ string GetGeoLocalityIDByCityAndRegion(string regionName, string cityName, CMysq
 	string		 	result = "";
 	string			regionID = "", cityID = "";
 
-	{
-		CLog	log;
-		log.Write(DEBUG, string(__func__) + "[" + to_string(__LINE__) + "]: start");
-	}
+	MESSAGE_DEBUG("", "", "start");
 
 	if(regionName.length())
 	{
@@ -1360,13 +1161,11 @@ string GetGeoLocalityIDByCityAndRegion(string regionName, string cityName, CMysq
 		else
 		{
 			long int 	tmp;
-			{
-				CLog			log;
-				log.Write(DEBUG, string(__func__) + "[" + to_string(__LINE__) + "]: region[" + regionName + "] not found. Creating new one.");
-			}
+
+			MESSAGE_DEBUG("", "", "region[" + regionName + "] not found. Creating new one.");
 
 			tmp = db->InsertQuery("INSERT INTO `geo_region` SET `geo_country_id`=\"0\", `title`=\"" + regionName + "\";");
-			if(tmp) 
+			if(tmp)
 				regionID = to_string(tmp);
 			else
 			{
@@ -1377,10 +1176,7 @@ string GetGeoLocalityIDByCityAndRegion(string regionName, string cityName, CMysq
 	}
 	else
 	{
-		{
-			CLog			log;
-			log.Write(DEBUG, string(__func__) + "[" + to_string(__LINE__) + "]: regionName is empty");
-		}
+		MESSAGE_DEBUG("", "", "regionName is empty");
 	}
 
 	if(cityName.length())
@@ -1392,13 +1188,11 @@ string GetGeoLocalityIDByCityAndRegion(string regionName, string cityName, CMysq
 		else
 		{
 			long int 	tmp;
-			{
-				CLog			log;
-				log.Write(DEBUG, string(__func__) + "[" + to_string(__LINE__) + "]: region[" + cityName + "] not found. Creating new one.");
-			}
+
+			MESSAGE_DEBUG("", "", "region[" + cityName + "] not found. Creating new one.");
 
 			tmp = db->InsertQuery("INSERT INTO `geo_locality` SET " + (regionID.length() ? "`geo_region_id`=\"" + regionID + "\"," : "") + " `title`=\"" + cityName + "\";");
-			if(tmp) 
+			if(tmp)
 				cityID = to_string(tmp);
 			else
 			{
@@ -1410,43 +1204,10 @@ string GetGeoLocalityIDByCityAndRegion(string regionName, string cityName, CMysq
 	}
 	else
 	{
-		{
-			CLog			log;
-			log.Write(DEBUG, string(__func__) + "[" + to_string(__LINE__) + "]: cityName is empty");
-		}
+		MESSAGE_DEBUG("", "", "cityName is empty");
 	}
 
-	{
-		CLog			log;
-		log.Write(DEBUG, string(__func__) + "[" + to_string(__LINE__) + "]: end (returning string length " + to_string(result.length()) + ")");
-	}
-
-	return result;
-}
-
-string GetMessageCommentsCount(string messageID, CMysql *db)
-{
-	ostringstream   ost;
-	int			 affected;
-	string		  result = "0";
-
-	{
-		CLog	log;
-		log.Write(DEBUG, string(__func__) + "[" + to_string(__LINE__) + "]: start");
-	}
-
-	ost.str("");
-	ost << "select count(*) as `counter` from `feed_message_comment` where `type`=\"message\" and `messageID`='" << messageID << "';";
-	affected = db->Query(ost.str());
-	if(affected > 0) 
-	{
-		result = db->Get(0, "counter");
-	}
-
-	{
-		CLog	log;
-		log.Write(DEBUG, string(__func__) + "[" + to_string(__LINE__) + "]: end");
-	}
+	MESSAGE_DEBUG("", "", "finish (returning string length " + to_string(result.length()) + ")");
 
 	return result;
 }
@@ -1454,10 +1215,7 @@ string GetMessageCommentsCount(string messageID, CMysql *db)
 bool AllowMessageInNewsFeed(CUser *me, const string messageOwnerID, const string messageAccessRights, vector<string> *messageFriendList)
 {
 
-	{
-		CLog			log;
-		log.Write(DEBUG, string(__func__) + "[" + to_string(__LINE__) + "]:parameters (user [" + me->GetID() + "], messageOwnerID [" + messageOwnerID + "], messageAccessRights [" + messageAccessRights + "]): start");
-	}
+	MESSAGE_DEBUG("", "", "parameters (user [" + me->GetID() + "], messageOwnerID [" + messageOwnerID + "], messageAccessRights [" + messageAccessRights + "]): start");
 
 	// --- messages belons to yourself must be shown unconditionally
 	// --- must be checked before message access private
@@ -1480,7 +1238,7 @@ bool AllowMessageInNewsFeed(CUser *me, const string messageOwnerID, const string
 	return true;
 }
 
-// --- rate-limit on sessid persistence		
+// --- rate-limit on sessid persistence
 // --- input: REMOTE_ADDR
 // --- output: true, if rate-limit required
 // ---		 false, if rate-limit not required
@@ -1491,7 +1249,7 @@ bool isPersistenceRateLimited(string REMOTE_ADDR, CMysql *db)
 	auto			affected = 0, attempts = 0;
 	auto			result = false;
 
-	MESSAGE_DEBUG("", "", "start (REMOTE_ADDR " + REMOTE_ADDR + ")")
+	MESSAGE_DEBUG("", "", "start (REMOTE_ADDR " + REMOTE_ADDR + ")");
 
 	// --- cleanup rate-limit table
 	db->Query("delete from `sessions_persistence_ratelimit` where `eventTimestamp` < (NOW() - interval "s + to_string(maxTime) + " second);");
@@ -1502,7 +1260,6 @@ bool isPersistenceRateLimited(string REMOTE_ADDR, CMysql *db)
 		MESSAGE_DEBUG("", "", "REMOTE_ADDR is in rate-limit table");
 
 		rateLimitID = db->Get(0, "id");
-		// attempts = atoi(db->Get(0, "attempts"));
 		attempts = stoi(db->Get(0, "attempts"));
 
 		db->Query("update `sessions_persistence_ratelimit` set `attempts`=`attempts`+1 where `id`='" + rateLimitID + "';");
@@ -1529,12 +1286,12 @@ bool isPersistenceRateLimited(string REMOTE_ADDR, CMysql *db)
 		result = false;
 	}
 
-	MESSAGE_DEBUG("", "", "end. "s + (result ? "rate-limit" : "no need rate-limit"))
+	MESSAGE_DEBUG("", "", "finish. "s + (result ? "rate-limit" : "no need rate-limit"))
 
 	return result;
 }
 
-void CopyFile(const string src, const string dst) 
+void CopyFile(const string src, const string dst)
 {
 	clock_t start, end;
 
@@ -1578,7 +1335,7 @@ string GetCompanyDuplicates(CMysql *db)
 	ostResult.str("");
 	ost.str("");
 	ost << "select * from `company`;";
-	for(int i = 0; i < db->Query(ost.str()); i++)
+	for(auto i = 0; i < db->Query(ost.str()); i++)
 	{
 		string		companyToTestName, companyToTestID;
 
@@ -1595,7 +1352,7 @@ string GetCompanyDuplicates(CMysql *db)
 		companyMap[companyToTestName] = companyToTestID;
 	}
 
-	for (const auto& it : duplicatesMap) 
+	for (const auto& it : duplicatesMap)
 	{
 		if(ostResult.str().length()) ostResult << ",";
 		ost.str("");
@@ -1640,7 +1397,7 @@ string GetPicturesWithEmptySet(CMysql *db)
 	ost.str("");
 	ost << "SELECT * FROM `feed_images` where `setID`='0';";
 	affected = db->Query(ost.str());
-	for(int i = 0; i < affected; i++)
+	for(auto i = 0; i < affected; i++)
 	{
 		if(ostResult.str().length()) ostResult << ",";
 		ostResult << "{\"id\":\"" << db->Get(i, "id") << "\",\"srcType\":\"" << db->Get(i, "srcType") << "\",\"userID\":\"" << db->Get(i, "userID") << "\",\"folder\":\"" << db->Get(i, "folder") << "\",\"filename\":\"" << db->Get(i, "filename") << "\"}";
@@ -1679,9 +1436,8 @@ string GetPicturesWithUnknownMessage(CMysql *db)
 	ost.str("");
 	ost << "SELECT `setID` FROM `feed_images`;";
 	affected = db->Query(ost.str());
-	for(int i = 0; i < affected; i++)
+	for(auto i = 0; i < affected; i++)
 	{
-		// allImageSets.insert(atol(db->Get(i, "setID")));
 		allImageSets.insert(stol(db->Get(i, "setID")));
 	}
 
@@ -1690,7 +1446,6 @@ string GetPicturesWithUnknownMessage(CMysql *db)
 		ost.str("");
 		ost << "select count(*) as count from `feed_message` where `imageSetID`=\"" << id << "\";";
 		db->Query(ost.str());
-		// if(!atoi(db->Get(0, "count")))
 		if(!stoi(db->Get(0, "count")))
 		{
 			lostImageSets.insert(id);
@@ -1702,7 +1457,7 @@ string GetPicturesWithUnknownMessage(CMysql *db)
 	{
 		ost.str("");
 		ost << "select * from `feed_images` where `setID`=\"" << id << "\";";
-		for(int i = 0; i < db->Query(ost.str()); i++, lostCount++)
+		for(auto i = 0; i < db->Query(ost.str()); i++, lostCount++)
 		{
 			if(ostResult.str().length()) ostResult << ",";
 			ostResult << "{\"id\":\"" << db->Get(i, "id") << "\",\"srcType\":\"" << db->Get(i, "srcType") << "\",\"userID\":\"" << db->Get(i, "userID") << "\",\"setID\":\"" << db->Get(i, "setID") << "\",\"folder\":\"" << db->Get(i, "folder") << "\",\"filename\":\"" << db->Get(i, "filename") << "\"}";
@@ -1742,7 +1497,7 @@ string GetPicturesWithUnknownUser(CMysql *db)
 	ost.str("");
 	ost << "SELECT `srcType`,`userID` FROM `feed_images`;";
 	affected = db->Query(ost.str());
-	for(int i = 0; i < affected; i++)
+	for(auto i = 0; i < affected; i++)
 		allImageOwners.insert(string(db->Get(i, "srcType")) + string(db->Get(i, "userID")));
 
 	for(auto &item: allImageOwners)
@@ -1771,7 +1526,7 @@ string GetPicturesWithUnknownUser(CMysql *db)
 	{
 		ost.str("");
 		ost << "select * from `feed_images` where `userID`=\"" << id << "\";";
-		for(int i = 0; i < db->Query(ost.str()); i++, lostCount++)
+		for(auto i = 0; i < db->Query(ost.str()); i++, lostCount++)
 		{
 			if(ostResult.str().length()) ostResult << ",";
 			ostResult << "{\"id\":\"" << db->Get(i, "id") << "\",\"srcType\":\"" << db->Get(i, "srcType") << "\",\"userID\":\"" << db->Get(i, "userID") << "\",\"setID\":\"" << db->Get(i, "setID") << "\",\"folder\":\"" << db->Get(i, "folder") << "\",\"filename\":\"" << db->Get(i, "filename") << "\"}";
@@ -1803,7 +1558,7 @@ string GetRecommendationAdverse(CMysql *db)
 	affected = db->Query(ost.str());
 	if(affected)
 	{
-		for(int i = 0; i < affected; i++)
+		for(auto i = 0; i < affected; i++)
 		{
 			if(i) dictionaryStatement << " or ";
 			dictionaryStatement << "(`title` like \"%" << db->Get(i, "word") << "%\")";
@@ -1815,7 +1570,7 @@ string GetRecommendationAdverse(CMysql *db)
 	affected = db->Query(ost.str());
 	if(affected)
 	{
-		for(int i = 0; i < affected; i++)
+		for(auto i = 0; i < affected; i++)
 		{
 			if(i) ostResult << ",";
 			ostResult << "{";
@@ -1854,7 +1609,7 @@ string GetUserAvatarByUserID(string userID, CMysql *db)
 // --- as input require SWL WHERE clause (because of using SELECT and DELETE statements)
 // --- input params:
 // --- 1) SQL WHERE statement
-// --- 2) db reference  
+// --- 2) db reference
 void	RemoveMessageImages(string sqlWhereStatement, CMysql *db)
 {
 	int			 affected;
@@ -1870,7 +1625,7 @@ void	RemoveMessageImages(string sqlWhereStatement, CMysql *db)
 	affected = db->Query(ost.str());
 	if(affected)
 	{
-		for(int i = 0; i < affected; i++)
+		for(auto i = 0; i < affected; i++)
 		{
 			string  filename = "";
 			string  mediaType = db->Get(i, "mediaType");
@@ -1881,7 +1636,7 @@ void	RemoveMessageImages(string sqlWhereStatement, CMysql *db)
 					CLog	log;
 					log.Write(DEBUG, string(__func__) + "[" + to_string(__LINE__) +  "]: file must be deleted [" + filename + "]");
 				}
-				
+
 				if(mediaType == "image") filename = IMAGE_FEED_DIRECTORY;
 				if(mediaType == "video") filename = VIDEO_FEED_DIRECTORY;
 
@@ -1907,7 +1662,7 @@ void	RemoveMessageImages(string sqlWhereStatement, CMysql *db)
 					CLog	log;
 					log.Write(DEBUG, string(__func__) + "[" + to_string(__LINE__) +  "]: mediaType[" + mediaType + "] doesn't have local file");
 				}
-				
+
 			}
 
 		}
@@ -1927,7 +1682,7 @@ void	RemoveMessageImages(string sqlWhereStatement, CMysql *db)
 // --- as input require SWL WHERE clause (because of using SELECT and DELETE statements)
 // --- input params:
 // --- 1) SQL WHERE statement
-// --- 2) db reference  
+// --- 2) db reference
 void	RemoveBookCover(string sqlWhereStatement, CMysql *db)
 {
 	int			 affected;
@@ -1943,14 +1698,14 @@ void	RemoveBookCover(string sqlWhereStatement, CMysql *db)
 	affected = db->Query(ost.str());
 	if(affected)
 	{
-		for(int i = 0; i < affected; i++)
+		for(auto i = 0; i < affected; i++)
 		{
 			string  filename = "";
 			string  mediaType = "image";
 
 			if(mediaType == "image" || mediaType == "video")
 			{
-				
+
 				if(mediaType == "image") filename = IMAGE_BOOKS_DIRECTORY;
 
 				filename +=  "/";
@@ -1979,7 +1734,7 @@ void	RemoveBookCover(string sqlWhereStatement, CMysql *db)
 					CLog	log;
 					log.Write(DEBUG, string(__func__) + "[" + to_string(__LINE__) +  "]: mediaType[" + mediaType + "] doesn't have local file");
 				}
-				
+
 			}
 
 		}
@@ -1998,8 +1753,8 @@ void	RemoveBookCover(string sqlWhereStatement, CMysql *db)
 // --- function removes specified image from FileSystems and cleanup DB
 // --- input params:
 // --- 1) id
-// --- 2) type  
-// --- 3) db reference  
+// --- 2) type
+// --- 3) db reference
 bool	RemoveSpecifiedCover(string itemID, string itemType, CMysql *db)
 {
 	int			 affected;
@@ -2013,14 +1768,14 @@ bool	RemoveSpecifiedCover(string itemID, string itemType, CMysql *db)
 	affected = db->Query(GetSpecificData_SelectQueryItemByID(itemID, itemType));
 	if(affected)
 	{
-		for(int i = 0; i < affected; i++)
+		for(auto i = 0; i < affected; i++)
 		{
 			string  filename = "";
 			string  mediaType = "image";
 
 			if(mediaType == "image" || mediaType == "video")
 			{
-				
+
 				if(mediaType == "image") filename = GetSpecificData_GetBaseDirectory(itemType);
 
 				filename +=  "/";
@@ -2043,7 +1798,7 @@ bool	RemoveSpecifiedCover(string itemID, string itemType, CMysql *db)
 					{
 						CLog	log;
 						log.Write(ERROR, string(__func__) + "[" + to_string(__LINE__) +  "]:ERROR: file doesn't exists  [filename=" + filename + "]");
-					}					
+					}
 				}
 			}
 			else
@@ -2052,7 +1807,7 @@ bool	RemoveSpecifiedCover(string itemID, string itemType, CMysql *db)
 					CLog	log;
 					log.Write(DEBUG, string(__func__) + "[" + to_string(__LINE__) +  "]: mediaType[" + mediaType + "] doesn't have local file");
 				}
-				
+
 			}
 
 		}
@@ -2073,7 +1828,7 @@ bool is_base64(BYTE c) {
   return (isalnum(c) || (c == '+') || (c == '/'));
 }
 
-string base64_encode(BYTE const* buf, unsigned int bufLen) 
+string base64_encode(BYTE const* buf, unsigned int bufLen)
 {
   std::string ret;
   int i = 0;
@@ -2115,7 +1870,7 @@ string base64_encode(BYTE const* buf, unsigned int bufLen)
   return ret;
 }
 
-string base64_decode(std::string const& encoded_string) 
+string base64_decode(std::string const& encoded_string)
 {
   size_t in_len = encoded_string.size();
   size_t i = 0;
@@ -2193,458 +1948,6 @@ bool RedirStderrToFile(string fname)
 	return  result;
 }
 
-
-
-
-
-
-
-
-int GetSpecificData_GetNumberOfFolders(string itemType)
-{
-	int	  result = 0;
-
-	{
-		CLog	log;
-
-		log.Write(DEBUG, string(__func__) + "[" + to_string(__LINE__) + "]: start");
-	}
-
-	if(itemType == "certification")		result = CERTIFICATIONSLOGO_NUMBER_OF_FOLDERS;
-	else if(itemType == "course")		result = CERTIFICATIONSLOGO_NUMBER_OF_FOLDERS;
-	else if(itemType == "university")	result = UNIVERSITYLOGO_NUMBER_OF_FOLDERS;
-	else if(itemType == "school")		result = SCHOOLLOGO_NUMBER_OF_FOLDERS;
-	else if(itemType == "language")		result = FLAG_NUMBER_OF_FOLDERS;
-	else if(itemType == "book")			result = BOOKCOVER_NUMBER_OF_FOLDERS;
-	else if(itemType == "company")		result = COMPANYLOGO_NUMBER_OF_FOLDERS;
-	else if(itemType == "gift")			result = GIFTIMAGE_NUMBER_OF_FOLDERS;
-	else if(itemType == "event")		result = EVENTIMAGE_NUMBER_OF_FOLDERS;
-	else
-	{
-		CLog	log;
-		log.Write(ERROR, string(__func__) + "[" + to_string(__LINE__) + "]:ERROR: itemType [" + itemType + "] unknown");
-	}
-
-	{
-		CLog	log;
-
-		log.Write(DEBUG, string(__func__) + "[" + to_string(__LINE__) + "]: finish (result: " + to_string(result) + ")");
-	}
-	
-	return result;
-}
-
-int GetSpecificData_GetMaxFileSize(string itemType)
-{
-	int	  result = 0;
-
-	{
-		CLog	log;
-
-		log.Write(DEBUG, string(__func__) + "[" + to_string(__LINE__) + "]: start");
-	}
-
-	if(itemType == "certification")		result = CERTIFICATIONSLOGO_MAX_FILE_SIZE;
-	else if(itemType == "course")		result = CERTIFICATIONSLOGO_MAX_FILE_SIZE;
-	else if(itemType == "university")	result = UNIVERSITYLOGO_MAX_FILE_SIZE;
-	else if(itemType == "school")		result = SCHOOLLOGO_MAX_FILE_SIZE;
-	else if(itemType == "language")		result = FLAG_MAX_FILE_SIZE;
-	else if(itemType == "book")			result = BOOKCOVER_MAX_FILE_SIZE;
-	else if(itemType == "company")		result = COMPANYLOGO_MAX_FILE_SIZE;
-	else if(itemType == "gift")			result = GIFTIMAGE_MAX_FILE_SIZE;
-	else if(itemType == "event")		result = EVENTIMAGE_MAX_FILE_SIZE;
-	else
-	{
-		CLog	log;
-		log.Write(ERROR, string(__func__) + "[" + to_string(__LINE__) + "]:ERROR: itemType [" + itemType + "] unknown");
-	}
-
-	{
-		CLog	log;
-
-		log.Write(DEBUG, string(__func__) + "[" + to_string(__LINE__) + "]: finish (result: " + to_string(result) + ")");
-	}
-	
-	return result;
-}
-
-unsigned int GetSpecificData_GetMaxWidth(string itemType)
-{
-	int	  result = 0;
-
-	{
-		CLog	log;
-
-		log.Write(DEBUG, string(__func__) + "[" + to_string(__LINE__) + "]: start");
-	}
-
-	if(itemType == "certification")		result = CERTIFICATIONSLOGO_MAX_WIDTH;
-	else if(itemType == "course")		result = CERTIFICATIONSLOGO_MAX_WIDTH;
-	else if(itemType == "university")	result = UNIVERSITYLOGO_MAX_WIDTH;
-	else if(itemType == "school")		result = SCHOOLLOGO_MAX_WIDTH;
-	else if(itemType == "language")		result = FLAG_MAX_WIDTH;
-	else if(itemType == "book")			result = BOOKCOVER_MAX_WIDTH;
-	else if(itemType == "company")		result = COMPANYLOGO_MAX_WIDTH;
-	else if(itemType == "gift")			result = GIFTIMAGE_MAX_WIDTH;
-	else if(itemType == "event")		result = EVENTIMAGE_MAX_WIDTH;
-	else
-	{
-		CLog	log;
-		log.Write(ERROR, string(__func__) + "[" + to_string(__LINE__) + "]:ERROR: itemType [" + itemType + "] unknown");
-	}
-
-	{
-		CLog	log;
-
-		log.Write(DEBUG, string(__func__) + "[" + to_string(__LINE__) + "]: finish (result: " + to_string(result) + ")");
-	}
-	
-	return result;
-}
-
-unsigned int GetSpecificData_GetMaxHeight(string itemType)
-{
-	int	  result = 0;
-
-	{
-		CLog	log;
-
-		log.Write(DEBUG, string(__func__) + "[" + to_string(__LINE__) + "]: start");
-	}
-
-	if(itemType == "certification")		result = CERTIFICATIONSLOGO_MAX_HEIGHT;
-	else if(itemType == "course")		result = CERTIFICATIONSLOGO_MAX_HEIGHT;
-	else if(itemType == "university")	result = UNIVERSITYLOGO_MAX_HEIGHT;
-	else if(itemType == "school")		result = SCHOOLLOGO_MAX_HEIGHT;
-	else if(itemType == "language")		result = FLAG_MAX_HEIGHT;
-	else if(itemType == "book")			result = BOOKCOVER_MAX_HEIGHT;
-	else if(itemType == "company")		result = COMPANYLOGO_MAX_HEIGHT;
-	else if(itemType == "gift")	  		result = GIFTIMAGE_MAX_HEIGHT;
-	else if(itemType == "event")	  	result = EVENTIMAGE_MAX_HEIGHT;
-	else
-	{
-		CLog	log;
-		log.Write(ERROR, string(__func__) + "[" + to_string(__LINE__) + "]:ERROR: itemType [" + itemType + "] unknown");
-	}
-
-	{
-		CLog	log;
-
-		log.Write(DEBUG, string(__func__) + "[" + to_string(__LINE__) + "]: finish (result: " + to_string(result) + ")");
-	}
-	
-	return result;
-}
-
-string GetSpecificData_GetBaseDirectory(string itemType)
-{
-	string	  result = "";
-
-	{
-		CLog	log;
-
-		log.Write(DEBUG, string(__func__) + "[" + to_string(__LINE__) + "]: start");
-	}
-
-	if(itemType == "certification")		result = IMAGE_CERTIFICATIONS_DIRECTORY;
-	else if(itemType == "course")		result = IMAGE_CERTIFICATIONS_DIRECTORY;
-	else if(itemType == "university")	result = IMAGE_UNIVERSITIES_DIRECTORY;
-	else if(itemType == "school")		result = IMAGE_SCHOOLS_DIRECTORY;
-	else if(itemType == "language")		result = IMAGE_FLAGS_DIRECTORY;
-	else if(itemType == "book")			result = IMAGE_BOOKS_DIRECTORY;
-	else if(itemType == "company")		result = IMAGE_COMPANIES_DIRECTORY;
-	else if(itemType == "gift")			result = IMAGE_GIFTS_DIRECTORY;
-	else if(itemType == "event")		result = IMAGE_EVENTS_DIRECTORY;
-	else
-	{
-		CLog	log;
-		log.Write(ERROR, string(__func__) + "[" + to_string(__LINE__) + "]:ERROR: itemType [" + itemType + "] unknown");
-	}
-
-	{
-		CLog	log;
-
-		log.Write(DEBUG, string(__func__) + "[" + to_string(__LINE__) + "]: finish (result: " + result + ")");
-	}
-	
-	return result;
-}
-
-string GetSpecificData_SelectQueryItemByID(string itemID, string itemType)
-{
-	string	  result = "";
-
-	{
-		CLog	log;
-
-		log.Write(DEBUG, string(__func__) + "[" + to_string(__LINE__) + "]: start");
-	}
-
-	if(itemType == "certification")		result = "select * from `certification_tracks` where `id`=\"" + itemID + "\";";
-	else if(itemType == "course")		result = "select * from `certification_tracks` where `id`=\"" + itemID + "\";";
-	else if(itemType == "university")	result = "select * from `university` where `id`=\"" + itemID + "\";";
-	else if(itemType == "school")		result = "select * from `school` where `id`=\"" + itemID + "\";";
-	else if(itemType == "language")		result = "select * from `language` where `id`=\"" + itemID + "\";";
-	else if(itemType == "book")			result = "select * from `book` where `id`=\"" + itemID + "\";";
-	else if(itemType == "company")		result = "select * from `company` where `id`=\"" + itemID + "\";";
-	else if(itemType == "gift")			result = "select * from `gifts` where `id`=\"" + itemID + "\";";
-	else if(itemType == "event")		result = "select * from `events` where `id`=\"" + itemID + "\";";
-	else
-	{
-		CLog	log;
-		log.Write(ERROR, string(__func__) + "[" + to_string(__LINE__) + "]:ERROR: itemType [" + itemType + "] unknown");
-	}
-
-	{
-		CLog	log;
-
-		log.Write(DEBUG, string(__func__) + "[" + to_string(__LINE__) + "]: finish (result: " + result + ")");
-	}
-	
-	return result;
-}
-
-string GetSpecificData_UpdateQueryItemByID(string itemID, string itemType, string folderID, string fileName)
-{
-	string		result = "";
-	string		logo_folder = "";
-	string		logo_filename = "";
-
-	{
-		CLog	log;
-
-		log.Write(DEBUG, string(__func__) + "[" + to_string(__LINE__) + "]: start");
-	}
-
-	logo_folder = GetSpecificData_GetDBCoverPhotoFolderString(itemType);
-	logo_filename = GetSpecificData_GetDBCoverPhotoFilenameString(itemType);
-
-	if(logo_folder.length() && logo_filename.length())
-	{
-		if(itemType == "certification")		result = "update `certification_tracks` set	`" + logo_folder + "`='" + folderID + "', `" + logo_filename + "`='" + fileName + "' where `id`=\"" + itemID + "\";";
-		else if(itemType == "course")		result = "update `certification_tracks` set `" + logo_folder + "`='" + folderID + "', `" + logo_filename + "`='" + fileName + "' where `id`=\"" + itemID + "\";";
-		else if(itemType == "university")	result = "update `university` set 			`" + logo_folder + "`='" + folderID + "', `" + logo_filename + "`='" + fileName + "' where `id`=\"" + itemID + "\";";
-		else if(itemType == "school")		result = "update `school` set 				`" + logo_folder + "`='" + folderID + "', `" + logo_filename + "`='" + fileName + "' where `id`=\"" + itemID + "\";";
-		else if(itemType == "language")		result = "update `language` set 			`" + logo_folder + "`='" + folderID + "', `" + logo_filename + "`='" + fileName + "' where `id`=\"" + itemID + "\";";
-		else if(itemType == "book")			result = "update `book` set 				`" + logo_folder + "`='" + folderID + "', `" + logo_filename + "`='" + fileName + "' where `id`=\"" + itemID + "\";";
-		else if(itemType == "company")		result = "update `company` set 				`" + logo_folder + "`='" + folderID + "', `" + logo_filename + "`='" + fileName + "' where `id`=\"" + itemID + "\";";
-		else if(itemType == "gift")			result = "update `gifts` set 				`" + logo_folder + "`='" + folderID + "', `" + logo_filename + "`='" + fileName + "' where `id`=\"" + itemID + "\";";
-		else if(itemType == "event")		result = "update `events` set 				`" + logo_folder + "`='" + folderID + "', `" + logo_filename + "`='" + fileName + "' where `id`=\"" + itemID + "\";";
-		else
-		{
-			CLog	log;
-			log.Write(ERROR, string(__func__) + "[" + to_string(__LINE__) + "]:ERROR: itemType [" + itemType + "] unknown");
-		}
-	}
-	else
-	{
-		{
-			CLog	log;
-			log.Write(ERROR, string(__func__) + "[" + to_string(__LINE__) + "]:ERROR: logo_folder or logo_filename not found for itemType [" + itemType + "]");
-		}
-	}
-
-
-	{
-		CLog	log;
-
-		log.Write(DEBUG, string(__func__) + "[" + to_string(__LINE__) + "]: finish (result: " + result + ")");
-	}
-	
-	return result;
-}
-
-string GetSpecificData_GetDBCoverPhotoFolderString(string itemType)
-{
-	string	  result = "";
-
-	{
-		CLog	log;
-
-		log.Write(DEBUG, string(__func__) + "[" + to_string(__LINE__) + "]: start");
-	}
-
-	if(itemType == "certification")	 	result = "logo_folder";
-	else if(itemType == "course")	   	result = "logo_folder";
-	else if(itemType == "university")   result = "logo_folder";
-	else if(itemType == "school")	   	result = "logo_folder";
-	else if(itemType == "language")	 	result = "logo_folder";
-	else if(itemType == "book")		 	result = "coverPhotoFolder";
-	else if(itemType == "company")		result = "logo_folder";
-	else if(itemType == "gift")	  		result = "logo_folder";
-	else if(itemType == "event")	  	result = "logo_folder";
-	else
-	{
-		CLog	log;
-		log.Write(ERROR, string(__func__) + "[" + to_string(__LINE__) + "]:ERROR: itemType [" + itemType + "] unknown");
-	}
-
-	{
-		CLog	log;
-
-		log.Write(DEBUG, string(__func__) + "[" + to_string(__LINE__) + "]: finish (result: " + result + ")");
-	}
-	
-	return result;
-}
-
-string GetSpecificData_GetDBCoverPhotoFilenameString(string itemType)
-{
-	string	  result = "";
-
-	{
-		CLog	log;
-
-		log.Write(DEBUG, string(__func__) + "[" + to_string(__LINE__) + "]: start");
-	}
-
-	if(itemType == "certification")		result = "logo_filename";
-	else if(itemType == "course")		result = "logo_filename";
-	else if(itemType == "university")	result = "logo_filename";
-	else if(itemType == "school")		result = "logo_filename";
-	else if(itemType == "language")		result = "logo_filename";
-	else if(itemType == "book")			result = "coverPhotoFilename";
-	else if(itemType == "company")		result = "logo_filename";
-	else if(itemType == "gift")			result = "logo_filename";
-	else if(itemType == "event")		result = "logo_filename";
-	else
-	{
-		CLog	log;
-		log.Write(ERROR, string(__func__) + "[" + to_string(__LINE__) + "]:ERROR: itemType [" + itemType + "] unknown");
-	}
-
-	{
-		CLog	log;
-		log.Write(DEBUG, string(__func__) + "[" + to_string(__LINE__) + "]: finish (result: " + result + ")");
-	}
-	
-	return result;
-}
-
-string GetSpecificData_GetFinalFileExtenstion(string itemType)
-{
-	string	  result = ".jpg";
-
-	MESSAGE_DEBUG("", "", "start");
-
-	if(itemType == "template_sow")						result = ".txt";
-	else if(itemType == "template_psow")				result = ".txt";
-	else if(itemType == "template_costcenter")			result = ".txt";
-	else if(itemType == "template_company")				result = ".txt";
-	else if(itemType == "template_agreement_company")	result = ".txt";
-	else if(itemType == "template_agreement_sow")		result = ".txt";
-	else
-	{
-		MESSAGE_DEBUG("", "", "default extension(" + result + ") taken");
-	}
-
-	MESSAGE_DEBUG("", "", "finish (result = " + result + ")");
-
-	return result;
-}
-
-string GetSpecificData_GetDataTypeByItemType(const string &itemType)
-{
-	auto	result = "image"s;
-
-	MESSAGE_DEBUG("", "", "start");
-
-	if(itemType == "template_sow")					result = "template";
-	if(itemType == "template_psow")					result = "template";
-	if(itemType == "template_costcenter")			result = "template";
-	if(itemType == "template_company")				result = "template";
-	if(itemType == "template_agreement_company")	result = "template";
-	if(itemType == "template_agreement_sow")		result = "template";
-
-	MESSAGE_DEBUG("", "", "finish (result = " + result + ")");
-
-	return result;
-}
-
-// --- Does the owner user allowed to change it ?
-// --- For example:
-// ---	*) university or school logo can be changed by administartor only.
-// ---	*) gift image could be changed by owner
-auto GetSpecificData_AllowedToChange(string itemID, string itemType, CMysql *db, CUser *user) -> string
-{
-	auto	  error_message = ""s;
-
-	MESSAGE_DEBUG("", "", "start");
-
-	if(db->Query(GetSpecificData_SelectQueryItemByID(itemID, itemType))) // --- item itemID exists ?
-	{
-		if((itemType == "course") || (itemType == "university") || (itemType == "school") || (itemType == "language") || (itemType == "book") || (itemType == "company") || (itemType == "certification"))
-		{
-			string	  coverPhotoFolder = db->Get(0, GetSpecificData_GetDBCoverPhotoFolderString(itemType).c_str());
-			string	  coverPhotoFilename = db->Get(0, GetSpecificData_GetDBCoverPhotoFilenameString(itemType).c_str());
-
-			if(coverPhotoFolder.empty() && coverPhotoFilename.empty()) {}
-			else
-			{
-				error_message = "logo already uploaded";
-
-				MESSAGE_DEBUG("", "", "access to " + itemType + "(" + itemID + ") denied, because logo already uploaded");
-			}
-		}
-		else if(itemType == "event")
-		{
-			if(user)
-			{
-				if(db->Query("SELECT `id` FROM `event_hosts` WHERE `event_id`=\"" + itemID + "\" AND `user_id`=\"" + user->GetID() + "\";")) {}
-				else
-				{
-					error_message = "you are not the event host";
-
-					MESSAGE_DEBUG("", "", "access to " + itemType + "(" + itemID + ") denied, you are not the event host");
-				}
-			}
-			else
-			{
-				error_message = "user object is NULL";
-
-				MESSAGE_ERROR("", "", error_message);
-			}
-		}
-		else if(itemType == "gift")
-		{
-			string		user_id = db->Get(0, "user_id");
-
-			if(user)
-			{
-				if(user_id == user->GetID()) {}
-				else
-				{
-					error_message = "you are not the gift owner";
-
-					MESSAGE_DEBUG("", "", "access to " + itemType + "(" + itemID + ") denied, you are not the gift owner");
-				}
-			}
-			else
-			{
-				error_message = "user object is NULL";
-
-				MESSAGE_ERROR("", "", error_message);
-			}
-		}
-		else
-		{
-			error_message = "itemType [" + itemType + "] unknown";
-
-			MESSAGE_ERROR("", "", error_message);
-		}
-	}
-	else
-	{
-		error_message = itemType + "(" + itemID + ") not found";
-
-		MESSAGE_ERROR("", "", error_message);
-	}
-
-	MESSAGE_DEBUG("", "", "finish (error_message: " + error_message + ")");
-	
-	return error_message;
-}
-
 auto isAllowed_NoSession_Action(string action) -> bool
 {
 	auto			result = false;
@@ -2666,12 +1969,273 @@ auto isAllowed_NoSession_Action(string action) -> bool
 	return result;
 }
 
-struct tm GetTMObject(string date)
+pair<struct tm, struct tm> GetFirstAndLastMonthDaysByDate(const struct tm &_date)
 {
-	struct tm	result;
-	smatch		sm;
+	struct tm end_of_mon, start_of_mon;
+
+	MESSAGE_DEBUG("", "", "start(" + to_string(_date.tm_mday) + "/" + to_string(_date.tm_mon + 1) + "/" + to_string(_date.tm_year + 1900) + ")");
+
+	start_of_mon.tm_sec		= 0;   // seconds of minutes from 0 to 61
+	start_of_mon.tm_min		= 0;   // minutes of hour from 0 to 59
+	start_of_mon.tm_hour	= 0;  // hours of day from 0 to 24
+	start_of_mon.tm_mday	= 0;  // day of month from 1 to 31
+	start_of_mon.tm_mon		= 0;   // month of year from 0 to 11
+	start_of_mon.tm_year	= 0;  // year since 1900
+	start_of_mon.tm_wday	= 0;  // days since sunday
+	start_of_mon.tm_yday	= 0;  // days since January 1st
+	start_of_mon.tm_isdst	= 0; // hours of daylight savings time
+
+	end_of_mon.tm_sec		= 0;   // seconds of minutes from 0 to 61
+	end_of_mon.tm_min		= 0;   // minutes of hour from 0 to 59
+	end_of_mon.tm_hour		= 0;  // hours of day from 0 to 24
+	end_of_mon.tm_mday		= 0;  // day of month from 1 to 31
+	end_of_mon.tm_mon		= 0;   // month of year from 0 to 11
+	end_of_mon.tm_year		= 0;  // year since 1900
+	end_of_mon.tm_wday		= 0;  // days since sunday
+	end_of_mon.tm_yday		= 0;  // days since January 1st
+	end_of_mon.tm_isdst		= 0; // hours of daylight savings time
+
+	start_of_mon.tm_year	= _date.tm_year;
+	start_of_mon.tm_mon		= _date.tm_mon;
+	start_of_mon.tm_mday	= 1;
+
+	end_of_mon.tm_year		= _date.tm_year;
+	end_of_mon.tm_mon		= _date.tm_mon + 1;
+	end_of_mon.tm_mday		= 0;
+
+	mktime(&start_of_mon);
+	mktime(&end_of_mon);
+
+	MESSAGE_DEBUG("", "", "finish (" + to_string(start_of_mon.tm_mday) + "/" + to_string(start_of_mon.tm_mon + 1) + "/" + to_string(start_of_mon.tm_year + 1900) + " - " + to_string(end_of_mon.tm_mday) + "/" + to_string(end_of_mon.tm_mon + 1) + "/" + to_string(end_of_mon.tm_year + 1900) + ")");
+
+	return make_pair(start_of_mon, end_of_mon);
+}
+
+pair<struct tm, struct tm> GetFirstAndLastWeekDaysByDate(const struct tm &_date)
+{
+	struct tm end_of_week, start_of_week;
+
+	MESSAGE_DEBUG("", "", "start(" + to_string(_date.tm_mday) + "/" + to_string(_date.tm_mon + 1) + "/" + to_string(_date.tm_year + 1900) + ")");
+
+	start_of_week.tm_sec	= 0;   // seconds of minutes from 0 to 61
+	start_of_week.tm_min	= 0;   // minutes of hour from 0 to 59
+	start_of_week.tm_hour	= 0;  // hours of day from 0 to 24
+	start_of_week.tm_mday	= 0;  // day of month from 1 to 31
+	start_of_week.tm_mon	= 0;   // month of year from 0 to 11
+	start_of_week.tm_year	= 0;  // year since 1900
+	start_of_week.tm_wday	= 0;  // days since sunday
+	start_of_week.tm_yday	= 0;  // days since January 1st
+	start_of_week.tm_isdst	= 0; // hours of daylight savings time
+
+	end_of_week.tm_sec		= 0;   // seconds of minutes from 0 to 61
+	end_of_week.tm_min		= 0;   // minutes of hour from 0 to 59
+	end_of_week.tm_hour		= 0;  // hours of day from 0 to 24
+	end_of_week.tm_mday		= 0;  // day of month from 1 to 31
+	end_of_week.tm_mon		= 0;   // month of year from 0 to 11
+	end_of_week.tm_year		= 0;  // year since 1900
+	end_of_week.tm_wday		= 0;  // days since sunday
+	end_of_week.tm_yday		= 0;  // days since January 1st
+	end_of_week.tm_isdst	= 0; // hours of daylight savings time
+
+	start_of_week.tm_year	= _date.tm_year;
+	start_of_week.tm_mon	= _date.tm_mon;
+	start_of_week.tm_mday	= _date.tm_mday;
+
+	end_of_week.tm_year		= _date.tm_year;
+	end_of_week.tm_mon		= _date.tm_mon;
+	end_of_week.tm_mday		= _date.tm_mday;
+
+	mktime(&start_of_week);
+	mktime(&end_of_week);
+
+	start_of_week.tm_mday	= start_of_week.tm_mday - start_of_week.tm_wday + 1;
+
+	end_of_week.tm_mday		= end_of_week.tm_mday - end_of_week.tm_wday + 7;
+
+	mktime(&start_of_week);
+	mktime(&end_of_week);
+
+	MESSAGE_DEBUG("", "", "finish (" + to_string(start_of_week.tm_mday) + "/" + to_string(start_of_week.tm_mon + 1) + "/" + to_string(start_of_week.tm_year + 1900) + " - " + to_string(end_of_week.tm_mday) + "/" + to_string(end_of_week.tm_mon + 1) + "/" + to_string(end_of_week.tm_year + 1900) + ")");
+
+	return make_pair(start_of_week, end_of_week);
+}
+
+pair<struct tm, struct tm> GetFirstAndLastDateOfThisMonth()
+{
+	time_t rawtime;
+	struct tm * timeinfo;
+
+	struct tm _date;
 
 	MESSAGE_DEBUG("", "", "start");
+
+	_date.tm_sec	= 0;   // seconds of minutes from 0 to 61
+	_date.tm_min	= 0;   // minutes of hour from 0 to 59
+	_date.tm_hour	= 0;  // hours of day from 0 to 24
+	_date.tm_mday	= 0;  // day of month from 1 to 31
+	_date.tm_mon	= 0;   // month of year from 0 to 11
+	_date.tm_year	= 0;  // year since 1900
+	_date.tm_wday	= 0;  // days since sunday
+	_date.tm_yday	= 0;  // days since January 1st
+	_date.tm_isdst	= 0; // hours of daylight savings time
+
+	time ( &rawtime );
+	timeinfo = localtime ( &rawtime );
+
+	_date.tm_year	= timeinfo->tm_year;
+	_date.tm_mon	= timeinfo->tm_mon;
+	_date.tm_mday	= 1;
+
+	mktime(&_date);
+
+	MESSAGE_DEBUG("", "", "finish");
+
+	return GetFirstAndLastMonthDaysByDate(_date);
+}
+
+pair<struct tm, struct tm> GetFirstAndLastDateOfLastMonth()
+{
+	time_t rawtime;
+	struct tm * timeinfo;
+
+	struct tm _date;
+
+	MESSAGE_DEBUG("", "", "start");
+
+	_date.tm_sec	= 0;   // seconds of minutes from 0 to 61
+	_date.tm_min	= 0;   // minutes of hour from 0 to 59
+	_date.tm_hour	= 0;  // hours of day from 0 to 24
+	_date.tm_mday	= 0;  // day of month from 1 to 31
+	_date.tm_mon	= 0;   // month of year from 0 to 11
+	_date.tm_year	= 0;  // year since 1900
+	_date.tm_wday	= 0;  // days since sunday
+	_date.tm_yday	= 0;  // days since January 1st
+	_date.tm_isdst	= 0; // hours of daylight savings time
+
+	time ( &rawtime );
+	timeinfo = localtime ( &rawtime );
+
+	_date.tm_year	= timeinfo->tm_year;
+	_date.tm_mon	= timeinfo->tm_mon;
+	_date.tm_mday	= 0;
+
+	mktime(&_date);
+
+	MESSAGE_DEBUG("", "", "finish");
+
+	return GetFirstAndLastMonthDaysByDate(_date);
+}
+
+pair<struct tm, struct tm> GetFirstAndLastDateOfThisWeek()
+{
+	time_t rawtime;
+	struct tm * timeinfo;
+
+	struct tm _date;
+
+	MESSAGE_DEBUG("", "", "start");
+
+	_date.tm_sec	= 0;   // seconds of minutes from 0 to 61
+	_date.tm_min	= 0;   // minutes of hour from 0 to 59
+	_date.tm_hour	= 0;  // hours of day from 0 to 24
+	_date.tm_mday	= 0;  // day of month from 1 to 31
+	_date.tm_mon	= 0;   // month of year from 0 to 11
+	_date.tm_year	= 0;  // year since 1900
+	_date.tm_wday	= 0;  // days since sunday
+	_date.tm_yday	= 0;  // days since January 1st
+	_date.tm_isdst	= 0; // hours of daylight savings time
+
+	time ( &rawtime );
+	timeinfo = localtime ( &rawtime );
+
+	_date.tm_year	= timeinfo->tm_year;
+	_date.tm_mon	= timeinfo->tm_mon;
+	_date.tm_mday	= timeinfo->tm_mday;
+
+	mktime(&_date);
+
+	MESSAGE_DEBUG("", "", "finish");
+
+	return GetFirstAndLastWeekDaysByDate(_date);
+}
+
+pair<struct tm, struct tm> GetFirstAndLastDateOfLastWeek()
+{
+	time_t rawtime;
+	struct tm * timeinfo;
+
+	struct tm _date;
+
+	MESSAGE_DEBUG("", "", "start");
+
+	_date.tm_sec	= 0;   // seconds of minutes from 0 to 61
+	_date.tm_min	= 0;   // minutes of hour from 0 to 59
+	_date.tm_hour	= 0;  // hours of day from 0 to 24
+	_date.tm_mday	= 0;  // day of month from 1 to 31
+	_date.tm_mon	= 0;   // month of year from 0 to 11
+	_date.tm_year	= 0;  // year since 1900
+	_date.tm_wday	= 0;  // days since sunday
+	_date.tm_yday	= 0;  // days since January 1st
+	_date.tm_isdst	= 0; // hours of daylight savings time
+
+	time ( &rawtime );
+	timeinfo = localtime ( &rawtime );
+
+	_date.tm_year	= timeinfo->tm_year;
+	_date.tm_mon	= timeinfo->tm_mon;
+	_date.tm_mday	= timeinfo->tm_mday - 7;
+
+	mktime(&_date);
+
+	MESSAGE_DEBUG("", "", "finish");
+
+	return GetFirstAndLastWeekDaysByDate(_date);
+}
+
+auto GetSpellingDate(long int seconds_since_epoch) -> string
+{
+	C_Date_Spelling	date_spelling(*(localtime(&seconds_since_epoch)));
+
+	return date_spelling.Spell();
+}
+
+auto GetSpellingFormattedDate(string date, string format) -> string
+{
+	return GetSpellingFormattedDate(GetTMObject(date), format);
+}
+
+auto GetSpellingFormattedDate(struct tm date_obj, string format) -> string
+{
+	MESSAGE_DEBUG("", "", "start (" + format + ")");
+
+	auto	result = ""s;
+	char	buffer[100];
+
+	mktime(&date_obj);
+
+	if(strftime(buffer, sizeof(buffer), format.c_str(), &date_obj))
+	{
+		result = buffer;
+	}
+	else
+	{
+		MESSAGE_ERROR("", "", "strftime returns 0");
+	}
+
+
+	MESSAGE_DEBUG("", "", "finish (" + result + ")");
+
+	return result;
+}
+
+
+
+struct tm GetTMObject(string date)
+{
+	MESSAGE_DEBUG("", "", "start (" + date + ")");
+
+	struct tm	result;
+	smatch		sm;
 	
 	result.tm_sec	= 0;   // seconds of minutes from 0 to 61
 	result.tm_min	= 0;   // minutes of hour from 0 to 59
