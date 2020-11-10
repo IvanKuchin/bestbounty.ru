@@ -636,7 +636,7 @@ int main()
 
 							 feed_imageID = db.InsertQuery(ost.str());
 						}
-						else if(html.GetPreviewImageFolder().length() && html.GetPreviewImagePrefix().length() && html.GetPreviewImageExtention().length())
+						else if(html.GetPreviewImageFolder().length() && html.GetPreviewImagePrefix().length() && html.GetPreviewImageExtension().length())
 						{
 							// --- 1) check that image actually image
 							// --- 2) move it to finalFoldef
@@ -651,7 +651,7 @@ int main()
 							}
 
 							// --- init variables
-							tmpFile2Check	= "/tmp/tmp_" + html.GetPreviewImagePrefix() + html.GetPreviewImageExtention();
+							tmpFile2Check	= "/tmp/tmp_" + html.GetPreviewImagePrefix() + html.GetPreviewImageExtension();
 							tmpImageJPG		= "/tmp/" + html.GetPreviewImagePrefix() + ".jpg";
 							finalFile		= IMAGE_TEMP_DIRECTORY + "/" + html.GetPreviewImageFolder() + "/" + html.GetPreviewImagePrefix() + ".jpg";
 

@@ -1119,7 +1119,7 @@ int main()
 							 feed_mediaType = "youtube_video";
 							 feed_imageURL = html.GetEmbedVideoURL();
 						}
-						else if((!html.GetPreviewImageFolder().empty()) && (!html.GetPreviewImagePrefix().empty()) && (!html.GetPreviewImageExtention().empty()))
+						else if((!html.GetPreviewImageFolder().empty()) && (!html.GetPreviewImagePrefix().empty()) && (!html.GetPreviewImageExtension().empty()))
 						{
 							// --- 1) check that image actually image
 							// --- 2) move it to finalFoldef
@@ -1142,7 +1142,7 @@ int main()
 							finalFile = ost.str();
 
 							ost.str("");
-							ost << "/tmp/tmp_" << html.GetPreviewImagePrefix() << html.GetPreviewImageExtention();
+							ost << "/tmp/tmp_" << html.GetPreviewImagePrefix() << html.GetPreviewImageExtension();
 							tmpFile2Check = ost.str();
 
 							ost.str("");

@@ -342,7 +342,7 @@ string GetSpecificData_GetDBCoverPhotoFilenameString(string itemType)
 	return result;
 }
 
-string GetSpecificData_GetFinalFileExtenstion(string itemType)
+string GetSpecificData_GetFinalFileExtension(string itemType)
 {
 	string	  result = ".jpg";
 
