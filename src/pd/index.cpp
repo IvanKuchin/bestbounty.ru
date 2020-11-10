@@ -260,7 +260,7 @@ string GenerateImage(string randStr)
 				do {
 					{
 						CLog	log;
-						log.Write(DEBUG, string(__func__) + "[" + to_string(__LINE__) + "]: checking captcha file existance");
+						log.Write(DEBUG, string(__func__) + "[" + to_string(__LINE__) + "]: checking captcha file existence");
 					}
 					fileResult = "_";
 					fileResult += GetRandom(10);
