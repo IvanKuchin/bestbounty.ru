@@ -1,5 +1,5 @@
-#ifndef __UTILITIES_BESTNOUNTY__H__
-#define __UTILITIES_BESTNOUNTY__H__
+#ifndef __UTILITIES_BESTBOUNTY__H__
+#define __UTILITIES_BESTBOUNTY__H__
 
 #include "utilities.h"
 #include "utilities_sql_queries.h"

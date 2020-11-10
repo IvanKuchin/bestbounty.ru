@@ -27,7 +27,7 @@ static auto RemoveEventHosts(string event_host, CMysql &db)
 
 int main()
 {
-	CStatistics		appStat;  // --- CStatistics must be firts statement to measure end2end param's
+	CStatistics		appStat;  // --- CStatistics must be first statement to measure end2end param's
 	CCgi			indexPage(EXTERNAL_TEMPLATE);
 	CUser			user;
 	string			action, partnerID;
@@ -928,7 +928,7 @@ int main()
 
 							if(owner_id == user_id)
 							{
-								// --- speacial case: owner can remove himself
+								// --- special case: owner can remove himself
 								// --- this is required if you organize someones event and don't want to expose your own gifts
 								if(owner_id == user.GetID())
 								{

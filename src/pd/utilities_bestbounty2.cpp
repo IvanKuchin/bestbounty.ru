@@ -160,7 +160,7 @@ string GetUserListInJSONFormat(string dbQuery, CMysql *db, CUser *user)
 					userFriendship = db->Get(0, "state");
 				}
 
-				// --- Get presense status for chat purposes
+				// --- Get presence status for chat purposes
 				if(db->Query("select COUNT(*) as `number_unread_messages` from `chat_messages` where `fromType`='fromUser' and `fromID`='" + userID + "' and (`messageStatus`='unread' or `messageStatus`='sent' or `messageStatus`='delivered');"))
 				{
 					numberUreadMessages = db->Get(0, "number_unread_messages");
@@ -653,55 +653,6 @@ static auto GetChecklistItemInJSONFormat(string dbQuery, CMysql *db, CUser *user
 	return result;
 }
 
-
-auto GetFavoriteChecklistCategoriestInJSONFormat(const string &dbQuery, CMysql *db, CUser *user) -> string
-{
-	MESSAGE_DEBUG("", "", "start");
-
-	struct ItemClass 
-	{
-		string	id;
-		string	title;
-	};
-
-	vector<ItemClass>	checklists;
-	auto				result = ""s;
-	auto				affected = db->Query(dbQuery);
-
-	if(affected)
-	{
-		for(int i = 0; i < affected; i++)
-		{
-			ItemClass	checklist;
-
-			checklist.id = db->Get(i, "id");
-			checklist.title = db->Get(i, "title");
-
-			checklists.push_back(checklist);
-		}
-
-		for(auto &checklist: checklists)
-		{
-			if(result.length()) result +=",";
-
-			result += "{";
-			result += "\"id\": \""				  	+ checklist.id + "\",";
-			result += "\"title\": \""				+ checklist.title + "\",";
-			result += "}";
-
-		}
-
-	}
-	else
-	{
-		MESSAGE_DEBUG("", "", "items not found");
-	}
-
-
-	MESSAGE_DEBUG("", "", "finish");
-
-	return result;
-}
 
 auto GetEventChecklistInJSONFormat(const string &dbQuery, CMysql *db, CUser *user) -> string
 {

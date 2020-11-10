@@ -14,7 +14,7 @@
 #include <dirent.h>		// --- opendir, rmdir
 #include <openssl/sha.h>
 #include <execinfo.h>   // --- backtrace defined here
-#include <signal.h>     // --- signal intercaeption
+#include <signal.h>     // --- signal interception
 #include <Magick++.h>
 #include <codecvt>		// --- codecvt_utf8
 

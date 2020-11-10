@@ -13,7 +13,7 @@ bool ImageSaveAsJpgToFeedFolder (const string src, const string dst, struct Exif
 	}
 
 #ifndef IMAGEMAGICK_DISABLE
-	// Construct the image object. Seperating image construction FROM the
+	// Construct the image object. Separating image construction FROM the
 	// the read operation ensures that a failure to read the image file
 	// doesn't render the image object useless.
 	try {
@@ -220,7 +220,7 @@ bool ImageSaveAsJpgToFeedFolder (const string src, const string dst, struct Exif
 
 int main()
 {
-	CStatistics		appStat;  // --- CStatistics must be firts statement to measure end2end param's
+	CStatistics		appStat;  // --- CStatistics must be first statement to measure end2end param's
 	CCgi			indexPage(EXTERNAL_TEMPLATE);
 	CUser			user;
 	string			action, partnerID;
@@ -309,7 +309,7 @@ int main()
 			{
 				{
 					CLog	log;
-					log.Write(DEBUG, string(__func__) + string("[") + to_string(__LINE__) + "]:action == " + action + ": title should not be ampty");
+					log.Write(DEBUG, string(__func__) + string("[") + to_string(__LINE__) + "]:action == " + action + ": title should not be empty");
 				}
 
 				ostResult << "{\"result\":\"error\",\"description\":\"укажите название подарка\"}";
@@ -539,7 +539,7 @@ int main()
 			{
 				{
 					CLog	log;
-					log.Write(DEBUG, string(__func__) + string("[") + to_string(__LINE__) + "]:action == " + action + ": id should not be ampty");
+					log.Write(DEBUG, string(__func__) + string("[") + to_string(__LINE__) + "]:action == " + action + ": id should not be empty");
 				}
 
 				ostResult << "{\"result\":\"error\",\"description\":\"укажите название подарка\"}";
@@ -639,7 +639,7 @@ int main()
 						else if(html.GetPreviewImageFolder().length() && html.GetPreviewImagePrefix().length() && html.GetPreviewImageExtension().length())
 						{
 							// --- 1) check that image actually image
-							// --- 2) move it to finalFoldef
+							// --- 2) move it to finalFolder
 							// --- 3) submit to imageTempSet in DB
 							struct ExifInfo exifInfo;
 							string			finalFile, tmpFile2Check, tmpImageJPG;
@@ -667,7 +667,7 @@ int main()
 
 										{
 											CLog	log;
-											log.Write(DEBUG, string(__func__) + "[" + to_string(__LINE__) + "]:" + action + ": choosen filename for feed image [" + finalFile + "]");
+											log.Write(DEBUG, string(__func__) + "[" + to_string(__LINE__) + "]:" + action + ": chosen filename for feed image [" + finalFile + "]");
 										}
 
 										CopyFile(tmpImageJPG, finalFile);
@@ -745,7 +745,7 @@ int main()
 					{
 						{
 							CLog	log;
-							log.Write(DEBUG, string(__func__) + string("[") + to_string(__LINE__) + "]:" + action + ":ERROR: can't performi request" + string(url));
+							log.Write(DEBUG, string(__func__) + string("[") + to_string(__LINE__) + "]:" + action + ":ERROR: can't perform request" + string(url));
 						}
 
 						ostFinal.str("");
@@ -796,7 +796,7 @@ int main()
 			{
 				{
 					CLog	log;
-					log.Write(DEBUG, string(__func__) + string("[") + to_string(__LINE__) + "]:action == " + action + ": id should not be ampty");
+					log.Write(DEBUG, string(__func__) + string("[") + to_string(__LINE__) + "]:action == " + action + ": id should not be empty");
 				}
 
 				ostResult << "{\"result\":\"error\",\"description\":\"ошибка передачи параметров\"}";
@@ -974,7 +974,7 @@ int main()
 			{
 				{
 					CLog	log;
-					log.Write(DEBUG, string(__func__) + string("[") + to_string(__LINE__) + "]:action == " + action + ": id should not be ampty");
+					log.Write(DEBUG, string(__func__) + string("[") + to_string(__LINE__) + "]:action == " + action + ": id should not be empty");
 				}
 
 				ostResult << "{\"result\":\"error\",\"description\":\"ошибка передачи параметров\"}";
