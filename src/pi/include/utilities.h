@@ -86,7 +86,7 @@ auto			isAllowed_NoSession_Action(string action) -> bool;
 auto			stod_noexcept(const string &) noexcept -> double;
 auto			MaskSymbols(string src, int first_pos, int last_pos) -> string;
 
-auto      		GetBaseUserInfoInJSONFormat(string dbQuery, CMysql *, CUser *) -> string;
+auto      		GetHelpdeskBaseUserInfoInJSONFormat(string dbQuery, CMysql *, CUser *) -> string;
 auto      		GetGeoCountryListInJSONFormat(string dbQuery, CMysql *, CUser *) -> string;
 auto			GetGeoLocalityIDByCityAndRegion(string regionName, string cityName, CMysql *) -> string;
 bool        	AllowMessageInNewsFeed(CUser *me, const string messageOwnerID, const string messageAccessRights, vector<string> *messageFriendList);
