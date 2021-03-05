@@ -4319,9 +4319,9 @@ string  GetUserNotificationSpecificDataByType(unsigned long typeID, unsigned lon
 
 			if(commentType == "likeCompany")
 			{
-				string	  usersCompanysID = messageID;
+				string	  usersCompanyID = messageID;
 
-				if(db->Query("select * from `users_company` where `id`=\"" + usersCompanysID + "\";"))
+				if(db->Query("select * from `users_company` where `id`=\"" + usersCompanyID + "\";"))
 				{
 					string	  companyID = db->Get(0, "company_id");
 					string	  positionTitleID = db->Get(0, "position_title_id");
@@ -4342,7 +4342,7 @@ string  GetUserNotificationSpecificDataByType(unsigned long typeID, unsigned lon
 							string	  friend_userNameLast = db->Get(0, "nameLast");
 							string	  friend_sex = db->Get(0, "sex");
 
-							ostResult << "\"notificationUsersCompanyID\":\"" << usersCompanysID << "\",";
+							ostResult << "\"notificationUsersCompanyID\":\"" << usersCompanyID << "\",";
 							ostResult << "\"notificationCompanyID\":\"" << companyID << "\",";
 							ostResult << "\"notificationCompanyName\":\"" << companyName << "\",";
 							ostResult << "\"notificationCompanyCompanyName\":\"" << companyName << "\",";
@@ -4374,7 +4374,7 @@ string  GetUserNotificationSpecificDataByType(unsigned long typeID, unsigned lon
 				else
 				{
 					CLog log;
-					log.Write(ERROR, string(__func__) + "[" + to_string(__LINE__) + "]:ERROR:typeID=" + to_string(typeID) + ": ERROR: finding users_companies.id[" + usersCompanysID + "]");
+					log.Write(ERROR, string(__func__) + "[" + to_string(__LINE__) + "]:ERROR:typeID=" + to_string(typeID) + ": ERROR: finding users_companies.id[" + usersCompanyID + "]");
 				}
 			} // --- if(likeType == "company")
 
