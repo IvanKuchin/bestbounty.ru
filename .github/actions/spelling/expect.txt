@@ -658,3 +658,6 @@ eventid
 eventtimestamps
 IAllowed
 ivan
+ofs
+DIRS
+executables
