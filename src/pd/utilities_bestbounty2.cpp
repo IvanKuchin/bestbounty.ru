@@ -160,7 +160,7 @@ string GetUserListInJSONFormat(string dbQuery, CMysql *db, CUser *user)
 					userFriendship = db->Get(0, "state");
 				}
 
-				// --- Get presense status for chat purposes
+				// --- Get presence status for chat purposes
 				if(db->Query("select COUNT(*) as `number_unread_messages` from `chat_messages` where `fromType`='fromUser' and `fromID`='" + userID + "' and (`messageStatus`='unread' or `messageStatus`='sent' or `messageStatus`='delivered');"))
 				{
 					numberUreadMessages = db->Get(0, "number_unread_messages");
@@ -184,11 +184,8 @@ string GetUserListInJSONFormat(string dbQuery, CMysql *db, CUser *user)
 						  "\"birthdayAccess\": \""				<< itemsList[i].userBirthdayAccess << "\","
 						  "\"sex\": \""							<< userSex << "\","
 						  "\"userSex\": \""						<< userSex << "\","
-
 						  "\"gifts\": ["						<< GetGiftListInJSONFormat("SELECT * FROM `gifts` WHERE `user_id`=\"" + userID + "\";", db, user) << "],"
 						  "\"gifts_to_give\": ["				<< GetGiftToGiveListInJSONFormat("SELECT * FROM `gifts_to_give` WHERE `gift_id` in (SELECT `id` FROM `gifts` WHERE `user_id`=\"" + userID + "\");", db, user) << "],"
-
-						  // "\"appliedVacanciesRender\": \""		<< userAppliedVacanciesRender << "\","
 						  "\"last_online\": \""					<< userLastOnline << "\","
 						  "\"last_online_diff\": \""			<< to_string(GetTimeDifferenceFromNow(userLastOnline)) << "\","
 						  "\"last_onlineSecondsSinceY2k\": \""  << userLastOnlineSecondSinceY2k << "\","
@@ -416,14 +413,11 @@ string GetMessageSpamUser(string messageID, string userID, CMysql *db)
 	return GetValueFromDB("select count(*) from `feed_message_params` where `parameter`='spam' and `messageID`='" + messageID + "' and `userID`='" + userID + "' ;", db);
 }
 
-
-auto GetUserListInJSONFormat_BySearchString(const string lookForKey, bool include_myself, CMysql *db, CUser *user) -> string
+auto GetUsersID_BySearchString(const string &lookForKey, bool include_myself, CMysql *db, CUser *user) -> vector<string>
 {
 	MESSAGE_DEBUG("", "", "start(" + lookForKey + ")");
 
-	ostringstream	ostFinal, ost;
-	vector<string>	searchWords;
-	auto			userList		= ""s;
+	vector<string>	result, searchWords;
 
 	if(qw(lookForKey, searchWords))
 	{
@@ -432,194 +426,142 @@ auto GetUserListInJSONFormat_BySearchString(const string lookForKey, bool includ
 		{
 			MESSAGE_DEBUG("", "", "single word search");
 
-			// --- Looking through name, surname
-			ost.str("");
-			ost << "SELECT * FROM `users` WHERE "
-					" `isActivated`='Y' and `isblocked`='N' "
-					<< (include_myself ? "" : " and `users`.`id`!=\"" + user->GetID() + "\" ") <<
-					" and (`name` like \"%" 	<< lookForKey << "%\" or `nameLast` like \"%" 	<< lookForKey << "%\") LIMIT 0, 20;";
+			// --- Looking through name, last name
+			auto query = 
+					"SELECT `users`.`id` FROM `users`"
+					"LEFT JOIN `users_company` on `users_company`.`user_id` = `users`.`id` "
+					"LEFT JOIN `company` on `company`.`id`=`users_company`.`company_id` "
+					"WHERE "
+					"("
+						" `users`.`isActivated`='Y' AND `users`.`isblocked`='N' "
+						+ (include_myself ? "" : " AND `users`.`id`!=\"" + user->GetID() + "\" ") +
+					") "
+					" AND "
+					"("
+						"("
+							"`users`.`name` LIKE \"%" 	+ lookForKey + "%\" or `users`.`nameLast` LIKE \"%" 	+ lookForKey + "%\""
+						")"
+						" OR "
+						"("
+							"`users_company`.`current_company`='1' AND `company`.`name` LIKE \"%" + lookForKey + "%\""
+						")"
+					")";
 
-			userList = GetUserListInJSONFormat(ost.str(), db, user);
-			if(userList.length() > 0) 
-			{
-				// --- comma required only if previous text is exists
-				if(ostFinal.str().length() > 10) ostFinal << ","; 
-				ostFinal  << std::endl << userList; 
-			}
-
-			// --- Looking through company title
-			ost.str("");
-			ost << "SELECT * FROM `users` "
-					"left join `users_company` on `users_company`.`user_id` = `users`.`id` "
-					"left join `company` on `company`.`id`=`users_company`.`company_id` "
-					"where "
-					"`users`.`isActivated`='Y' "
-					" and `users`.`isblocked`='N' "
-					<< (include_myself ? "" : " and `users`.`id`!=\"" + user->GetID() + "\" ") <<
-					" and `users_company`.`current_company`='1' "
-					" and `company`.`name` like \"%" 	<< lookForKey << "%\" LIMIT 0, 20;";
-
-			userList = GetUserListInJSONFormat(ost.str(), db, user);
-			if(userList.length() > 0) 
-			{
-				// --- comma required only if previous text is exists
-				if(ostFinal.str().length() > 10) ostFinal << ","; 
-				ostFinal  << std::endl << userList; 
-			}
-
+			result = GetValuesFromDB(query, db);
 		}
-
-		// --- two words searching through DB 
 		if(searchWords.size() == 2)
 		{
 			MESSAGE_DEBUG("", "", "two words search");
 
-			// --- Looking through user name,surname and company title
-			ost.str("");
-			ost << "SELECT * FROM `users` "
-					" left join `users_company` on `users_company`.`user_id` = `users`.`id` "
-					" left join `company` on `company`.`id`=`users_company`.`company_id` "
-					" where "
-					" `users`.`isActivated`='Y' "
-					" and `users`.`isblocked`='N' "
-					<< (include_myself ? "" : " and `users`.`id`!=\"" + user->GetID() + "\" ") <<
-					" and `users_company`.`current_company`='1' "
-					" and ( "
-					" 	`company`.`name` like \"%" 	<< searchWords[0] << "%\" or "
-					" 	`company`.`name` like \"%" 	<< searchWords[1] << "%\" "
-					" ) and ( "
-					" 	`users`.`name` like \"%" 		<< searchWords[0] << "%\" or "
-					" 	`users`.`name` like \"%" 		<< searchWords[1] << "%\" or "
-					" 	`users`.`nameLast` like \"%" 	<< searchWords[0] << "%\" or "
-					" 	`users`.`nameLast` like \"%" 	<< searchWords[1] << "%\" "
-					" ) LIMIT 0, 20;";
+			auto query = 
+					"SELECT `users`.`id` FROM `users` "
+					" LEFT JOIN `users_company` on `users_company`.`user_id` = `users`.`id` "
+					" LEFT JOIN `company` on `company`.`id`=`users_company`.`company_id` "
+					" WHERE "
+					"("
+						" `users`.`isActivated`='Y' AND `users`.`isblocked`='N' "
+						+ (include_myself ? "" : " AND `users`.`id`!=\"" + user->GetID() + "\" ") +
+					") "
+					" AND "
+					"("
+						"("
+							" `users_company`.`current_company`='1' "
+							" AND "
+							"( "
+							" 	`company`.`name` like \"%" 	+ searchWords[0] + "%\" or "
+							"	`company`.`name` like \"%" 	+ searchWords[1] + "%\" "
+							")"
+							" AND "
+							"( "
+							" 	`users`.`name` like \"%" 		+ searchWords[0] + "%\" or "
+							" 	`users`.`name` like \"%" 		+ searchWords[1] + "%\" or "
+							" 	`users`.`nameLast` like \"%" 	+ searchWords[0] + "%\" or "
+							" 	`users`.`nameLast` like \"%" 	+ searchWords[1] + "%\" "
+							" )"
+						")"
+						" OR "
+						"("
+							" ( "
+							" 	`users`.`name` like \"%" 		+ searchWords[1] + "%\" AND "
+							" 	`users`.`nameLast` like \"%" 	+ searchWords[0] + "%\" "
+							" ) "
+							" or "
+							" ( "
+							" 	`users`.`name` like \"%" 		+ searchWords[0] + "%\" AND "
+							" 	`users`.`nameLast` like \"%" 	+ searchWords[1] + "%\" "
+							" ) "
+						")"
+					")";
 
-			userList = GetUserListInJSONFormat(ost.str(), db, user);
-			if(userList.length() > 0) 
-			{
-				// --- comma required only if previous text is exists
-				if(ostFinal.str().length() > 10) ostFinal << ","; 
-				ostFinal  << std::endl << userList; 
-			}
-			else
-			{
-				// --- here code will be run only if multiwork search was not sucessfull on previous step
-				// --- earlier: user _and_ company is not success
-				// --- here: user _or_ company
-				{
-					MESSAGE_DEBUG("", "", "(user _and_ company) has fail, try (user _without_ company) ");
-				}
-
-				ost.str("");
-				ost << "SELECT * FROM `users` "
-						" WHERE `isActivated`='Y' "
-						" and `isblocked`='N' "
-						<< (include_myself ? "" : " and `users`.`id`!=\"" + user->GetID() + "\" ") <<
-						" and ( "
-						" ( "
-						" 	`users`.`name` like \"%" 		<< searchWords[1] << "%\" and "
-						" 	`users`.`nameLast` like \"%" 	<< searchWords[0] << "%\" "
-						" ) "
-						" or "
-						" ( "
-						" 	`users`.`name` like \"%" 		<< searchWords[0] << "%\" and "
-						" 	`users`.`nameLast` like \"%" 	<< searchWords[1] << "%\" "
-						" ) "
-						" ) LIMIT 0, 20;";
-
-				userList = GetUserListInJSONFormat(ost.str(), db, user);
-				if(userList.length() > 0) 
-				{
-					// --- comma required only if previous text is exists
-					if(ostFinal.str().length() > 10) ostFinal << ","; 
-					ostFinal  << std::endl << userList; 
-				}
-			}
-
+			result = GetValuesFromDB(query, db);
 		}
-
-		// --- three words searching through DB 
 		if(searchWords.size() == 3)
 		{
 			MESSAGE_DEBUG("", "", "three words search");
 
-			// --- Looking through user name,surname and company title
-			ost.str("");
-			ost << "SELECT * FROM `users` \
-					left join `users_company` on `users_company`.`user_id` = `users`.`id` \
-					left join `company` on `company`.`id`=`users_company`.`company_id` \
-					where \
-					`users`.`isActivated`='Y' and `users`.`isblocked`='N' and `users`.`id`!=\"" << user->GetID() << "\" and \
-					`users_company`.`current_company`='1' and \
-					( \
-						`company`.`name` like \"%" 		<< searchWords[0] << "%\" or \
-						`company`.`name` like \"%" 		<< searchWords[1] << "%\" or \
-						`company`.`name` like \"%" 		<< searchWords[2] << "%\" \
-					) and ( \
-						`users`.`name` like \"%" 		<< searchWords[0] << "%\" or \
-						`users`.`name` like \"%" 		<< searchWords[1] << "%\" or \
-						`users`.`name` like \"%" 		<< searchWords[2] << "%\" or \
-						`users`.`nameLast` like \"%" 	<< searchWords[0] << "%\" or \
-						`users`.`nameLast` like \"%" 	<< searchWords[1] << "%\" or \
-						`users`.`nameLast` like \"%" 	<< searchWords[2] << "%\" \
-					) LIMIT 0, 20;";
+			auto	query = 
+					"SELECT `users`.`id` FROM `users` "
+					" LEFT JOIN `users_company` on `users_company`.`user_id` = `users`.`id` "
+					" LEFT JOIN `company` on `company`.`id`=`users_company`.`company_id` "
+					" WHERE "
+					"("
+						" `users`.`isActivated`='Y' AND `users`.`isblocked`='N' "
+						+ (include_myself ? "" : " AND `users`.`id`!=\"" + user->GetID() + "\" ") +
+					") "
+					" AND "
+					"("
+						"("
+							"`users_company`.`current_company`='1' and "
+							"( "
+							"	`company`.`name` like \"%" 		+ searchWords[0] + "%\" or "
+							"	`company`.`name` like \"%" 		+ searchWords[1] + "%\" or "
+							"	`company`.`name` like \"%" 		+ searchWords[2] + "%\" "
+							")"
+							" AND "
+							"( "
+							"	`users`.`name` like \"%" 		+ searchWords[0] + "%\" or "
+							"	`users`.`name` like \"%" 		+ searchWords[1] + "%\" or "
+							"	`users`.`name` like \"%" 		+ searchWords[2] + "%\" or "
+							"	`users`.`nameLast` like \"%" 	+ searchWords[0] + "%\" or "
+							"	`users`.`nameLast` like \"%" 	+ searchWords[1] + "%\" or "
+							"	`users`.`nameLast` like \"%" 	+ searchWords[2] + "%\""
+							")"
+						")"
+						" OR "
+						"("
+							"("
+							"	`users`.`name` like \"%" 		+ searchWords[1] + "%\" and "
+							"	`users`.`nameLast` like \"%" 	+ searchWords[0] + "%\" "
+							")"
+							" OR "
+							"("
+							"	`users`.`name` like \"%" 		+ searchWords[0] + "%\" and "
+							"	`users`.`nameLast` like \"%" 	+ searchWords[1] + "%\" "
+							")"
+							" OR "
+							"("
+							"	`users`.`name` like \"%" 		+ searchWords[2] + "%\" and "
+							"	`users`.`nameLast` like \"%" 	+ searchWords[0] + "%\" "
+							")"
+							" OR "
+							"("
+							"	`users`.`name` like \"%" 		+ searchWords[0] + "%\" and "
+							"	`users`.`nameLast` like \"%" 	+ searchWords[2] + "%\" "
+							")"
+							" OR "
+							"("
+							"	`users`.`name` like \"%" 		+ searchWords[1] + "%\" and "
+							"	`users`.`nameLast` like \"%" 	+ searchWords[2] + "%\" "
+							")"
+							" OR "
+							"("
+							"	`users`.`name` like \"%" 		+ searchWords[2] + "%\" and "
+							"	`users`.`nameLast` like \"%" 	+ searchWords[1] + "%\" "
+							")"
+						")"
+					")";
 
-			userList = GetUserListInJSONFormat(ost.str(), db, user);
-			if(userList.length() > 0) 
-			{
-				// --- comma required only if previous text is exists
-				if(ostFinal.str().length() > 10) ostFinal << ","; 
-				ostFinal  << std::endl << userList; 
-			}
-			else
-			{
-				// --- here code will be run only if multiwork search was not sucessfull on previous step
-				// --- earlier: user _and_ company is not success
-				// --- here: user _or_ company
-				MESSAGE_DEBUG("", "", "(user _and_ company) has fail, try (user _without_ company) ");
-
-				ost.str("");
-				ost << "SELECT * FROM `users` WHERE `isActivated`='Y' and `isblocked`='N' and `id`!=\"" << user->GetID() << "\" and ( \
-						( \
-							`users`.`name` like \"%" 		<< searchWords[1] << "%\" and \
-							`users`.`nameLast` like \"%" 	<< searchWords[0] << "%\" \
-						) \
-						or \
-						( \
-							`users`.`name` like \"%" 		<< searchWords[0] << "%\" and \
-							`users`.`nameLast` like \"%" 	<< searchWords[1] << "%\" \
-						) \
-						or \
-						( \
-							`users`.`name` like \"%" 		<< searchWords[2] << "%\" and \
-							`users`.`nameLast` like \"%" 	<< searchWords[0] << "%\" \
-						) \
-						or \
-						( \
-							`users`.`name` like \"%" 		<< searchWords[0] << "%\" and \
-							`users`.`nameLast` like \"%" 	<< searchWords[2] << "%\" \
-						) \
-						or \
-						( \
-							`users`.`name` like \"%" 		<< searchWords[1] << "%\" and \
-							`users`.`nameLast` like \"%" 	<< searchWords[2] << "%\" \
-						) \
-						or \
-						( \
-							`users`.`name` like \"%" 		<< searchWords[2] << "%\" and \
-							`users`.`nameLast` like \"%" 	<< searchWords[1] << "%\" \
-						) \
-						) LIMIT 0, 20;";
-
-				userList = GetUserListInJSONFormat(ost.str(), db, user);
-				if(userList.length() > 0) 
-				{
-					// --- comma required only if previous text is exists
-					if(ostFinal.str().length() > 10) ostFinal << ","; 
-					ostFinal  << std::endl << userList; 
-				}
-			}
-
+			result = GetValuesFromDB(query, db);
 		}
 	}
 	else
@@ -629,10 +571,22 @@ auto GetUserListInJSONFormat_BySearchString(const string lookForKey, bool includ
 
 	MESSAGE_DEBUG("", "", "finish");
 
-	return ostFinal.str();
+	return result;
 }
 
-static auto GetCheckistItemInJSONFormat(string dbQuery, CMysql *db, CUser *user) -> string
+auto GetUserListInJSONFormat_BySearchString(const string &lookForKey, bool include_myself, CMysql *db, CUser *user) -> string
+{
+	MESSAGE_DEBUG("", "", "start(" + lookForKey + ")");
+
+	auto			users_id	= GetUsersID_BySearchString(lookForKey, include_myself, db, user);
+	auto			result		= (users_id.size() ? GetUserListInJSONFormat("SELECT * FROM `users` WHERE `id` IN (" + join(users_id, ",") + ");", db, user) : "");
+
+	MESSAGE_DEBUG("", "", "finish");
+
+	return result;
+}
+
+static auto GetChecklistItemInJSONFormat(string dbQuery, CMysql *db, CUser *user) -> string
 {
 	MESSAGE_DEBUG("", "", "start");
 
@@ -679,10 +633,13 @@ static auto GetCheckistItemInJSONFormat(string dbQuery, CMysql *db, CUser *user)
 			result += "{";
 			result += "\"id\": \""				  	+ item.id + "\",";
 			result += "\"title\": \""				+ item.title + "\",";
+			result += "\"category\": \""			+ item.category + "\",";
+			result += "\"state\": \""				+ item.state + "\",";
+			result += "\"price\": \""				+ item.price + "\",";
+			result += "\"comment\": \""				+ item.comment + "\",";
+			result += "\"eventTimestamp\": \""		+ item.eventTimestamp + "\"";
 			result += "}";
 		}
-
-
 	}
 	else
 	{
@@ -696,7 +653,8 @@ static auto GetCheckistItemInJSONFormat(string dbQuery, CMysql *db, CUser *user)
 	return result;
 }
 
-auto GetEventCheckistInJSONFormat(string dbQuery, CMysql *db, CUser *user) -> string
+
+auto GetEventChecklistInJSONFormat(const string &dbQuery, CMysql *db, CUser *user) -> string
 {
 	MESSAGE_DEBUG("", "", "start");
 
@@ -733,12 +691,7 @@ auto GetEventCheckistInJSONFormat(string dbQuery, CMysql *db, CUser *user) -> st
 			result += "{";
 			result += "\"id\": \""				  	+ checklist.id + "\",";
 			result += "\"title\": \""				+ checklist.title + "\",";
-			result += "\"items\": ["				+ GetCheckistItemInJSONFormat(
-															"SELECT * FROM `checklist_items` "
-															"INNER JOIN `checklist_predefined` ON `checklist_predefined`.`id`=`checklist_items`.`checklist_predefined_id` "
-															"WHERE `checklist_items`.`event_checklist_id`=" + quoted(checklist.id) +  " "
-															";", 
-															db, user) + "],";
+			result += "\"items\": ["				+ GetChecklistItemInJSONFormat(Get_ChecklistItemsByChecklistID_sqlquery(checklist.id), db, user) + "],";
 			result += "\"eventTimestamp\": \""		+ checklist.eventTimestamp + "\"";
 			result += "}";
 
@@ -756,3 +709,324 @@ auto GetEventCheckistInJSONFormat(string dbQuery, CMysql *db, CUser *user) -> st
 	return result;
 }
 
+auto GetFavoriteChecklistItemsInJSONFormat(const string &dbQuery, CMysql *db, CUser *user) -> string
+{
+	MESSAGE_DEBUG("", "", "start");
+
+	struct ItemClass 
+	{
+		string	id;
+		string	category;
+		string	title;
+		string	type;
+		string	favorite;
+	};
+
+	vector<ItemClass>	items;
+	auto				result = ""s;
+	auto				affected = db->Query(dbQuery);
+
+	if(affected)
+	{
+		for(int i = 0; i < affected; i++)
+		{
+			ItemClass	item;
+
+			item.id								= db->Get(i, "id");
+			item.category						= db->Get(i, "category");
+			item.title							= db->Get(i, "title");
+			item.type							= db->Get(i, "type");
+			item.favorite						= db->Get(i, "favorite");
+
+			items.push_back(item);
+		}
+
+		for(auto &item: items)
+		{
+			if(result.length()) result +=",";
+
+			result += "{";
+			result += "\"id\": \""				  	+ item.id + "\",";
+			result += "\"title\": \""				+ item.title + "\",";
+			result += "\"category\": \""			+ item.category + "\",";
+			result += "\"type\": \""				+ item.type + "\",";
+			result += "\"favorite\": \""			+ item.favorite + "\"";
+			result += "}";
+		}
+	}
+	else
+	{
+		MESSAGE_DEBUG("", "", "no items assigned to the checklist");
+	}
+
+
+
+	MESSAGE_DEBUG("", "", "finish");
+
+	return result;
+}
+
+auto GetFavoriteChecklistCategoriesInJSONFormat(const string &dbQuery, CMysql *db, CUser *user) -> string
+{
+	MESSAGE_DEBUG("", "", "start");
+
+	struct ItemClass 
+	{
+		string	id;
+		string	title;
+		string	event_id;
+		string	favorite;
+	};
+
+	vector<ItemClass>	items;
+	auto				result = ""s;
+	auto				affected = db->Query(dbQuery);
+
+	if(affected)
+	{
+		for(int i = 0; i < affected; i++)
+		{
+			ItemClass	item;
+
+			item.id								= db->Get(i, "id");
+			item.title							= db->Get(i, "title");
+			item.event_id						= db->Get(i, "event_id");
+			item.favorite						= db->Get(i, "favorite");
+
+			items.push_back(item);
+		}
+
+		for(auto &item: items)
+		{
+			if(result.length()) result +=",";
+
+			result += "{";
+			result += "\"id\": \""				  	+ item.id + "\",";
+			result += "\"title\": \""				+ item.title + "\",";
+			result += "\"event_id\": \""			+ item.event_id + "\",";
+			result += "\"favorite\": \""			+ item.favorite + "\"";
+			result += "}";
+		}
+	}
+	else
+	{
+		MESSAGE_DEBUG("", "", "no items assigned to the checklist");
+	}
+
+
+
+	MESSAGE_DEBUG("", "", "finish");
+
+	return result;
+}
+
+auto amIAllowedToChangeEvent(const string id, CMysql *db, CUser *user) -> string
+{
+	MESSAGE_DEBUG("", "", "start");
+
+	auto	error_message	= ""s;
+	auto	event_id		= GetValueFromDB("SELECT `id` FROM `events` WHERE `id`=" + quoted(id) + " AND `owner_id`=" + quoted(user->GetID()) + ";", db);
+
+	if(event_id.length())
+	{
+	}
+	else
+	{
+		error_message = gettext("mandatory parameter missed");
+		MESSAGE_ERROR("", "", error_message);
+	}
+
+	MESSAGE_DEBUG("", "", "finish");
+
+	return error_message;
+}
+
+auto addMissedChecklistItems(const string &from_checklist_id, string const &to_checklist_id, CMysql *db) -> string
+{
+	MESSAGE_DEBUG("", "", "start (" + from_checklist_id + " -> " + to_checklist_id + ")");
+
+	auto			error_message		= ""s;
+	auto			item_ids			= GetValuesFromDB("SELECT `checklist_predefined_id` FROM `checklist_items` where `event_checklist_id`=" + quoted(from_checklist_id) + " AND `checklist_predefined_id` not in (SELECT `checklist_predefined_id` FROM `checklist_items` WHERE `event_checklist_id`=" + quoted(to_checklist_id) + ")", db);
+	auto			sql_query			= "INSERT INTO `checklist_items` (`event_checklist_id`, `checklist_predefined_id`, `eventTimestamp`) VALUES ";
+	vector<string>	sql_values;
+
+	for(auto &item_id: item_ids)
+	{
+		sql_values.push_back("(" + quoted(to_checklist_id) + ", " + quoted(item_id) + ", UNIX_TIMESTAMP())");
+	}
+
+	if(sql_values.size())
+	{
+		db->Query(sql_query + join(sql_values, ","));
+	}
+
+	MESSAGE_DEBUG("", "", "finish");
+
+	return error_message;
+}
+
+auto addChecklistItem(string const &to_checklist_id, const string &title, const string &category, CMysql *db, CUser *user) -> string
+{
+	MESSAGE_DEBUG("", "", "start (" + to_checklist_id + ", " + title + ", " + category + ")");
+
+	auto	error_message				= ""s;
+	auto	checklist_predefined_id		= GetValueFromDB("SELECT `id` FROM `checklist_predefined` where `title`=" + quoted(title) + " AND `category`=" + quoted(category) + ";", db);
+
+	if(checklist_predefined_id.empty())
+	{
+		checklist_predefined_id = to_string(db->InsertQuery("INSERT INTO `checklist_predefined` (`category`, `title`) VALUES (" + quoted(category) + ", " + quoted(title) + ");"));
+	}
+
+	auto	checklist_item_id			= GetValueFromDB("SELECT `id` FROM `checklist_items` WHERE `event_checklist_id`=" + quoted(to_checklist_id) + " AND `checklist_predefined_id`=" + quoted(checklist_predefined_id) + ";", db);
+
+	if(checklist_item_id.empty())
+	{
+		checklist_predefined_id = to_string(db->InsertQuery("INSERT INTO `checklist_items` (`event_checklist_id`, `checklist_predefined_id`, `eventTimestamp`) VALUES (" + quoted(to_checklist_id) + ", " + quoted(checklist_predefined_id) + ", UNIX_TIMESTAMP());"));
+	}
+
+	MESSAGE_DEBUG("", "", "finish");
+
+	return error_message;
+}
+
+
+auto GetChecklistIDByEventID_CreateIfMissed(const string &event_id, CMysql *db, CUser *user) -> string
+{
+	MESSAGE_DEBUG("", "", "start (" + event_id + ")");
+
+	auto	checklist_id		= GetValueFromDB("SELECT `id` FROM `event_checklists` WHERE `event_id`=" + quoted(event_id) + ";", db);
+
+	if(checklist_id.empty())
+	{
+		checklist_id = to_string(db->InsertQuery("INSERT INTO `event_checklists` (`event_id`, `eventTimestamp`) VALUES (" + quoted(event_id) + ", UNIX_TIMESTAMP());"));
+	}
+
+	MESSAGE_DEBUG("", "", "finish (checklist_id = " + checklist_id + ")");
+
+	return checklist_id;
+}
+
+
+auto RemoveChecklistsByEventID(const string &event_id, CMysql *db, CUser *user) -> string
+{
+	MESSAGE_DEBUG("", "", "start (" + event_id + ")");
+
+	auto	error_message		= ""s;
+	auto	checklist_items_id	= GetValuesFromDB(Get_ChecklistItemsIDByChecklistID_sqlquery(Get_ChecklistItemsIDByEventID(event_id)), db);
+
+	if(checklist_items_id.size())
+	{
+		db->Query("DELETE FROM `checklist_items` WHERE `id` IN (" + join(checklist_items_id, ",") + ")");
+		if(db->isError())
+		{
+			error_message = gettext("SQL syntax error");
+		}
+
+		if(error_message.empty())
+		{
+			db->Query("DELETE FROM `event_checklists` WHERE `event_id` IN (" + event_id + ")");
+			if(db->isError())
+			{
+				error_message = gettext("SQL syntax error");
+			}
+		}
+	}
+	else
+	{
+		MESSAGE_DEBUG("", "", "no checklists associated with event.id(" + event_id + ")");
+	}
+
+	MESSAGE_DEBUG("", "", "finish");
+
+	return error_message;
+}
+
+string GetChatMessagesInJSONFormat(string dbQuery, CMysql *db)
+{
+	ostringstream	result, ost;
+	int				affected;
+
+	{
+		CLog	log;
+		log.Write(DEBUG, string(__func__) + "[" + to_string(__LINE__) + "]: start");
+	}
+	result.str("");
+
+	affected = db->Query(dbQuery);
+	if(affected)
+	{
+		for(int i = 0; i < affected; i++)
+		{
+			result << (i ? "," : "") << "{\
+				\"id\": \""						<< db->Get(i, "id") << "\", \
+				\"message\": \"" 				<< ReplaceDoubleQuoteToQuote(db->Get(i, "message")) << "\", \
+				\"fromType\": \"" 				<< db->Get(i, "fromType") << "\",\
+				\"fromID\": \""					<< db->Get(i, "fromID") << "\",\
+				\"toType\": \""			 		<< db->Get(i, "toType") << "\",\
+				\"toID\": \""	 				<< db->Get(i, "toID") << "\",\
+				\"messageStatus\": \""		  << db->Get(i, "messageStatus") << "\",\
+				\"messageType\": \""			<< db->Get(i, "messageType") << "\",\
+				\"eventTimestampDelta\": \""	<< GetHumanReadableTimeDifferenceFromNow(db->Get(i, "eventTimestamp")) << "\",\
+				\"secondsSinceY2k\": \""		<< db->Get(i, "secondsSinceY2k") << "\",\
+				\"eventTimestamp\": \""			<< db->Get(i, "eventTimestamp") << "\"\
+			}";
+		}
+	}
+	
+	{
+		CLog	log;
+		log.Write(DEBUG, __func__ + string("[") + to_string(__LINE__) + string("]: end"));
+	}
+
+	return  result.str();
+}
+
+string GetUnreadChatMessagesInJSONFormat(CUser *user, CMysql *db)
+{
+	ostringstream	result, ost;
+	int				affected;
+
+	{
+		CLog	log;
+		log.Write(DEBUG, string(__func__) + "[" + to_string(__LINE__) + "]: start");
+	}
+
+	result.str("");
+
+	ost.str("");
+	ost << "select * from `chat_messages` where `toID`='" << user->GetID() << "' and (`messageStatus`='unread' or `messageStatus`='delivered' or `messageStatus`='sent');";
+	affected = db->Query(ost.str());
+	if(affected)
+	{
+		for(int i = 0; i < affected; i++)
+		{
+			result << (i ? "," : "") << "{\
+				\"id\": \""					<< db->Get(i, "id") << "\", \
+				\"message\": \"" 			<< ReplaceDoubleQuoteToQuote(db->Get(i, "message")) << "\", \
+				\"fromType\": \"" 			<< db->Get(i, "fromType") << "\",\
+				\"fromID\": \""				<< db->Get(i, "fromID") << "\",\
+				\"toType\": \""			 	<< db->Get(i, "toType") << "\",\
+				\"toID\": \""	 			<< db->Get(i, "toID") << "\",\
+				\"messageType\": \""		<< db->Get(i, "messageType") << "\",\
+				\"messageStatus\": \""		<< db->Get(i, "messageStatus") << "\",\
+				\"eventTimestamp\": \""		<< db->Get(i, "eventTimestamp") << "\"\
+			}";
+		}
+	}
+	
+	{
+		CLog	log;
+		log.Write(DEBUG, string(__func__) + "[" + to_string(__LINE__) + "]: end");
+	}
+
+	return	result.str();
+}
+
+string GetDefaultActionLoggedinUser(void)
+{
+	MESSAGE_DEBUG("", "", "start");
+
+	MESSAGE_DEBUG("", "", "finish");
+
+	return LOGGEDIN_USER_DEFAULT_ACTION;
+}

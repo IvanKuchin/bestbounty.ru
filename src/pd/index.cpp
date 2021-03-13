@@ -13,7 +13,7 @@ bool ImageSaveAsJpgToFeedFolder (const string src, const string dst, struct Exif
 	}
 
 #ifndef IMAGEMAGICK_DISABLE
-	// Construct the image object. Seperating image construction FROM the
+	// Construct the image object. Separating image construction FROM the
 	// the read operation ensures that a failure to read the image file
 	// doesn't render the image object useless.
 	try {
@@ -260,7 +260,7 @@ string GenerateImage(string randStr)
 				do {
 					{
 						CLog	log;
-						log.Write(DEBUG, string(__func__) + "[" + to_string(__LINE__) + "]: checking captha file existance");
+						log.Write(DEBUG, string(__func__) + "[" + to_string(__LINE__) + "]: checking captcha file existence");
 					}
 					fileResult = "_";
 					fileResult += GetRandom(10);
@@ -312,7 +312,7 @@ string GenerateImage(string randStr)
 
 int main()
 {
-	CStatistics		appStat;  // --- CStatistics must be firts statement to measure end2end param's
+	CStatistics		appStat;  // --- CStatistics must be first statement to measure end2end param's
 	CCgi			indexPage(EXTERNAL_TEMPLATE);
 	CUser			user;
 	string			action, partnerID;
@@ -343,7 +343,7 @@ int main()
 			throw CException("Template file was missing");
 		}
 
-		if(db.Connect(DB_NAME, DB_LOGIN, DB_PASSWORD) < 0)
+		if(db.Connect() < 0)
 		{
 			CLog	log;
 
@@ -1108,7 +1108,7 @@ int main()
 							}
 
 							ost.str("");
-							ost << "insert into `feed_images` set "
+							ost << "INSERT INTO `feed_images` set "
 								<< "`tempSet`='" << imageTempSet << "', "
 								<< "`userID`='" << user.GetID() << "',  "
 								<< "`folder`='', "
@@ -1119,10 +1119,10 @@ int main()
 							 feed_mediaType = "youtube_video";
 							 feed_imageURL = html.GetEmbedVideoURL();
 						}
-						else if((!html.GetPreviewImageFolder().empty()) && (!html.GetPreviewImagePrefix().empty()) && (!html.GetPreviewImageExtention().empty()))
+						else if((!html.GetPreviewImageFolder().empty()) && (!html.GetPreviewImagePrefix().empty()) && (!html.GetPreviewImageExtension().empty()))
 						{
 							// --- 1) check that image actually image
-							// --- 2) move it to finalFoldef
+							// --- 2) move it to finalFolder
 							// --- 3) submit to imageTempSet in DB
 							struct ExifInfo exifInfo;
 							string			finalFile, tmpFile2Check, tmpImageJPG;
@@ -1142,7 +1142,7 @@ int main()
 							finalFile = ost.str();
 
 							ost.str("");
-							ost << "/tmp/tmp_" << html.GetPreviewImagePrefix() << html.GetPreviewImageExtention();
+							ost << "/tmp/tmp_" << html.GetPreviewImagePrefix() << html.GetPreviewImageExtension();
 							tmpFile2Check = ost.str();
 
 							ost.str("");
@@ -1154,13 +1154,13 @@ int main()
 
 								{
 									CLog	log;
-									MESSAGE_DEBUG("", action, "choosen filename for feed image [" + finalFile + "]");
+									MESSAGE_DEBUG("", action, "chosen filename for feed image [" + finalFile + "]");
 								}
 
 								CopyFile(tmpImageJPG, finalFile);
 
 								ost.str("");
-								ost << "insert into `feed_images` set "
+								ost << "INSERT INTO `feed_images` set "
 									<< "`tempSet`='" << imageTempSet << "', "
 									<< "`userID`='" << user.GetID() << "',  "
 									<< "`folder`='" << html.GetPreviewImageFolder() << "', "
@@ -1402,213 +1402,132 @@ int main()
 		// --- AJAX change in friendship status
 		if(action == "AJAX_setFindFriend_FriendshipStatus") 
 		{
-			ostringstream	ost, result;
-			string			sessid, friendID, currentFriendshipStatus, requestedFriendshipStatus;
+			MESSAGE_DEBUG("", action, "start");
 
-			MESSAGE_DEBUG("", "", "start");
+			auto			sessid						= ""s;
+			auto			friendID					= CheckHTTPParam_Number(indexPage.GetVarsHandler()->Get("friendID"));
+			auto			requestedFriendshipStatus	= CheckHTTPParam_Text(indexPage.GetVarsHandler()->Get("status"));
+			auto			currentFriendshipStatus		= ""s;
+			auto			success_message				= ""s;
+			auto			error_message				= ""s;
 
 			if(user.GetLogin() == "Guest")
 			{
-				MESSAGE_DEBUG("", action, "re-login required");
-
-				indexPage.Redirect("/" + GUEST_USER_DEFAULT_ACTION + "?rand=" + GetRandom(10));
-			}
-
-			friendID = CheckHTTPParam_Number(indexPage.GetVarsHandler()->Get("friendID"));
-			requestedFriendshipStatus = CheckHTTPParam_Text(indexPage.GetVarsHandler()->Get("status"));
-			result.str("");
-
-			if((friendID.length() == 0) || (requestedFriendshipStatus.length() == 0))
-			{
-				ostringstream	ost2;
-				ost2.str("");
-				ost2 << string(__func__) + "[" + to_string(__LINE__) + "]" + action + ": friendID [" << friendID << "] or status [" << requestedFriendshipStatus << "] is empty";
-
-				result.str("");
-				result << "{ \"result\":\"error\", \"description\":\"" << ost2.str() << "\" }";
-
-				{
-					CLog	log;
-					log.Write(ERROR, ost2.str());
-				}
+				error_message = gettext("re-login required");
+				MESSAGE_DEBUG("", action, error_message);
 			}
 			else
 			{
-				if(db.Query("SELECT * FROM `users_friends` WHERE `userID`='" + user.GetID() + "' and `friendID`='" + friendID + "';")) 
-					currentFriendshipStatus = db.Get(0, "state");
-				else 
-					currentFriendshipStatus = "empty";
-
-				if((requestedFriendshipStatus == "requested") || (requestedFriendshipStatus == "requesting")) 
+				if((friendID.length() == 0) || (requestedFriendshipStatus.length() == 0))
 				{
-					if((currentFriendshipStatus == "empty") || (currentFriendshipStatus == "ignored"))
-					{
-						ost.str("");
-						ost << "START TRANSACTION;";
-						ost << "insert into `users_friends` (`userID`, `friendID`, `state`, `date`) \
-								VALUES (\
-								\"" << user.GetID() << "\", \
-								\"" << friendID << "\", \
-								\"requesting\", \
-								NOW() \
-								);";
-						ost << "insert into `users_friends` (`userID`, `friendID`, `state`, `date`) \
-								VALUES (\
-								\"" << friendID << "\", \
-								\"" << user.GetID() << "\", \
-								\"requested\", \
-								NOW() \
-								);";
-						ost << "INSERT INTO `feed` (`title`, `userId`, `actionTypeId`, `actionId`, `eventTimestamp`) \
-								VALUES(\
-								\"\", \
-								\"" << user.GetID() << "\", \
-								\"16\", \
-								\"" << friendID << "\",  \
-								NOW());";
-						ost << "COMMIT;";
-						db.Query(ost.str());
-
-						result.str("");
-						result << "{ \"result\":\"ok\", \"description\":\"\" }";
-					}
-					else
-					{
-						ostringstream	ost2;
-						ost2.str("");
-						ost2 << string(__func__) + "[" + to_string(__LINE__) + "]" + action + ": can't move "
-								"FROM (" << user.GetID() << " " << currentFriendshipStatus << " " << friendID << ") "
-								"TO (" << friendID << " " << requestedFriendshipStatus << " " << user.GetID() << ") ";
-
-						result.str("");
-						result << "{ \"result\":\"error\", \"description\":\"" << ost2.str() << "\" }";
-
-						{
-							CLog	log;
-							log.Write(ERROR, ost2.str());
-						} // CLog
-					}
-				}
-				else if (requestedFriendshipStatus == "disconnect")
-				{
-
-					if((currentFriendshipStatus == "requested") || (currentFriendshipStatus == "requesting") || (currentFriendshipStatus == "confirmed") || (currentFriendshipStatus == "blocked"))
-					{
-						ost.str("");
-						ost << "DELETE FROM `users_friends` WHERE  \
-								(`userID`=\"" << user.GetID() << "\" and `friendID`=\"" << friendID << "\" ) \
-								OR \
-								(`friendID`=\"" << user.GetID() << "\" and `userID`=\"" << friendID << "\" );";
-						db.Query(ost.str());
-
-/*						ost.str("");
-						ost << "INSERT INTO `feed` (`title`, `userId`, `actionTypeId`, `actionId`, `eventTimestamp`) values(\"\",\"" << user.GetID() << "\", \"15\", \"" << friendID << "\", NOW())";
-						db.Query(ost.str());
-*/
-						result.str("");
-						result << "{ \"result\":\"ok\", \"description\":\"\" }";
-					}
-					else
-					{
-						ostringstream	ost2;
-						ost2.str("");
-						ost2 << string(__func__) + "[" + to_string(__LINE__) + "]" + action + ": can't move FROM " << currentFriendshipStatus << " to " << requestedFriendshipStatus << " ";
-
-						result.str("");
-						result << "{ \"result\":\"error\", \"description\":\"" << ost2.str() << "\" }";
-
-						{
-							CLog	log;
-							log.Write(ERROR, ost2.str());
-						} // CLog
-					}
-
-				}
-				else if(requestedFriendshipStatus == "confirm")
-				{
-					if((currentFriendshipStatus == "requested") || (currentFriendshipStatus == "requesting") || (currentFriendshipStatus == "confirmed") || (currentFriendshipStatus == "blocked"))
-					{
-						db.Query("update `users_friends` set `state`='confirmed', `date`=NOW() WHERE  "
-								 "(`userID`=\"" + user.GetID() + "\" and `friendID`=\"" + friendID + "\") "
-								 "OR "
-								 "(`friendID`=\"" + user.GetID() + "\" and `userID`=\"" + friendID + "\" );");
-						db.Query("INSERT INTO `feed` (`title`, `userId`, `actionTypeId`, `actionId`, `eventTimestamp`) values(\"\",\"" + user.GetID() + "\", \"14\", \"" + friendID + "\", NOW());");
-						db.Query("INSERT INTO `feed` (`title`, `userId`, `actionTypeId`, `actionId`, `eventTimestamp`) values(\"\",\"" + friendID + "\", \"14\", \"" + user.GetID() + "\", NOW());");
-
-						result.str("");
-						result << "{ \"result\":\"ok\", \"description\":\"\"}";
-					}
-					if(currentFriendshipStatus == "empty")
-					{
-						ost.str("");
-						ost << "START TRANSACTION;"
-								"insert into `users_friends` (`userID`, `friendID`, `state`, `date`) "
-								"VALUES ("
-								"\"" << user.GetID() << "\", "
-								"\"" << friendID << "\", "
-								"\"confirmed\", "
-								"NOW() "
-								");"
-								"insert into `users_friends` (`userID`, `friendID`, `state`, `date`) "
-								"VALUES ("
-								"\"" << friendID << "\", "
-								"\"" << user.GetID() << "\", "
-								"\"confirmed\", "
-								"NOW() "
-								");"
-								"INSERT INTO `feed` (`title`, `userId`, `actionTypeId`, `actionId`, `eventTimestamp`) "
-								"VALUES("
-								"\"\", "
-								"\"" << user.GetID() << "\", "
-								"\"14\", "
-								"\"" << friendID << "\",  "
-								"NOW());"
-								"COMMIT;";
-						db.Query(ost.str());
-
-						result.str("");
-						result << "{ \"result\":\"ok\", \"description\":\"\" }";
-					}
-					else
-					{
-						ostringstream	ost2;
-						ost2.str("");
-						ost2 << string(__func__) + "[" + to_string(__LINE__) + "]" + action + ": can't move FROM " << currentFriendshipStatus << " to " << requestedFriendshipStatus << " ";
-
-						result.str("");
-						result << "{ \"result\":\"error\", \"description\":\"" << ost2.str() << "\" }";
-
-						{
-							CLog	log;
-							log.Write(ERROR, ost2.str());
-						} // CLog
-					}
+					error_message = gettext("mandatory parameter missed");
+					MESSAGE_ERROR("", action, error_message);
 				}
 				else
 				{
-					ostringstream	ost2;
-					ost2.str("");
-					ost2 << string(__func__) + "[" + to_string(__LINE__) + "]" + action + ": requested friendship status is unknown [" << requestedFriendshipStatus << "] friendID [" << friendID << "]";
+					if(db.Query("SELECT * FROM `users_friends` WHERE `userID`='" + user.GetID() + "' and `friendID`='" + friendID + "';")) 
+						currentFriendshipStatus = db.Get(0, "state");
+					else 
+						currentFriendshipStatus = "empty";
 
-					result.str("");
-					result << "{ \"result\":\"error\", \"description\":\"" << ost2.str() << "\" }";
-
+					if((requestedFriendshipStatus == "requested") || (requestedFriendshipStatus == "requesting")) 
 					{
-						CLog	log;
-						log.Write(ERROR, ost2.str());
-					} // CLog
-				} // Check friendship status
-			} // if((friendID.length() == 0) || (status.length() == 0))
+						if((currentFriendshipStatus == "empty") || (currentFriendshipStatus == "ignored"))
+						{
+							db.Query(
+									"START TRANSACTION;"
+									"INSERT INTO `users_friends` (`userID`, `friendID`, `state`, `date`) "
+									"VALUES (" + quoted(user.GetID()) + "," + quoted(friendID) + ", \"requesting\", NOW());"
+									"INSERT INTO `users_friends` (`userID`, `friendID`, `state`, `date`) "
+									"VALUES (" + quoted(friendID) + ", " + quoted(user.GetID()) + ", \"requested\", NOW());"
+									"INSERT INTO `feed` (`title`, `userId`, `actionTypeId`, `actionId`, `eventTimestamp`) "
+									"VALUES(\"\", " + quoted(user.GetID()) + ", \"16\", " + quoted(friendID) + ",  NOW());"
+									"COMMIT;"
+							);
+						}
+						else
+						{
+							error_message = gettext("friendship status can't be changed") + " ("s + currentFriendshipStatus + " -> " + requestedFriendshipStatus + ")";
+							MESSAGE_ERROR("", action, error_message);
+						}
+					}
+					else if (requestedFriendshipStatus == "disconnect")
+					{
 
-			indexPage.RegisterVariableForce("result", result.str());
+						if((currentFriendshipStatus == "requested") || (currentFriendshipStatus == "requesting") || (currentFriendshipStatus == "confirmed") || (currentFriendshipStatus == "blocked"))
+						{
+							db.Query(
+									"DELETE FROM `users_friends` WHERE "
+									"(`userID`=\"" + user.GetID() + "\" AND `friendID`=\"" + friendID + "\" ) "
+									"OR "
+									"(`friendID`=\"" + user.GetID() + "\" AND `userID`=\"" + friendID + "\" );"
+									);
 
-			if(!indexPage.SetTemplate("json_response.htmlt"))
-			{
-				CLog	log;
+							db.Query(
+									"DELETE FROM `feed` WHERE "
+									"(`userId`=\"" + user.GetID() + "\" AND `actionId`=\"" + friendID + "\" AND `actionTypeId` IN (14, 15, 16)) "
+									"OR "
+									"(`actionId`=\"" + user.GetID() + "\" AND `userId`=\"" + friendID + "\" AND `actionTypeId` IN (14, 15, 16)) "
+									);
+						}
+						else
+						{
+							error_message = gettext("friendship status can't be changed") + " ("s + currentFriendshipStatus + " -> " + requestedFriendshipStatus + ")";
+							MESSAGE_ERROR("", action, error_message);
+						}
 
-				log.Write(ERROR, string(__func__) + string("[") + to_string(__LINE__) + string("] template file ajax_response.htmlt was missing"));
-				throw CException("Template file was missing");
+					}
+					else if(requestedFriendshipStatus == "confirm")
+					{
+						if((currentFriendshipStatus == "requested") || (currentFriendshipStatus == "requesting") || (currentFriendshipStatus == "confirmed") || (currentFriendshipStatus == "blocked"))
+						{
+							db.Query(
+									"update `users_friends` set `state`='confirmed', `date`=NOW() WHERE  "
+									"(`userID`=\"" + user.GetID() + "\" and `friendID`=\"" + friendID + "\") "
+									"OR "
+									"(`friendID`=\"" + user.GetID() + "\" and `userID`=\"" + friendID + "\" );"
+							);
+
+							if(db.InsertQuery("INSERT INTO `feed` (`title`, `userId`, `actionTypeId`, `actionId`, `eventTimestamp`) values(\"\",\"" + user.GetID() + "\", \"14\", \"" + friendID + "\", NOW())")) {}
+							else
+							{
+								MESSAGE_ERROR("", action, "inserting into `feed`");
+							}
+
+							if(db.InsertQuery("INSERT INTO `feed` (`title`, `userId`, `actionTypeId`, `actionId`, `eventTimestamp`) values(\"\",\"" + friendID + "\", \"14\", \"" + user.GetID() + "\", NOW())")) {}
+							else
+							{
+								MESSAGE_ERROR("", action, "inserting into `feed`");
+							}
+						}
+						if(currentFriendshipStatus == "empty")
+						{
+							db.Query(
+									"START TRANSACTION;"
+									"INSERT INTO `users_friends` (`userID`, `friendID`, `state`, `date`) "
+									"VALUES (" + quoted(user.GetID()) + ", " + quoted(friendID) + ", \"confirmed\", NOW());"
+									"INSERT INTO `users_friends` (`userID`, `friendID`, `state`, `date`) "
+									"VALUES (" + quoted(friendID) + ", " + quoted(user.GetID()) + ", \"confirmed\", NOW());"
+									"INSERT INTO `feed` (`title`, `userId`, `actionTypeId`, `actionId`, `eventTimestamp`) "
+									"VALUES(\"\", " + quoted(user.GetID()) + ", \"14\", " + quoted(friendID) + ", NOW());"
+									"COMMIT;"
+							);
+						}
+						else
+						{
+							error_message = gettext("friendship status can't be changed") + " ("s + currentFriendshipStatus + " -> " + requestedFriendshipStatus + ")";
+							MESSAGE_ERROR("", action, error_message);
+						}
+					}
+					else
+					{
+						error_message = gettext("requested friendship status is unknown") + " ("s + currentFriendshipStatus + " -> " + requestedFriendshipStatus + ")";
+						MESSAGE_ERROR("", action, error_message);
+					}
+				}
 			}
+
+			AJAX_ResponseTemplate(&indexPage, success_message, error_message);
 		}
 
 		// --- AJAX block user account
@@ -1876,7 +1795,7 @@ int main()
 						{
 							// --- user notification for message like
 							
-							if(db.InsertQuery("insert into `users_notification` (`userId`, `actionTypeId`, `actionId`, `eventTimestamp`) VALUES (\"" + userIDtoNotify + "\", \"49\", \"" + to_string(feed_message_params_id) + "\", UNIX_TIMESTAMP());"))
+							if(db.InsertQuery("INSERT INTO `users_notification` (`userId`, `actionTypeId`, `actionId`, `eventTimestamp`) VALUES (\"" + userIDtoNotify + "\", \"49\", \"" + to_string(feed_message_params_id) + "\", UNIX_TIMESTAMP());"))
 							{
 							}
 							else
@@ -2014,8 +1933,8 @@ int main()
 			}
 			else
 */
-			auto	lookForKey = CheckHTTPParam_Text(indexPage.GetVarsHandler()->Get("lookForKey"));
 			auto	error_message = ""s;
+			auto	lookForKey = CheckHTTPParam_Text(indexPage.GetVarsHandler()->Get("lookForKey"));
 			auto	success_message = "\"users\":[" + GetUserListInJSONFormat_BySearchString(lookForKey, false, &db, &user) + "]";
 
 			AJAX_ResponseTemplate(&indexPage, success_message, error_message);
@@ -2049,7 +1968,7 @@ int main()
 			}
 		}
 
-		// --- JSON industy list for autocomplete
+		// --- JSON industry list for autocomplete
 		if(action == "JSON_getIndustryListAutocomplete")
 		{
 			ostringstream   ost, ostFinal;
@@ -2678,7 +2597,7 @@ int main()
 			else
 			{
 				{
-					MESSAGE_DEBUG("", action, "there are no company of current employmant of user " + user.GetID());
+					MESSAGE_DEBUG("", action, "there are no company of current employment of user " + user.GetID());
 				}
 			}
 			indexPage.RegisterVariableForce("result", ost.str());
@@ -3081,9 +3000,7 @@ int main()
 							ost << "}";
 							ost << "]";
 
-							{
-								MESSAGE_ERROR("", action, " can't post message due to adverse words");
-							}
+							MESSAGE_ERROR("", action, " can't post message due to adverse words");
 						}
 					}
 					else
@@ -3344,11 +3261,11 @@ int main()
 							ost.str("");
 							ost << "{";
 							ost << "\"result\": \"error\",";
-							ost << "\"description\": \"users_companys.id [" << newsFeedMessageID << "] is not exists\"";
+							ost << "\"description\": \"users_companies.id [" << newsFeedMessageID << "] is not exists\"";
 							ost << "}";
 
 							CLog	log;
-							MESSAGE_ERROR("", action, " can't find ID in users_companys table");
+							MESSAGE_ERROR("", action, " can't find ID in users_companies table");
 						}
 					} // --- action == "AJAX_commentOnCompanyInNewsFeed"
 					if(action == "AJAX_commentOnScienceDegreeInNewsFeed")
@@ -3404,7 +3321,7 @@ int main()
 					{
 						// --- insert comment
 						ost.str("");
-						ost << "insert into `feed_message_comment` (`messageID`, `userID`, `comment`, `type`, `eventTimestamp`) VALUES (\"" << newsFeedMessageID << "\", \"" << user.GetID() << "\", \"" << newsFeedMessageComment << "\", \"" << newsFeedMessageCommentType << "\", NOW());";
+						ost << "INSERT INTO `feed_message_comment` (`messageID`, `userID`, `comment`, `type`, `eventTimestamp`) VALUES (\"" << newsFeedMessageID << "\", \"" << user.GetID() << "\", \"" << newsFeedMessageComment << "\", \"" << newsFeedMessageCommentType << "\", NOW());";
 						feed_message_comment_id = db.InsertQuery(ost.str());
 						if(feed_message_comment_id)
 						{
@@ -3421,7 +3338,7 @@ int main()
 							for(auto &replyUserID: replyToUsers)
 							{
 								ost.str("");
-								ost << "insert into `users_notification` (`userID`, `actionTypeId`, `actionId`, `eventTimestamp`) VALUES ('" << replyUserID << "', \"19\", '" << feed_message_comment_id << "', UNIX_TIMESTAMP() );";
+								ost << "INSERT INTO `users_notification` (`userID`, `actionTypeId`, `actionId`, `eventTimestamp`) VALUES ('" << replyUserID << "', \"19\", '" << feed_message_comment_id << "', UNIX_TIMESTAMP() );";
 								if(db.InsertQuery(ost.str()))
 								{
 									{
@@ -3867,60 +3784,35 @@ int main()
 
 			if(user.GetLogin() == "Guest")
 			{
-				ostringstream	ost;
-				string		sessid;
-				string		randomValue = GetRandom(4);
-				string 		captchaFile = GenerateImage(randomValue);
-				int 		affected;
+				auto			sessid = indexPage.GetCookie("sessid");
 
-				sessid = indexPage.GetCookie("sessid");
-
-				if(sessid.length() < 5) {
+				if(sessid.length() < 5) 
+				{
 					MESSAGE_ERROR("", action, "session.id [" + sessid + "] must be 20 symbols long");
 					throw CException("Please enable cookie in browser.");
 				}
-
+				else
 				{
 					MESSAGE_DEBUG("", action, "get login captcha for session " + sessid);
+
+					auto		randomValue = GetRandom(4);
+					auto 		captchaFile = GenerateImage(randomValue);
+					auto		captcha_id	= GetValueFromDB("SELECT `id` FROM captcha WHERE `session`=\"" + sessid + "\" and `purpose`='regNewUser'", &db);
+					auto		sql_query	= captcha_id.length()
+												? "UPDATE `captcha` SET `code`='" + randomValue + "', `filename`='" + captchaFile + "', `timestamp`=NOW() WHERE `session`=\"" + sessid + "\" AND `purpose`='regNewUser'"
+												: "INSERT INTO  `captcha` (`session` ,`code` ,`filename` ,`purpose`, `timestamp`) VALUES ('" + sessid + "',  '" + randomValue + "',  '" + captchaFile + "',  'regNewUser', NOW());"
+												;
+
+					db.Query(sql_query);
+
+					indexPage.RegisterVariableForce("noun_list", GetPasswordNounsList(&db));
+					indexPage.RegisterVariableForce("adjectives_list", GetPasswordAdjectivesList(&db));
+
+					indexPage.RegisterVariableForce("title", "Добро пожаловать");
+					indexPage.RegisterVariable("regEmail_checked", "0");
+
+					indexPage.RegisterVariableForce("securityFile", captchaFile);
 				}
-
-
-				ost.str("");
-				ost << "SELECT id FROM captcha WHERE `session`=\"" << sessid << "\" and `purpose`='regNewUser'";
-
-				if((affected = db.Query(ost.str())) > 0) {
-					// ------ Update session
-					{
-						MESSAGE_DEBUG("", action, "update session.id(" + sessid + ") captcha");
-					}
-
-					ost.str("");
-					ost << "UPDATE `captcha` SET `code`='" << randomValue << "', `filename`='" << captchaFile << "', `timestamp`=NOW() WHERE `session`=\"" << sessid << "\" AND `purpose`='regNewUser'";
-				}
-				else {
-					// ------ Create new session
-					{
-						MESSAGE_DEBUG("", action, "create new session.id(" + sessid + ") captcha");
-					}
-
-
-					ost.str("");
-					ost << "INSERT INTO  `captcha` (`session` ,`code` ,`filename` ,`purpose`, `timestamp`) VALUES ('" << sessid << "',  '" << randomValue << "',  '" << captchaFile << "',  'regNewUser', NOW());";
-				}
-				db.Query(ost.str());
-
-				{
-					MESSAGE_DEBUG("", action, "register variables");
-				}
-
-				indexPage.RegisterVariableForce("noun_list", GetPasswordNounsList(&db));
-				indexPage.RegisterVariableForce("adjectives_list", GetPasswordAdjectivesList(&db));
-
-				indexPage.RegisterVariableForce("title", "Добро пожаловать");
-				indexPage.RegisterVariable("regEmail_checked", "0");
-
-
-				indexPage.RegisterVariableForce("securityFile", captchaFile);
 
 
 				if(!indexPage.SetTemplate("login.htmlt"))
@@ -3933,7 +3825,7 @@ int main()
 			{
 				MESSAGE_ERROR("", action, "(not an error, severity error to monitor) registered user(" + user.GetLogin() + ") attempts to access login page, redirect to default page");
 
-				indexPage.Redirect("/" + GetDefaultActionFromUserType(user.GetType(), &db) + "?rand=" + GetRandom(10));
+				indexPage.Redirect("/" + GetDefaultActionFromUserType(&user, &db) + "?rand=" + GetRandom(10));
 			}
 
 			MESSAGE_DEBUG("", action, "finish");
@@ -4023,7 +3915,7 @@ int main()
 				{
 					MESSAGE_DEBUG("", action, "user [" + user.GetLogin() + "] not found");
 
-					// --- don't alert that user is missing, it make reconaissance attack easier
+					// --- don't alert that user is missing, it make reconnaissance attack easier
 					ostResult.str("");
 					ostResult << "{";
 					ostResult << "\"result\": \"error\",";
@@ -4471,7 +4363,7 @@ int main()
 					// --- account activated
 					act.Activate();
 
-					// --- improve the user expirience by automatically sign-in user
+					// --- improve the user experience by automatically sign-in user
 					// --- automatic sing-in
 					string		sessid, login, rememberMe, lng;
 					CUser		user;
@@ -4514,7 +4406,7 @@ int main()
 								CLog	log;
 								MESSAGE_ERROR("", action, "user [" + user.GetLogin() + "] not activated");
 
-								if(!indexPage.SetTemplate("weberror_user_not_activared.htmlt"))
+								if(!indexPage.SetTemplate("weberror_user_not_activated.htmlt"))
 								{
 									throw CExceptionHTML("template page missing");
 								}
@@ -4564,7 +4456,7 @@ int main()
 			{
 				MESSAGE_ERROR("", action, "(not an error, severity should be monitor) registered user(" + user.GetLogin() + ") attempts to access activateNewUser page, redirect to default page");
 
-				indexPage.Redirect("/" + GetDefaultActionFromUserType(user.GetType(), &db) + "?rand=" + GetRandom(10));
+				indexPage.Redirect("/" + GetDefaultActionFromUserType(&user, &db) + "?rand=" + GetRandom(10));
 			}
 
 
@@ -5077,7 +4969,7 @@ int main()
 				else
 				{
 					{
-						MESSAGE_ERROR("", action, " can't edit message.id(" + messageID + ") such as neighter you(user.id: " + user.GetID() + ") nor your companies are not owning message");
+						MESSAGE_ERROR("", action, " can't edit message.id(" + messageID + ") such as neither you(user.id: " + user.GetID() + ") nor your companies are not owning message");
 					}
 					ostFinal.str("");
 					ostFinal << "{";
@@ -5531,20 +5423,18 @@ int main()
 		// --- action _news_feed_ MUST BE BELOW action _login_user_
 		if((action == "news_feed") || (action == "getUserWall"))
 		{
-			ostringstream	ost;
-			string			strPageToGet, strNewsOnSinglePage;
-
 			MESSAGE_DEBUG("", action, "start");
 
-			if((user.GetLogin() == "Guest") && (action == "news_feed"))
+			auto	strNewsOnSinglePage	= CheckHTTPParam_Number(indexPage.GetVarsHandler()->Get("NewsOnSinglePage"));
+			auto	strPageToGet 		= CheckHTTPParam_Number(indexPage.GetVarsHandler()->Get("page"));
+
+			if(user.GetLogin() == "Guest")
 			{
 				MESSAGE_DEBUG("", action, "re-login required");
 
-				indexPage.Redirect("/" + GUEST_USER_DEFAULT_ACTION + "?rand=" + GetRandom(10));
+				// indexPage.Redirect("/" + GUEST_USER_DEFAULT_ACTION + "?rand=" + GetRandom(10));
 			}	
 
-			strNewsOnSinglePage	= CheckHTTPParam_Number(indexPage.GetVarsHandler()->Get("NewsOnSinglePage"));
-			strPageToGet 		= CheckHTTPParam_Number(indexPage.GetVarsHandler()->Get("page"));
 			if(strPageToGet.empty()) strPageToGet = "0";
 			{
 				MESSAGE_DEBUG("", action, "page " + strPageToGet + " requested");
@@ -5567,6 +5457,137 @@ int main()
 
 			MESSAGE_DEBUG("", action, "finish");
 		}
+
+		if(action == "getEventWall")
+		{
+			ostringstream	ost;
+			string			id = "", link = "";
+
+			MESSAGE_DEBUG("", action, "start");
+
+	/*
+			if(user.GetLogin() == "Guest")
+			{
+
+				{
+					MESSAGE_DEBUG("", action, "re-login required");
+				}
+
+				ost.str("");
+				ost << "/?rand=" << GetRandom(10);
+				indexPage.Redirect(ost.str());
+			}
+	*/
+			id					= CheckHTTPParam_Number(indexPage.GetVarsHandler()->Get("id"));
+			link				= CheckHTTPParam_Text(indexPage.GetVarsHandler()->Get("link"));
+
+			if(link.length())
+			{
+				id = GetValueFromDB("SELECT `id` FROM `events` WHERE `link`=\"" + link + "\";", &db);
+				if(id.empty())
+				{
+					MESSAGE_DEBUG("", action, "event.link(" + link + ") not found");
+				}
+			}
+			else if(id.length())
+			{
+				link = GetValueFromDB("SELECT `link` FROM `events` WHERE `id`=\"" + id + "\";", &db);
+				if(link.empty())
+				{
+					MESSAGE_DEBUG("", action, "event.id(" + id + ") not found");
+				}
+			}
+			else
+			{
+				MESSAGE_DEBUG("", action, "id and link are empty");
+			}
+
+			indexPage.RegisterVariableForce("id", id);
+			indexPage.RegisterVariableForce("link", link);
+
+			if(!indexPage.SetTemplate("view_event_profile.htmlt"))
+			{
+				MESSAGE_DEBUG("", action, "template file getEventWall.htmlt was missing");
+				throw CException("Template file was missing");
+			}
+		}
+
+		if(action == "AJAX_getEventWall")
+		{
+			auto			currPage = 0, newsOnSinglePage = 0;
+			auto			result				= ""s;
+
+			auto			strNewsOnSinglePage = CheckHTTPParam_Number(indexPage.GetVarsHandler()->Get("NewsOnSinglePage"));
+			auto			strPageToGet		= CheckHTTPParam_Number(indexPage.GetVarsHandler()->Get("page"));
+			auto			eventLink			= CheckHTTPParam_Text(indexPage.GetVarsHandler()->Get("link"));
+			auto			eventID				= CheckHTTPParam_Number(indexPage.GetVarsHandler()->Get("id"));
+
+			if(strPageToGet.empty()) strPageToGet = "0";
+
+			MESSAGE_DEBUG("", action, "page " + strPageToGet + " requested");
+
+			try{
+				currPage = stoi(strPageToGet);
+			} catch(...) {
+				currPage = 0;
+			}
+
+			try{
+				newsOnSinglePage = stoi(strNewsOnSinglePage);
+			} catch(...) {
+				newsOnSinglePage = 30;
+			}
+
+	/*
+			if(user.GetLogin() == "Guest")
+			{
+				ostringstream   ost;
+
+				{
+					MESSAGE_DEBUG("", action, "re-login required");
+				}
+
+				ost.str("");
+				ost << "/?rand=" << GetRandom(10);
+				indexPage.Redirect(ost.str());
+			}
+	*/
+			
+			// --- define eventID by eventLink
+			if(eventLink.length() && db.Query("SELECT `id`, `isBlocked` FROM `events` WHERE `link`=\"" + eventLink + "\";")) eventID = db.Get(0, "id");
+
+			if(eventID.length())
+			{
+				auto	extraFilter = " AND `isBlocked`=\"N\""s;
+
+				if(db.Query("SELECT `id` FROM `event_hosts` WHERE `user_id`=\"" + user.GetID() + "\" AND `event_id`=\"" + eventID + "\";"))
+				{
+					extraFilter = "";
+				}
+				else
+				{
+					MESSAGE_DEBUG("", action, "user(" + user.GetID() + ") is not the event(" + eventID + ") host");
+				}
+
+				result = GetNewsFeedInJSONFormat(" `feed`.`dstType`=\"event\" AND `feed`.`dstID` IN (SELECT `id` FROM `events` WHERE `id`=\"" + eventID + "\" " + extraFilter + ") ", currPage, newsOnSinglePage, &user, &db);
+			}
+			else
+			{
+				MESSAGE_ERROR("", action, "eventID not found");
+			}
+
+			indexPage.RegisterVariableForce("result", "{"
+														"\"status\":\"success\","
+														"\"feed\":[" + result + "]"
+														"}");
+
+			if(!indexPage.SetTemplate("json_response.htmlt"))
+			{
+				MESSAGE_ERROR("", action, "can't find template json_response.htmlt");
+				throw CExceptionHTML("event not activated");
+			} // if(!indexPage.SetTemplate("json_response.htmlt"))
+		}
+
 
 		if(action == "find_friends")
 		{
@@ -5615,7 +5636,7 @@ int main()
 			{
 				MESSAGE_ERROR("", action, "(not an error, severity error to monitor) registered user(" + user.GetLogin() + ") attempts to access showmain page, redirect to default page");
 
-				indexPage.Redirect("/" + GetDefaultActionFromUserType(user.GetType(), &db) + "?rand=" + GetRandom(10));
+				indexPage.Redirect("/" + GetDefaultActionFromUserType(&user, &db) + "?rand=" + GetRandom(10));
 			}
 		}
 
@@ -5659,6 +5680,117 @@ int main()
 			}
 
 			indexPage.RegisterVariableForce("content", "На ваш почтовый ящик выслан пароль !");
+		}
+
+		if(action == "check_initial_action")
+		{
+			MESSAGE_DEBUG("", action, "start");
+
+			auto		invite_hash = CheckHTTPParam_Number(indexPage.GetVarsHandler()->Get("id"));
+
+			if(invite_hash.length())
+			{
+
+			if(user.GetLogin() == "Guest")
+			{
+				MESSAGE_DEBUG("", action, "guest workflow");
+
+				indexPage.Cookie_InitialAction_Assign(invite_hash);
+				indexPage.RegisterVariableForce("redirect_url", "/login?rand=" + GetRandom(10));
+			}
+			else
+			{
+				string		eventLink = "";
+
+				MESSAGE_DEBUG("", action, "userID(" + user.GetID() + ") workflow");
+
+				// --- remove "inviteHash" cookie
+				if(!indexPage.Cookie_InitialAction_Expire()) 
+				{
+					MESSAGE_DEBUG("", action, "issue in session expiration");
+				}
+
+				// --- update db
+				indexPage.RegisterVariableForce("redirect_url", "/" + GetDefaultActionLoggedinUser() + "?rand=" + GetRandom(10));
+
+				if(db.Query("SELECT * FROM `quick_registration` WHERE `invite_hash`=\"" + invite_hash + "\";"))
+				{
+					string		quick_registration_id = db.Get(0, "id");
+					string		quick_registration_action = db.Get(0, "action");
+					string		quick_registration_action_id = db.Get(0, "action_id");
+
+					if(quick_registration_action == "event")
+					{
+						if(db.Query("SELECT `event_id` FROM `event_guests` WHERE `quick_registration_id`=\"" + quick_registration_id + "\";"))
+						{
+							string		event_id = db.Get(0, "event_id");
+
+							if(db.Query("SELECT `link` FROM `events` WHERE `id`=\"" + event_id + "\";"))
+							{
+								string		event_link = db.Get(0, "link");
+
+								db.Query("UPDATE `event_guests` SET `user_id`=\"" + user.GetID() + "\" WHERE `quick_registration_id`=\"" + quick_registration_id + "\";");
+								if(db.isError())
+								{
+									{
+										MESSAGE_DEBUG("", action, "issue updating event_guest table");
+									}
+								}
+								else
+								{
+									indexPage.RegisterVariableForce("redirect_url", "/event/" + event_link + "?rand=" + GetRandom(10));
+								}
+							}
+							else
+							{
+								{
+									MESSAGE_DEBUG("", action, "event.id(" + event_id + ") not found");
+								}
+							}
+
+
+							// --- redirect to /event/_____
+						}
+						else
+						{
+							{
+								MESSAGE_DEBUG("", action, "quick_registration_id(" + quick_registration_id + ") not found");
+							}
+						}
+					}
+					else
+					{
+						{
+							MESSAGE_DEBUG("", action, "unknown action(" + quick_registration_action + ")");
+						}
+					}
+				}
+				else
+				{
+					{
+						MESSAGE_DEBUG("", action, "invite_hash(" + invite_hash + ") not found");
+					}
+				}
+
+			}
+
+
+			}
+			else
+			{
+				{
+					MESSAGE_DEBUG("", action, "invite_hash[" + indexPage.GetVarsHandler()->Get("id") + "] is not a number");
+				}
+
+			}
+
+			if(!indexPage.SetTemplate("check_invite.htmlt"))
+			{
+				MESSAGE_DEBUG("", action, "template file check_invite.htmlt was missing");
+				throw CException("Template file check_invite.htmlt was missing");
+			}  // if(!indexPage.SetTemplate("check_invite.htmlt"))
+
+			MESSAGE_DEBUG("", action, "finish");
 		}
 
 

@@ -42,16 +42,18 @@ set(LIBXL_PROJECT_DIR		${PROJECT_SOURCE_DIR}/libxl-3.8.4.0/)
 # ---- install variables
 set(ROOTDIR			"/home/httpd/${MAIN_DOMAIN_NAME}")
 set(IMAGEROOTDIR		"/home/httpd/${IMAGE_DOMAIN_NAME}")
-set(LOGDIR			"/home/ikuchin/src_logs/")
 set(CGIDIR			${ROOTDIR}/cgi-bin)
 set(CGIADMINDIR			${ROOTDIR}/cgi-bin/admin)
-set(CRON_INSTALL_DIR		${CMAKE_INSTALL_PREFIX}/share/${MAIN_DOMAIN_NAME}/cron)
-set(ARCHIVE_INSTALL_DIR		${CMAKE_INSTALL_PREFIX}/share/${MAIN_DOMAIN_NAME}/archive)
-set(MAXMIND_INSTALL_DIR		${CMAKE_INSTALL_PREFIX}/share/${MAIN_DOMAIN_NAME}/maxmind)
-set(LOCALE_INSTALL_DIR		${CMAKE_INSTALL_PREFIX}/share/${MAIN_DOMAIN_NAME}/locale)
-set(GIT_INSTALL_DIR             ${CMAKE_INSTALL_PREFIX}/share/${MAIN_DOMAIN_NAME}/git)
-set(PDF_FONT_INSTALL_DIR	${CMAKE_INSTALL_PREFIX}/share/${MAIN_DOMAIN_NAME}/libpdf-font)
-set(LIBXL_INSTALL_DIR		${CMAKE_INSTALL_PREFIX}/share/${MAIN_DOMAIN_NAME}/libxl)
+set(LOCAL_INSTALL_DIR           ${CMAKE_INSTALL_PREFIX}/share/${MAIN_DOMAIN_NAME})
+set(LOG_DIR                      ${LOCAL_INSTALL_DIR}/log/)
+set(CONFIG_DIR                   ${LOCAL_INSTALL_DIR}/config)
+set(CRON_INSTALL_DIR		${LOCAL_INSTALL_DIR}/cron)
+set(ARCHIVE_INSTALL_DIR		${LOCAL_INSTALL_DIR}/archive)
+set(MAXMIND_INSTALL_DIR		${LOCAL_INSTALL_DIR}/maxmind)
+set(LOCALE_INSTALL_DIR		${LOCAL_INSTALL_DIR}/locale)
+set(GIT_INSTALL_DIR             ${LOCAL_INSTALL_DIR}/git)
+set(PDF_FONT_INSTALL_DIR	${LOCAL_INSTALL_DIR}/libpdf-font)
+set(LIBXL_INSTALL_DIR		${LOCAL_INSTALL_DIR}/libxl)
 
 # ---- libxl library is not in apt-reporsitory, therefore is not installed on the OS
 # ---- to treat it as regulat lib I have to copy it to /usr/local/share..... folder
@@ -73,6 +75,10 @@ add_subdirectory(supplemental/ci-scripts/)
 add_subdirectory(supplemental/libpdf-font/)
 add_subdirectory(supplemental/git/)
 add_subdirectory(po/)
+
+# --- Install time
+install(DIRECTORY DESTINATION ${LOG_DIR}  DIRECTORY_PERMISSIONS OWNER_EXECUTE OWNER_WRITE OWNER_READ GROUP_EXECUTE GROUP_WRITE GROUP_READ)
+install(DIRECTORY DESTINATION ${CONFIG_DIR} DIRECTORY_PERMISSIONS OWNER_EXECUTE OWNER_WRITE OWNER_READ GROUP_EXECUTE GROUP_READ)
 
 # --- CTest
 include(CTest)

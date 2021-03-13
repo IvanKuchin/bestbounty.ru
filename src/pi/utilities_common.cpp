@@ -13,7 +13,7 @@ auto LogEnvVariables() -> void
 	return;
 }
 
-static auto LogGitCommitID()
+static auto LogGitCommitID(CCgi *indexPage)
 {
 	// MESSAGE_DEBUG("", "", "start");
 
@@ -31,6 +31,7 @@ static auto LogGitCommitID()
 
 		ifs.close();
 
+		indexPage->RegisterVariableForce("git_commit_id", result);
 		MESSAGE_WARNING("", "", "git commit id: " + result);
 	}
 	else
@@ -50,7 +51,7 @@ auto RegisterInitialVariables(CCgi *indexPage, CMysql *db, CUser *user) -> bool
 	MESSAGE_DEBUG("", "", "start");
 
 	LogEnvVariables();
-	LogGitCommitID();
+	LogGitCommitID(indexPage);
 
 	indexPage->RegisterVariableForce("rand", GetRandom(10));
 	indexPage->RegisterVariableForce("random", GetRandom(10));
@@ -137,6 +138,35 @@ auto SetLocale(string locale) -> bool
 	return result;
 }
 
+static auto __LoadUserAndSetVariables(string login, CCgi *indexPage, CMysql *db, CUser *user)
+{
+	auto error_message = ""s;
+
+	MESSAGE_DEBUG("", "", "start");
+
+	user->SetDB(db);
+	if(user->GetFromDBbyLogin(login))
+	{
+		indexPage->RegisterVariableForce("loginUser", indexPage->SessID_Get_UserFromDB());
+		indexPage->RegisterVariableForce("loginUserID", user->GetID());
+		indexPage->RegisterVariableForce("myLogin", user->GetLogin());
+		indexPage->RegisterVariableForce("myFirstName", user->GetName());
+		indexPage->RegisterVariableForce("myLastName", user->GetNameLast());
+		indexPage->RegisterVariableForce("myUserAvatar", user->GetAvatar());
+		indexPage->RegisterVariableForce("user_type", user->GetType());
+		indexPage->RegisterVariableForce("smartway_enrolled", user->GetSmartwayEnrolled());
+	}
+	else
+	{
+		error_message = "user login " + login + " not found in DB";
+		MESSAGE_ERROR("", "", error_message);
+	}
+
+	MESSAGE_DEBUG("", "", "finish");
+
+	return error_message;
+}
+
 auto GenerateSession(string action, CCgi *indexPage, CMysql *db, CUser *user) -> string
 {
 	auto			locale = LOCALE_DEFAULT;
@@ -163,7 +193,7 @@ auto GenerateSession(string action, CCgi *indexPage, CMysql *db, CUser *user) ->
 			// --- for example:
 			// ---              browser cached _main_Doc_ w/o cookies
 			// ---              it will request many AJAX-s: EchoRequest, GetNavChatStatus, GetNewsFeed
-			// ---              some of those will assign _new_sessid_ cookies and these cookies will be diffferent
+			// ---              some of those will assign _new_sessid_ cookies and these cookies will be different
 			// ---              prohibiting AJAX to assign sessid cookies, help to avoid assignment multiple sessid cookies 
 			MESSAGE_DEBUG("", action, "no sessid cookie assignment in AJAX/JSON handler. This line may appear in the log only if AJAX_ been requested prior to _main_doc_ or _main_doc_ with clean cookies has been cached in a browser.");
 		}
@@ -179,6 +209,7 @@ auto GenerateSession(string action, CCgi *indexPage, CMysql *db, CUser *user) ->
 			}
 		}
 
+/*
 		if(isAllowed_NoSession_Action(action))
 		{
 			// --- guest user access,
@@ -186,6 +217,25 @@ auto GenerateSession(string action, CCgi *indexPage, CMysql *db, CUser *user) ->
 		}
 		else
 		{
+			action = GUEST_USER_DEFAULT_ACTION;
+		}
+*/
+		if(__LoadUserAndSetVariables("Guest", indexPage, db, user).empty())
+		{
+			if(isAllowed_NoSession_Action(action))
+			{
+				// --- guest user access,
+				// --- 1) user wall, if exact link known
+			}
+			else
+			{
+				action = GUEST_USER_DEFAULT_ACTION;
+			}
+		}
+		else
+		{
+			MESSAGE_ERROR("", action, "can't load Guest user profile");
+
 			action = GUEST_USER_DEFAULT_ACTION;
 		}
 	}
@@ -199,7 +249,7 @@ auto GenerateSession(string action, CCgi *indexPage, CMysql *db, CUser *user) ->
 				{
 					indexPage->RegisterVariableForce("loginUser", "");
 					indexPage->RegisterVariableForce("loginUserID", "");
-
+/*
 					user->SetDB(db);
 					if(user->GetFromDBbyLogin(indexPage->SessID_Get_UserFromDB()))
 					{
@@ -211,7 +261,9 @@ auto GenerateSession(string action, CCgi *indexPage, CMysql *db, CUser *user) ->
 						indexPage->RegisterVariableForce("myUserAvatar", user->GetAvatar());
 						indexPage->RegisterVariableForce("user_type", user->GetType());
 						indexPage->RegisterVariableForce("smartway_enrolled", user->GetSmartwayEnrolled());
-
+*/
+					if(__LoadUserAndSetVariables(indexPage->SessID_Get_UserFromDB(), indexPage, db, user).empty())
+					{
 						if(user->GetLogin() != "Guest")
 						{
 							// --- actions specific to registered user
@@ -255,7 +307,7 @@ auto GenerateSession(string action, CCgi *indexPage, CMysql *db, CUser *user) ->
 		{
 			action = GetDefaultActionFromUserType(user, db);
 
-			MESSAGE_DEBUG("", "", "META-registration: action has been overriden user.type(" + user->GetType() + ") default action [action = " + action + "]");
+			MESSAGE_DEBUG("", "", "META-registration: action has been overridden user.type(" + user->GetType() + ") default action [action = " + action + "]");
 
 			if(user->GetLogin().empty()) MESSAGE_ERROR("", "", "user login is empty (user login must not be empty, either \"Guest\", or actual user login)");
 		}

@@ -28,7 +28,7 @@ bool Test1(CMysql *db)
 
 int main(void)
 {
-	CStatistics		appStat;  // --- CStatistics must be firts statement to measure end2end param's
+	CStatistics		appStat;  // --- CStatistics must be first statement to measure end2end param's
 	CCgi			indexPage(EXTERNAL_TEMPLATE);
 	CUser			user;
 	CMysql			db;
@@ -37,7 +37,7 @@ int main(void)
 	{ MESSAGE_DEBUG("", "", __FILE__); }
 	signal(SIGSEGV, crash_handler);
 
-	if(db.Connect(DB_NAME, DB_LOGIN, DB_PASSWORD) < 0)
+	if(db.Connect() < 0)
 	{
 		MESSAGE_ERROR("", "", "Can not connect to mysql database");
 		throw CExceptionHTML("MySql connection");

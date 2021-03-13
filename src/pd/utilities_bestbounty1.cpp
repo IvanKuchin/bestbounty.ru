@@ -30,7 +30,7 @@ string GetEventGuestsListInJSONFormat(string dbQuery, CMysql *db, CUser *user)
 		int		eventGuestsCounter = affected;
 
 		eventGuestsList.reserve(eventGuestsCounter);  // --- reserving allows avoid moving vector in memory
-											// --- to fit vector into continous memory piece
+											// --- to fit vector into continuous memory piece
 
 		for(int i = 0; i < eventGuestsCounter; i++)
 		{
@@ -441,7 +441,7 @@ string GetGroupListInJSONFormat(string dbQuery, CMysql *db, CUser *user)
 		int						groupCounter = affected;
 
 		groupsList.reserve(groupCounter);  // --- reserving allows avoid moving vector in memory
-											// --- to fit vector into continous memory piece
+											// --- to fit vector into continuous memory piece
 
 		for(int i = 0; i < affected; i++)
 		{
@@ -1021,7 +1021,7 @@ string GetGiftToGiveListInJSONFormat(string dbQuery, CMysql *db, CUser *user)
 		int		groupCounter = affected;
 
 		gifts_to_give_list.reserve(groupCounter);	// --- reserving allows avoid moving vector in memory
-											// --- to fit vector into continous memory piece
+											// --- to fit vector into continuous memory piece
 
 		for(int i = 0; i < affected; i++)
 		{
@@ -1100,7 +1100,7 @@ string GetEventListInJSONFormat(string dbQuery, CMysql *db, CUser *user)
 		int						eventCounter = affected;
 
 		eventsList.reserve(eventCounter);  // --- reserving allows avoid moving vector in memory
-											// --- to fit vector into continous memory piece
+											// --- to fit vector into continuous memory piece
 
 		for(int i = 0; i < affected; i++)
 		{
@@ -1141,7 +1141,7 @@ string GetEventListInJSONFormat(string dbQuery, CMysql *db, CUser *user)
 				ostFinal << "\"isMine\": \""				<< (user ? eventsList[i].owner_id == user->GetID() : false) << "\",";
 				ostFinal << "\"hosts\": ["					<< GetEventHostsListInJSONFormat("SELECT * FROM `event_hosts` WHERE `event_id`=\"" + eventsList[i].id + "\";", db, user) << "],";
 				ostFinal << "\"guests\": ["					<< GetEventGuestsListInJSONFormat("SELECT * FROM `event_guests` WHERE `event_id`=\"" + eventsList[i].id + "\";", db, user) << "],";
-				ostFinal << "\"checklists\": ["				<< GetEventCheckistInJSONFormat("SELECT * FROM `event_checklists` WHERE `event_id`=\"" + eventsList[i].id + "\";", db, user) << "],";
+				ostFinal << "\"checklists\": ["				<< GetEventChecklistInJSONFormat("SELECT * FROM `event_checklists` WHERE `event_id`=\"" + eventsList[i].id + "\";", db, user) << "],";
 				ostFinal << "\"hideGifts\": \""				<< eventsList[i].hideGifts << "\",";
 				ostFinal << "\"isBlocked\": \""				<< eventsList[i].isBlocked << "\",";
 				ostFinal << "\"eventTimestampCreation\": \""<< eventsList[i].eventTimestampCreation << "\",";
@@ -1187,7 +1187,7 @@ string GetEventHostsListInJSONFormat(string dbQuery, CMysql *db, CUser *user)
 		int		eventHostsCounter = affected;
 
 		eventHostsList.reserve(eventHostsCounter);  // --- reserving allows avoid moving vector in memory
-											// --- to fit vector into continous memory piece
+											// --- to fit vector into continuous memory piece
 
 		for(int i = 0; i < eventHostsCounter; i++)
 		{
@@ -1562,6 +1562,28 @@ string GetBookLikesUsersList(string usersBookID, CUser *user, CMysql *db)
 		CLog			log;
 		log.Write(DEBUG, string(__func__) + "[" + to_string(__LINE__) + "]: end (returning string length " + to_string(result.length()) + ")");
 	}
+
+	return result;
+}
+
+string GetMessageCommentsCount(string messageID, CMysql *db)
+{
+	ostringstream   ost;
+	int			 affected;
+	string		  result = "0";
+
+	MESSAGE_DEBUG("", "", "start");
+
+	ost.str("");
+	ost << "select count(*) as `counter` from `feed_message_comment` where `type`=\"message\" and `messageID`='" << messageID << "';";
+	affected = db->Query(ost.str());
+	if(affected > 0)
+	{
+		result = db->Get(0, "counter");
+	}
+
+	MESSAGE_DEBUG("", "", "finish");
+
 
 	return result;
 }
@@ -1983,7 +2005,7 @@ string GetCompanyListInJSONFormat(string dbQuery, CMysql *db, CUser *user, bool 
 	{
 		companyCounter = affected;
 		companiesList.reserve(companyCounter);  // --- reserving allows avoid moving vector in memory
-												// --- to fit vector into continous memory piece
+												// --- to fit vector into continuous memory piece
 
 		for(int i = 0; i < affected; i++)
 		{
@@ -2452,7 +2474,7 @@ string GetNewsFeedInJSONFormat(string whereStatement, int currPage, int newsOnSi
 						ostResult << "}";
 
 						// if(i < (affected - 1)) ostResult << ",";
-					} // --- Message Access Rights onot allow to post it into feed
+					}
 				}
 				else
 				{
@@ -2540,7 +2562,7 @@ string GetNewsFeedInJSONFormat(string whereStatement, int currPage, int newsOnSi
 						ostResult << "}";
 
 						// if(i < (affected - 1)) ostResult << ",";
-					} // --- Message Access Rights onot allow to post it into feed
+					}
 				}
 				else
 				{
@@ -2776,7 +2798,7 @@ string GetNewsFeedInJSONFormat(string whereStatement, int currPage, int newsOnSi
 			}
 			else if(feedActionTypeId == "22")
 			{
-				// --- cretificate received
+				// --- certificate received
 
 				if(db->Query("SELECT * FROM `users_certifications` WHERE `id`=\"" + feedActionId + "\";"))
 				{
@@ -3542,7 +3564,7 @@ string  GetUserNotificationSpecificDataByType(unsigned long typeID, unsigned lon
 				else
 				{
 					CLog log;
-					log.Write(DEBUG, string(__func__) + "[" + to_string(__LINE__) + "]: typeID=" + to_string(typeID) + ": finding users_universitys by (university_id[" + universityID + "] and user_id[" + (user ? user->GetID() : "NULL") + "]) or (user[" + (user ? "not null" : "null") + "] == NULL)");
+					log.Write(DEBUG, string(__func__) + "[" + to_string(__LINE__) + "]: typeID=" + to_string(typeID) + ": finding users_universities by (university_id[" + universityID + "] and user_id[" + (user ? user->GetID() : "NULL") + "]) or (user[" + (user ? "not null" : "null") + "] == NULL)");
 				}
 
 
@@ -3626,7 +3648,7 @@ string  GetUserNotificationSpecificDataByType(unsigned long typeID, unsigned lon
 				else
 				{
 					CLog log;
-					log.Write(DEBUG, string(__func__) + "[" + to_string(__LINE__) + "]:typeID=" + to_string(typeID) + ": finding users_companys by (company_id[" + companyID + "] and user_id[" + (user ? user->GetID() : "NULL") + "]) or (user[" + (user ? "not null" : "null") + "] == NULL)");
+					log.Write(DEBUG, string(__func__) + "[" + to_string(__LINE__) + "]:typeID=" + to_string(typeID) + ": finding users_companies by (company_id[" + companyID + "] and user_id[" + (user ? user->GetID() : "NULL") + "]) or (user[" + (user ? "not null" : "null") + "] == NULL)");
 				}
 
 
@@ -4297,9 +4319,9 @@ string  GetUserNotificationSpecificDataByType(unsigned long typeID, unsigned lon
 
 			if(commentType == "likeCompany")
 			{
-				string	  usersCompanysID = messageID;
+				string	  usersCompanyID = messageID;
 
-				if(db->Query("select * from `users_company` where `id`=\"" + usersCompanysID + "\";"))
+				if(db->Query("select * from `users_company` where `id`=\"" + usersCompanyID + "\";"))
 				{
 					string	  companyID = db->Get(0, "company_id");
 					string	  positionTitleID = db->Get(0, "position_title_id");
@@ -4320,7 +4342,7 @@ string  GetUserNotificationSpecificDataByType(unsigned long typeID, unsigned lon
 							string	  friend_userNameLast = db->Get(0, "nameLast");
 							string	  friend_sex = db->Get(0, "sex");
 
-							ostResult << "\"notificationUsersCompanyID\":\"" << usersCompanysID << "\",";
+							ostResult << "\"notificationUsersCompanyID\":\"" << usersCompanyID << "\",";
 							ostResult << "\"notificationCompanyID\":\"" << companyID << "\",";
 							ostResult << "\"notificationCompanyName\":\"" << companyName << "\",";
 							ostResult << "\"notificationCompanyCompanyName\":\"" << companyName << "\",";
@@ -4352,7 +4374,7 @@ string  GetUserNotificationSpecificDataByType(unsigned long typeID, unsigned lon
 				else
 				{
 					CLog log;
-					log.Write(ERROR, string(__func__) + "[" + to_string(__LINE__) + "]:ERROR:typeID=" + to_string(typeID) + ": ERROR: finding users_companys.id[" + usersCompanysID + "]");
+					log.Write(ERROR, string(__func__) + "[" + to_string(__LINE__) + "]:ERROR:typeID=" + to_string(typeID) + ": ERROR: finding users_companies.id[" + usersCompanyID + "]");
 				}
 			} // --- if(likeType == "company")
 
@@ -4429,7 +4451,7 @@ string  GetUserNotificationSpecificDataByType(unsigned long typeID, unsigned lon
 				else
 				{
 					CLog log;
-					log.Write(ERROR, string(__func__) + "[" + to_string(__LINE__) + "]:ERROR:typeID=" + to_string(typeID) + ": ERROR: finding users_universitys.id[" + usersUniversityDegreeID + "]");
+					log.Write(ERROR, string(__func__) + "[" + to_string(__LINE__) + "]:ERROR:typeID=" + to_string(typeID) + ": ERROR: finding users_universities.id[" + usersUniversityDegreeID + "]");
 				}
 			} // --- if(commentType == "university")
 
@@ -4584,12 +4606,12 @@ string  GetUserNotificationSpecificDataByType(unsigned long typeID, unsigned lon
 		}
 	}
 
-	// --- Company Posession Request
+	// --- Company Possession Request
 	if(typeID == 60)
 	{
-		string   company_posesison_request_id = to_string(actionID);
+		string   company_possession_request_id = to_string(actionID);
 
-		if(company_posesison_request_id.length() && db->Query("select * from `company_posession_request` where `id`='" + company_posesison_request_id + "';"))
+		if(company_possession_request_id.length() && db->Query("select * from `company_possession_request` where `id`='" + company_possession_request_id + "';"))
 		{
 			string  friendUserID = db->Get(0, "requester_user_id");
 			string  company_id = db->Get(0, "requested_company_id");
@@ -4605,14 +4627,14 @@ string  GetUserNotificationSpecificDataByType(unsigned long typeID, unsigned lon
 					string  friend_userName = db->Get(0, "name");
 					string  friend_userNameLast = db->Get(0, "nameLast");
 
-					ostResult << "\"notificationCompanyPosessionRequestID\":\"" << company_posesison_request_id << "\",";
+					ostResult << "\"notificationCompanyPossessionRequestID\":\"" << company_possession_request_id << "\",";
 					ostResult << "\"notificationDescription\":\"" << description << "\",";
 					ostResult << "\"notificationFriendUserID\":\"" << friendUserID << "\",";
 					ostResult << "\"notificationFriendUserName\":\"" << friend_userName << "\",";
 					ostResult << "\"notificationFriendUserNameLast\":\"" << friend_userNameLast << "\",";
 					ostResult << "\"notificationFriendUserAvatar\":\"" << GetUserAvatarByUserID(friendUserID, db) << "\",";
 					ostResult << "\"notificationRequestedCompany\":[" << GetCompanyListInJSONFormat("SELECT * FROM `company` WHERE `id`=\"" + company_id + "\";", db, NULL) << "],";
-					ostResult << "\"notificationPosessionStatus\":\"" << status << "\",";
+					ostResult << "\"notificationPossessionStatus\":\"" << status << "\",";
 					ostResult << "\"notificationEventTimestamp\":\"" << eventTimestamp << "\"";
 
 				}
@@ -4632,11 +4654,11 @@ string  GetUserNotificationSpecificDataByType(unsigned long typeID, unsigned lon
 		else
 		{
 			CLog log;
-			log.Write(ERROR, string(__func__) + "[" + to_string(__LINE__) + "]:ERROR:typeID=" + to_string(typeID) + ": ERROR selecting from company_posession_request[id = " + company_posesison_request_id + "]");
+			log.Write(ERROR, string(__func__) + "[" + to_string(__LINE__) + "]:ERROR:typeID=" + to_string(typeID) + ": ERROR selecting from company_possession_request[id = " + company_possession_request_id + "]");
 		}
 	}
 
-	// --- company posession approved / rejected
+	// --- company possession approved / rejected
 	if((typeID == 61) || (typeID == 62))
 	{
 		string   company_id = to_string(actionID);
@@ -4901,7 +4923,7 @@ string GetGiftListInJSONFormat(string dbQuery, CMysql *db, CUser *user)
 		int			groupCounter = affected;
 
 		groupsList.reserve(groupCounter);  // --- reserving allows avoid moving vector in memory
-											// --- to fit vector into continous memory piece
+											// --- to fit vector into continuous memory piece
 
 		for(int i = 0; i < affected; i++)
 		{

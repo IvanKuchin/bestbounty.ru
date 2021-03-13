@@ -127,7 +127,7 @@ bool UpdateGiftsToGive(CMysql *db)
 
 int main()
 {
-	CStatistics		appStat;  // --- CStatistics must be firts statement to measure end2end param's
+	CStatistics		appStat;  // --- CStatistics must be first statement to measure end2end param's
 	CMysql			db;
 	struct timeval	tv;
 
@@ -144,7 +144,7 @@ int main()
 	try
 	{
 
-		if(db.Connect(DB_NAME, DB_LOGIN, DB_PASSWORD) < 0)
+		if(db.Connect() < 0)
 		{
 			CLog	log;
 

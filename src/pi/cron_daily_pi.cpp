@@ -194,7 +194,7 @@ auto CloseHelpDeskTicketIn_ClosePending_and_SolutionProvided_States(CMysql *db)
 
 int main()
 {
-	CStatistics		appStat;  // --- CStatistics must be firts statement to measure end2end param's
+	CStatistics		appStat;  // --- CStatistics must be a first statement to measure end2end param's
 	CMysql			user;
 	CMysql			db;
 	struct timeval	tv;
@@ -219,7 +219,7 @@ int main()
 	{
 		auto	error_message = ""s;
 
-		if(db.Connect(DB_NAME, DB_LOGIN, DB_PASSWORD) < 0)
+		if(db.Connect() < 0)
 		{
 			CLog	log;
 

@@ -6,16 +6,23 @@
 
 #include "utilities.h"	// --- split and CMysql
 #include "cmysql.h"
+#include "c_config.h"
 #include "clog.h"
 #include "localy.h"
 
 using namespace std;
 
+#define	SMSC_SENDER_NAME							GetDomain()					// --- check sender name in smsc.ru control panel
+#define	SMSC_EXPIRATION								120
+#define	SMSC_CHARSET								"utf-8"s
+
+#define SMSC_DELIVERY_MODE							SMSC_NORMAL_DELIVERY
+#define SMSC_NORMAL_DELIVERY						0
+#define SMSC_FLASH_DELIVERY							1
+
 class c_smsc
 {
 private:
-	string					__SMSC_LOGIN = SMSC_LOGIN;// логин клиента
-	string					__SMSC_PASSWORD = SMSC_PASSWORD;// пароль
 	char					__SMSC_HTTPS = 1;// использовать протокол HTTPS
 	char					__SMSC_POST = 0;// использовать метод POST
 

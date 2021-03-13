@@ -1,7 +1,10 @@
-#ifndef __UTILITIES_BESTNOUNTY__H__
-#define __UTILITIES_BESTNOUNTY__H__
+#ifndef __UTILITIES_BESTBOUNTY__H__
+#define __UTILITIES_BESTBOUNTY__H__
 
 #include "utilities.h"
+#include "utilities_sql_queries.h"
+
+string			GetDefaultActionLoggedinUser(void);
 
 string      	GetUserListInJSONFormat(string dbQuery, CMysql *, CUser *);
 string 			GetNewsFeedInJSONFormat(string whereStatement, int currPage, int newsOnSinglePage, CUser *, CMysql *);
@@ -28,8 +31,10 @@ auto 			GetSchoolListInJSONFormat(string dbQuery, CMysql *, bool includeStudents
 auto			GetGiftListInJSONFormat(string dbQuery, CMysql *, CUser *) -> string;
 auto 			GetGiftToGiveListInJSONFormat(string dbQuery, CMysql *, CUser *) -> string;
 auto			GetEventListInJSONFormat(string dbQuery, CMysql *, CUser *) -> string;
-auto			GetEventCheckistInJSONFormat(string dbQuery, CMysql *, CUser *) -> string;
+auto			GetEventChecklistInJSONFormat(const string &dbQuery, CMysql *, CUser *) -> string;
 auto			GetEventHostsListInJSONFormat(string dbQuery, CMysql *, CUser *) -> string;
+auto 			GetFavoriteChecklistCategoriesInJSONFormat(const string &dbQuery, CMysql *, CUser *) -> string;
+auto 			GetFavoriteChecklistItemsInJSONFormat(const string &dbQuery, CMysql *, CUser *) -> string;
 auto 			GetCertificationLikesUsersList(string usersCertificationID, CUser *, CMysql *) -> string;
 auto 			GetCourseLikesUsersList(string usersCourseID, CUser *, CMysql *) -> string;
 auto 			GetUniversityDegreeLikesUsersList(string messageID, CUser *, CMysql *) -> string;
@@ -50,6 +55,17 @@ auto			GetCompanyPositionIDByTitle(string title, CMysql *) -> string;
 auto 			GetCandidatesListAppliedToVacancyInJSONFormat(string dbQuery, CMysql *) -> string;
 auto 			GetOpenVacanciesInJSONFormat(string companyID, CMysql *, CUser * = NULL) -> string;
 
-auto			GetUserListInJSONFormat_BySearchString(const string lookForKey, bool include_myself, CMysql *, CUser *) -> string;
+auto			addMissedChecklistItems(const string &from_checklist_id, string const &to_checklist_id, CMysql *) -> string;
+auto 			addChecklistItem(string const &to_checklist_id, const string &title, const string &category, CMysql *, CUser *) -> string;
+auto 			GetChecklistIDByEventID_CreateIfMissed(const string &event_id, CMysql *, CUser *) -> string;
+auto			RemoveChecklistsByEventID(const string &event_id, CMysql *, CUser *) -> string;
+
+auto			GetUserListInJSONFormat_BySearchString(const string &lookForKey, bool include_myself, CMysql *, CUser *) -> string;
+auto			GetUsersID_BySearchString(const string &lookForKey, bool include_myself, CMysql *, CUser *) -> vector<string>;
+
+auto	      	GetChatMessagesInJSONFormat(string dbQuery, CMysql *) -> string;
+auto	      	GetUnreadChatMessagesInJSONFormat(CUser *, CMysql *) -> string;
+
+auto			amIAllowedToChangeEvent(const string id, CMysql *, CUser *) -> string;
 
 #endif

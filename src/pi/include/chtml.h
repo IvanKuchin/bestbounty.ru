@@ -25,7 +25,7 @@ private:
 	string							metaPreviewImageURL = "";
 	string							htmlPage = "";
 	string							headTag = "";
-	string							folderID = "", filePrefix = "", fileExtention = "";
+	string							folderID = "", filePrefix = "", fileExtension = "";
 	string							embedVideoURL = "";
 	string							type = "feed";		// --- type of files (feed, temp) to save form request
 														// --- depends on type different /images/xxxx folders stores images
@@ -39,13 +39,10 @@ private:
 
 	void							ResetMetaValues();
 	bool							ParseHTMLPage();
-	
 	bool							ExtractHEAD();
 	bool							ExtractTITLE();
 	bool							ExtractDESCRIPTION();
 	bool							ExtractPreviewImage();
-
-	string							TryToFixURL(string url);
 	tuple<string, string, string>	PickFileName();
 	bool							DownloadFile(string urlPreview, FILE *f);
 	bool							ExtractEmbedVideoURL();
@@ -77,7 +74,7 @@ public:
 	string							GetPreviewImageURL()			const	{ return metaPreviewImageURL; }
 	string							GetPreviewImageFolder()			const	{ return folderID; };
 	string							GetPreviewImagePrefix()			const	{ return filePrefix; };
-	string							GetPreviewImageExtention()		const	{ return fileExtention; };
+	string							GetPreviewImageExtension()		const	{ return fileExtension; };
 	string							GetPostJSON()					const	{ return __post_json; };
 	string							GetContent() 					const	{ return htmlPage; };
 

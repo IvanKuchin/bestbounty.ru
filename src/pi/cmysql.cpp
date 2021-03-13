@@ -1,7 +1,7 @@
 #include "cmysql.h"
 #include "cexception.h"
 
-int CMysqlSkel::InitDB(const char *dbName, const char *user = "root", const char *pass = "" )
+int CMysqlSkel::InitDB(const string &dbName, const string &user, const string &pass, const string &host)
 {
     MESSAGE_DEBUG("", "", "start (db/login: " + dbName + "/" + user + ")");
 
@@ -14,7 +14,7 @@ int CMysqlSkel::InitDB(const char *dbName, const char *user = "root", const char
 
 // --- that ma fix 
 
-    db = mysql_real_connect(db, DB_HOST, user, pass, dbName, 0, NULL, CLIENT_MULTI_STATEMENTS | CLIENT_MULTI_RESULTS);
+    db = mysql_real_connect(db, host.c_str(), user.c_str(), pass.c_str(), dbName.c_str(), 0, NULL, CLIENT_MULTI_STATEMENTS | CLIENT_MULTI_RESULTS);
 
     if( db == NULL )
     {
@@ -152,20 +152,6 @@ void CMysqlSkel::FreeResultSet()
     }
 }
 
-char *CMysqlSkel::ResultValue( MYSQL_RES *result, unsigned int row, const char *name )
-{
-    auto            fi = FieldsIndex( name );
-
-    if(fi < 0)
-    {
-        MESSAGE_ERROR("", "", "DB-field [" + name + "] doesn't exists");
-
-        throw CException("error db");
-    }
-
-    return ResultValue(result, row, fi);
-}
-
 char *CMysqlSkel::ResultValue( MYSQL_RES *result, unsigned int row, int fi )
 {
     MYSQL_ROW       fr;
@@ -192,8 +178,43 @@ char *CMysqlSkel::ResultValue( MYSQL_RES *result, unsigned int row, int fi )
     {
         MESSAGE_ERROR("", "", "mysql_fetch_row( " + to_string(row) + " ) returned NULL")
 
-    	return(NULL);
+        return(NULL);
     }
+}
+
+// --- throw_exception: if true then Exception will be thrown in case of "field" not found
+// --- if not sure what function to use, then avoid use _with_NULL. This will keep your code safe 
+char *CMysqlSkel::__ResultValue( MYSQL_RES *result, unsigned int row, const char *name, bool throw_exception )
+{
+    auto            fi = FieldsIndex( name );
+
+    if(fi < 0)
+    {
+        if(throw_exception)
+        {
+            MESSAGE_ERROR("", "", "DB-field [" + name + "] doesn't exists");
+
+            throw CException("error db");
+        }
+        else
+        {
+            MESSAGE_DEBUG("", "", "DB-field [" + name + "] has NULL value");
+
+            return (char *)"";
+        }
+    }
+
+    return ResultValue(result, row, fi);
+}
+
+char *CMysqlSkel::ResultValue_with_NULL( MYSQL_RES *result, unsigned int row, const char *name )
+{
+    return __ResultValue(result, row, name, false);
+}
+
+char *CMysqlSkel::ResultValue( MYSQL_RES *result, unsigned int row, const char *name )
+{
+    return __ResultValue(result, row, name, true);
 }
 
 MYSQL_ROW CMysqlSkel::NextFetch(MYSQL_RES *result)
@@ -230,23 +251,35 @@ CMysql::CMysql()
     resultSet = NULL;
 }
 
-CMysql::CMysql(const char *dbName, const char *login, const char *pass)
+int CMysql::Connect(const string &dbName, const string &login, const string &pass, const string &host)
 {
-    resultSet = NULL;
-    InitDB(dbName, login, pass);
-}
-
-int CMysql::Connect(const char *dbName, const char *login, const char *pass)
-{
-    auto    result = InitDB(dbName, login, pass);
+    auto    result = InitDB(dbName, login, pass, host);
 
     if(result == 0)
     {
-        // --- sucessfull init
+        // --- successful init
         Query("set names " + DB_CHARSET);
     }
 
     return result;
+}
+
+int CMysql::Connect()
+{
+    c_config    config;
+    auto        credentials = config.Read({"DB_NAME"s, "DB_LOGIN"s, "DB_PASSWORD"s, "DB_HOST"s});
+    auto        valid_cred  = (credentials.size() ? true : false);
+    auto        db_name     = (valid_cred ? credentials["DB_NAME"]      : __DB_FALLBACK_NAME);
+    auto        db_login    = (valid_cred ? credentials["DB_LOGIN"]     : __DB_FALLBACK_LOGIN);
+    auto        db_pass     = (valid_cred ? credentials["DB_PASSWORD"]  : __DB_FALLBACK_PASSWORD);
+    auto        db_host     = (valid_cred ? credentials["DB_HOST"]      : __DB_FALLBACK_HOST);
+
+    if(!valid_cred)
+    {
+        MESSAGE_ERROR("", "", "no valid DB credentials found in the config file. Fallback credentials are used. This only acceptable for CI/CD workflow. Hardcoded credentials could be serious security flaw.");
+    }
+
+    return Connect(db_name, db_login, db_pass, db_host);
 }
 
 int CMysql::Query(const string &query)
@@ -265,15 +298,17 @@ unsigned long CMysql::InsertQuery(const string &query)
     return InsertQueryDB(query);
 }
 
-string CMysql::Get(int row, const string &name)
-{
-    return Get(row, name.c_str());
-}
-
-string CMysql::Get(int row, const char *name)
+string CMysql::Get_with_NULL(int row, const string &name)
 {
     if(resultSet)
-        return ResultValue(resultSet, row, name);
+        return ResultValue_with_NULL(resultSet, row, name.c_str());
+    return(NULL);
+}
+
+string CMysql::Get(int row, const string &name)
+{
+    if(resultSet)
+        return ResultValue(resultSet, row, name.c_str());
     return(NULL);
 }
 

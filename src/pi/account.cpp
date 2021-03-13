@@ -2,7 +2,7 @@
 
 int main()
 {
-	CStatistics		appStat;  // --- CStatistics must be firts statement to measure end2end param's
+	CStatistics		appStat;  // --- CStatistics must be a first statement to measure end2end param's
 	CCgi			indexPage(EXTERNAL_TEMPLATE);
 	CUser			user;
 	string			action, partnerID;
@@ -29,7 +29,7 @@ int main()
 			throw CException("Template file was missing");
 		}
 
-		if(db.Connect(DB_NAME, DB_LOGIN, DB_PASSWORD) < 0)
+		if(db.Connect() < 0)
 		{
 			CLog	log;
 
@@ -93,7 +93,7 @@ int main()
 
 			loginFromUser = CheckHTTPParam_Text(indexPage.GetVarsHandler()->Get("login"));
 
-			if(loginFromUser.length() >= 8)
+			if(loginFromUser.length() >= MIN_LOGIN_LENGTH)
 			{
 				if(loginFromUser.find_first_of(" \\/%?+-,*&^$#!абвгдеёжзийклмнопрстуфхцчшщьыъэюяАБВГДЕЁЖЗИЙКЛМНОПРСТУФХЦЧШЩЬЫЪЭЮЯ") == string::npos)
 				{
@@ -133,7 +133,7 @@ int main()
 			}
 			else
 			{
-				error_message = gettext("Login must be at least 8 characters");
+				error_message = gettext(("Login must be at least " + to_string(MIN_LOGIN_LENGTH) + " characters").c_str());
 				MESSAGE_DEBUG("", action, error_message);
 			}
 
@@ -1151,7 +1151,7 @@ int main()
 						indexPage.RegisterVariableForce("name", user.GetName());
 						indexPage.RegisterVariableForce("nameLast", user.GetNameLast());
 						indexPage.RegisterVariableForce("token", token);
-						mail.SendToEmail(email, user.GetLogin(), "change_password", indexPage.GetVarsHandler(), &db);
+						mail.SendToEmail(email, user.GetLogin(), "change_email", indexPage.GetVarsHandler(), &db);
 					}
 				}
 			}
@@ -1363,7 +1363,7 @@ int main()
 				}
 				else
 				{
-					MESSAGE_DEBUG("", action, "previous erros prevent to change subscription mode");
+					MESSAGE_DEBUG("", action, "previous errors prevent to change subscription mode");
 				}
 			}
 			else

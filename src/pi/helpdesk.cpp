@@ -2,7 +2,7 @@
 
 // --- try to avoid using this function outside this header
 // --- function naming is confusing, state actually "not"
-inline auto	Get_HelpdeskTicketID_By_UserID_And_NotState_sqlquery(const string &id, const string &state)
+static auto	Get_HelpdeskTicketID_By_UserID_And_NotState_sqlquery(const string &id, const string &state)
 {
 	return (
 			"SELECT `helpdesk_ticket_history_last_case_state_view`.`helpdesk_ticket_id` "
@@ -16,11 +16,35 @@ inline auto	Get_HelpdeskTicketID_By_UserID_And_NotState_sqlquery(const string &i
 		);
 }
 
-inline auto	Get_OpenHelpdeskTicketIDByUserID_sqlquery(const string &id)
+static auto isUserAllowedToChangeTicket(string ticket_id, string user_id, CMysql *db, CUser *user) -> string
+{
+	MESSAGE_DEBUG("", "", "start (ticket_id:" + ticket_id + ", user_id:" + user_id + ")");
+
+	auto	result	 = ""s;
+
+	if((db->Query("SELECT `id` FROM `users` WHERE "
+					"(`id`=" + quoted(user_id) + " AND `type`=" + quoted(HELPDESK_USER_ROLE) + ") "
+					"OR "
+					"(" + quoted(user_id) + "=(SELECT `customer_user_id` FROM `helpdesk_tickets` WHERE `id`=" + quoted(ticket_id) + ")) "
+					"LIMIT 0,1;"))
+		)
+	{
+	}
+	else
+	{
+		result = gettext("you are not authorized");
+		MESSAGE_DEBUG("", "", "user (" + user_id + ") not allowed to change ticket")
+	}
+
+	MESSAGE_DEBUG("", "", "finish (" + result + ")");
+
+	return result;
+}
+
+static auto	Get_OpenHelpdeskTicketIDByUserID_sqlquery(const string &id)
 {
 	return Get_HelpdeskTicketID_By_UserID_And_NotState_sqlquery(id, "closed");
 }
-
 
 static auto amINewEngineer(string ticket_id, CMysql *db, CUser *user)
 {
@@ -141,13 +165,13 @@ static auto SendSMSNotification(vector<string> recipients, string message, CCgi 
 
 	for(auto &recipient: recipients)
 	{
-		error_message = smsc.send_sms(recipient, message, 0, "", 0, 0, SMSC_SENDER_NAME, "", "");
+		error_message = smsc.send_sms(recipient, message, 0, "", 0, SMSC_DELIVERY_MODE, SMSC_SENDER_NAME, "", "");
 
 		if(error_message.length())
 		{
 			MESSAGE_ERROR("", "", "fail to send message to recipient(" + recipient + ")");
 
-			// --- do your best to notify everybody, don't stop in the middle of notfication process.
+			// --- do your best to notify everybody, don't stop in the middle of notification process.
 			error_message = "";
 		}
 	}
@@ -169,7 +193,7 @@ static auto SendSMSNotification_ExistingTicket(vector<string> recipients, CCgi *
 
 static auto SendEmailNotification(vector<string> recipients, string email_template, CCgi *indexPage, CMysql *db, CUser *user)
 {
-	MESSAGE_DEBUG("", "", "start (# of recepients:" + to_string(recipients.size()) + ")");
+	MESSAGE_DEBUG("", "", "start (# of recipients:" + to_string(recipients.size()) + ")");
 
 	auto		error_message = ""s;
 	CMailLocal	mail;
@@ -304,7 +328,7 @@ static auto SaveFilesAndUpdateDB(string ticket_history_id, CCgi *indexPage, CMys
 	{
 		if(indexPage->GetFilesHandler()->GetSize(filesCounter) > GetSpecificData_GetMaxFileSize(itemType))
 		{
-			error_message = "file [" + indexPage->GetFilesHandler()->GetName(filesCounter) + "] size exceed permited maximum: " + to_string(indexPage->GetFilesHandler()->GetSize(filesCounter)) + " > " + to_string(GetSpecificData_GetMaxFileSize(itemType));
+			error_message = "file [" + indexPage->GetFilesHandler()->GetName(filesCounter) + "] size exceed permitted maximum: " + to_string(indexPage->GetFilesHandler()->GetSize(filesCounter)) + " > " + to_string(GetSpecificData_GetMaxFileSize(itemType));
 			MESSAGE_ERROR("", "", error_message);
 
 			break;
@@ -376,7 +400,7 @@ static auto SaveFilesAndUpdateDB(string ticket_history_id, CCgi *indexPage, CMys
 
 int main(void)
 {
-	CStatistics		appStat;  // --- CStatistics must be firts statement to measure end2end param's
+	CStatistics		appStat;  // --- CStatistics must be a first statement to measure end2end param's
 	CCgi			indexPage(EXTERNAL_TEMPLATE);
 	CUser			user;
 	CMysql			db;
@@ -404,7 +428,7 @@ int main(void)
 			throw CException("Template file was missing");
 		}
 
-		if(db.Connect(DB_NAME, DB_LOGIN, DB_PASSWORD) < 0)
+		if(db.Connect() < 0)
 		{
 			MESSAGE_ERROR("", action, "Can not connect to mysql database");
 			throw CExceptionHTML("MySql connection");
@@ -788,7 +812,7 @@ int main(void)
 
 			auto	error_message = ""s;
 
-			AJAX_ResponseTemplate(&indexPage, "\"users\":[" + GetBaseUserInfoInJSONFormat("SELECT * FROM `users` WHERE `id`=" + quoted(user.GetID()) + ";", &db, &user) + "]", error_message);
+			AJAX_ResponseTemplate(&indexPage, "\"users\":[" + GetHelpdeskBaseUserInfoInJSONFormat("SELECT * FROM `users` WHERE `id`=" + quoted(user.GetID()) + ";", &db, &user) + "]", error_message);
 
 			MESSAGE_DEBUG("", action, "finish");
 		}

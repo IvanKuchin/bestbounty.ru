@@ -1,3 +1,6 @@
+# Git commit id
+git_commit_id
+
 # Prerequisites
 *.d
 
@@ -30,6 +33,9 @@
 *.exe
 *.out
 *.app
+
+# ignore private files
+*.original
 
 #Ignore build files
 CMakeCache.txt
