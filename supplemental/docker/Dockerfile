@@ -1,30 +1,3 @@
-FROM ubuntu:xenial as libwebsocket
-
-RUN apt update && apt install --no-install-recommends --no-install-suggests -y \
-			build-essential \
-			ca-certificates \
-			cmake \
-			git \
-			libssl-dev \
-			pkg-config \
-
-		&& git clone -b v2.2.0 --depth 1 https://github.com/warmcat/libwebsockets.git \
-		&& cd /libwebsockets \
-		&& mkdir build \
-		&& cd build \
-		&& cmake -DLWS_WITHOUT_DAEMONIZE:BOOL=FALSE -DLWS_WITH_STATIC=1 -DLWS_WITH_SHARED=1 -DCMAKE_INSTALL_PREFIX:PATH=/usr/local/share/libwebsockets/ .. \
-		&& make -j4 install \
-
-		&& apt remove --purge -y \
-			build-essential \
-			cmake \
-			git \
-		&& apt autoremove -y \
-		&& apt clean
-
-
-
-
 FROM ubuntu:xenial
 
 LABEL maintainer="ivan.kuchin@gmail.com"
@@ -36,9 +9,8 @@ LABEL org.opencontainers.image.source=https://github.com/ivankuchin/bestbounty.r
 # following two commands suppose to be reused from cache
 RUN apt update &&  apt install --no-install-recommends --no-install-suggests -y git ca-certificates
 
-COPY --from=libwebsocket /usr/local/share/libwebsockets/ /usr/local/share/libwebsockets/
-RUN git clone -b development --depth 1 https://github.com/IvanKuchin/connme.ru.git
-WORKDIR /connme.ru
+RUN git clone --depth 1 https://github.com/IvanKuchin/connme.ru.git /backend
+WORKDIR /backend
 
 RUN apt-get install --no-install-recommends --no-install-suggests -y software-properties-common \
         && add-apt-repository -y ppa:jonathonf/ffmpeg-4 \
