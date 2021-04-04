@@ -46,8 +46,7 @@ set(IMAGEROOTDIR		"/home/httpd/${IMAGE_DOMAIN_NAME}")
 set(CGIDIR			${ROOTDIR}/cgi-bin)
 set(CGIADMINDIR			${ROOTDIR}/cgi-bin/admin)
 set(LOCAL_INSTALL_DIR           ${CMAKE_INSTALL_PREFIX}/share/${MAIN_DOMAIN_NAME})
-set(LOG_DIR                      ${LOCAL_INSTALL_DIR}/log/)
-set(CONFIG_DIR                   ${LOCAL_INSTALL_DIR}/config)
+set(LOG_DIR			${LOCAL_INSTALL_DIR}/log/)
 set(CRON_INSTALL_DIR		${LOCAL_INSTALL_DIR}/cron)
 set(ARCHIVE_INSTALL_DIR		${LOCAL_INSTALL_DIR}/archive)
 set(MAXMIND_INSTALL_DIR		${LOCAL_INSTALL_DIR}/maxmind)
@@ -55,6 +54,7 @@ set(LOCALE_INSTALL_DIR		${LOCAL_INSTALL_DIR}/locale)
 set(GIT_INSTALL_DIR             ${LOCAL_INSTALL_DIR}/git)
 set(PDF_FONT_INSTALL_DIR	${LOCAL_INSTALL_DIR}/libpdf-font)
 set(LIBXL_INSTALL_DIR		${LOCAL_INSTALL_DIR}/libxl)
+set(CONFIG_INSTALL_DIR		${LOCAL_INSTALL_DIR}/config)
 
 # ---- libxl library is not in apt-reporsitory, therefore is not installed on the OS
 # ---- to treat it as regulat lib I have to copy it to /usr/local/share..... folder
@@ -75,11 +75,12 @@ add_subdirectory(supplemental/maxmind/)
 add_subdirectory(supplemental/ci-scripts/)
 add_subdirectory(supplemental/libpdf-font/)
 add_subdirectory(supplemental/git/)
+add_subdirectory(supplemental/config/)
 add_subdirectory(po/)
 
 # --- Install time
 install(DIRECTORY DESTINATION ${LOG_DIR}  DIRECTORY_PERMISSIONS OWNER_EXECUTE OWNER_WRITE OWNER_READ GROUP_EXECUTE GROUP_WRITE GROUP_READ)
-install(DIRECTORY DESTINATION ${CONFIG_DIR} DIRECTORY_PERMISSIONS OWNER_EXECUTE OWNER_WRITE OWNER_READ GROUP_EXECUTE GROUP_READ)
+install(DIRECTORY DESTINATION ${CONFIG_INSTALL_DIR} DIRECTORY_PERMISSIONS OWNER_EXECUTE OWNER_WRITE OWNER_READ GROUP_EXECUTE GROUP_READ)
 
 # --- CTest
 include(CTest)
