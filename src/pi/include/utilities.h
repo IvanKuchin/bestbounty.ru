@@ -1,6 +1,7 @@
 #ifndef __UTILITIES__H__
 #define __UTILITIES__H__
 
+#include <curl/curl.h>
 #include <fstream>  	//--- used for CopyFile function
 #include <map>
 #include <vector>
@@ -12,16 +13,16 @@
 #include <sys/stat.h>
 #include <sys/types.h>	// --- DIR
 #include <dirent.h>		// --- opendir, rmdir
-#include <openssl/sha.h>
 #include <execinfo.h>   // --- backtrace defined here
 #include <signal.h>     // --- signal interception
+#include <openssl/sha.h>
 #include <Magick++.h>
 #include <codecvt>		// --- codecvt_utf8
 
 #include "c_date_spelling.h"
 #include "c_smsc.h"
-#include "cfiles.h"
 #include "cmysql.h"
+#include "cfiles.h"
 #include "cuser.h"
 #include "cexception.h"
 #include "clog.h"
@@ -29,97 +30,98 @@
 
 using namespace std;
 
-auto			crash_handler(int sig) -> void;
-auto			GetSHA512(const string &src) -> string;
-auto			wide_to_multibyte(std::wstring const& s) -> string;
-auto			multibyte_to_wide(std::string const& s) -> wstring;
-auto      		rtrim(string& str) -> string;
-auto      		ltrim(string& str) -> string;
-auto      		trim(string& str) -> string;
-auto	      	quoted(string src) -> string;
-auto			quoted(const vector<string> &) -> vector<string>;
-auto	  		toUpper(const string &src) -> string;
-auto	  		toLower(const string &src) -> string;
-auto      		GetRandom(int len) -> string;
-auto      		DeleteHTML(string src, bool removeBR = true) -> string;
-auto      		RemoveQuotas(string src) -> string;
-auto 			RemoveSpecialSymbols(wstring src) -> wstring;
-auto      		RemoveSpecialSymbols(string src) -> string;
-auto 			RemoveSpecialHTMLSymbols(const wstring &src) -> wstring;
-auto      		RemoveSpecialHTMLSymbols(const string &src) -> string;
-auto      		ReplaceDoubleQuoteToQuote(string src) -> string;
-auto      		ReplaceCRtoHTML(string src) -> string;
-auto			ReplaceWstringAccordingToMap(const wstring &src, const map<wstring, wstring> &replacements) -> wstring;
-auto	      	ConvertHTMLToText(const wstring &messageBody) -> wstring;
-auto	      	ConvertHTMLToText(const string &messageBody) -> string;
-auto      		CleanUPText(const string messageBody, bool removeBR = true) -> string;
-auto      		RemoveAllNonAlphabetSymbols(const wstring &src) -> wstring;
-auto      		RemoveAllNonAlphabetSymbols(const string &src) -> string;
-auto      		ConvertTextToHTML(const string &messageBody) -> string;
-auto	 		CheckHTTPParam_Text(const string &srcText) -> string;
-auto 			CheckHTTPParam_Number(const string &srcText) -> string;
-auto	 		CheckHTTPParam_Date(string srcText) -> string;
-auto	 		CheckHTTPParam_Float(const string &srcText) -> string;
-auto	 		CheckHTTPParam_Email(const string &srcText) -> string;
-auto			GetDefaultActionFromUserType(const string &role, CMysql *) -> string;
-auto			GetDefaultActionFromUserType(CUser *, CMysql *) -> string;
-auto    	  	GetSecondsSinceY2k() -> double;
-auto    	  	GetLocalFormattedTimestamp() -> string;
-auto    	  	GetTimeDifferenceFromNow(const string timeAgo) -> double;
-auto    	  	GetMinutesDeclension(const int value) -> string;
-auto    	  	GetHoursDeclension(const int value) -> string;
-auto    	  	GetDaysDeclension(const int value) -> string;
-auto    	  	GetMonthsDeclension(const int value) -> string;
-auto    	  	GetYearsDeclension(const int value) -> string;
-auto    	  	GetHumanReadableTimeDifferenceFromNow (const string timeAgo) -> string;
-auto    	  	SymbolReplace(const string where, const string src, const string dst) -> string;
-auto    	  	SymbolReplace_KeepDigitsOnly(const string &where) -> string;
-auto         	qw(const string src, vector<string> &dst) -> int;
-auto			split(const string& s, const char& c) -> vector<string>;
-auto			join(const vector<string>& vec, string separator) -> string;
-auto 	     	UniqueUserIDInUserIDLine(string userIDLine) -> string; //-> decltype(static_cast<string>("123"))
-auto 	     	AutodetectSexByName(string name, CMysql *) -> string;
-auto			GetPasswordNounsList(CMysql *) -> string;
-auto			GetPasswordAdjectivesList(CMysql *) -> string;
-auto			GetPasswordCharacteristicsList(CMysql *) -> string;
-auto			isAllowed_NoSession_Action(string action) -> bool;
-auto			stod_noexcept(const string &) noexcept -> double;
-auto			MaskSymbols(string src, int first_pos, int last_pos) -> string;
+auto			crash_handler(int sig)														-> void;
+auto			GetSHA512(const string &src)												-> string;
+auto			wide_to_multibyte(std::wstring const& s)									-> string;
+auto			multibyte_to_wide(std::string const& s)										-> wstring;
+auto      		rtrim(string& str)															-> string;
+auto      		ltrim(string& str)															-> string;
+auto      		trim(string& str)															-> string;
+auto      		quoted(string src)															-> string;
+auto			quoted(const vector<string> &)												-> vector<string>;
+auto  			toUpper(const string &)														-> string;
+auto  			toLower(const string &)														-> string;
+auto      		GetRandom(int len)															-> string;
+auto      		DeleteHTML(string src, bool removeBR = true)								-> string;
+auto      		RemoveQuotas(string src)													-> string;
+auto      		RemoveSpecialSymbols(wstring src)											-> wstring;
+auto      		RemoveSpecialSymbols(string src)											-> string;
+auto 			RemoveSpecialHTMLSymbols(const wstring &src)								-> wstring;
+auto      		RemoveSpecialHTMLSymbols(const string &src)									-> string;
+auto      		ReplaceDoubleQuoteToQuote(string src)										-> string;
+auto      		ReplaceCRtoHTML(string src)													-> string;
+auto			ReplaceWstringAccordingToMap(const wstring &src, const map<wstring, wstring> &replacements)	-> wstring;
+auto      		CleanUPText(const string messageBody, bool removeBR = true)					-> string;
+auto      		RemoveAllNonAlphabetSymbols(const wstring &src)								-> wstring;
+auto      		RemoveAllNonAlphabetSymbols(const string &src)								-> string;
+auto			ConvertTextToHTML(const string &messageBody)								-> string;
+auto			ConvertHTMLToText(const string &src)										-> string;
+auto 			ConvertHTMLToText(const wstring &src)										-> wstring;
+auto 			CheckHTTPParam_Text(const string &srcText)									-> string;
+auto			CheckHTTPParam_Number(const string &srcText)								-> string;
+auto	 		CheckHTTPParam_Date(string srcText)											-> string;
+auto	 		CheckHTTPParam_Float(const string &srcText)									-> string;
+auto			CheckHTTPParam_Email(const string &srcText)									-> string;
+auto      		GetSecondsSinceY2k()														-> double;
+auto      		GetLocalFormattedTimestamp()												-> string;
+auto      		GetTimeDifferenceFromNow(const string timeAgo)								-> double;
+auto      		GetMinutesDeclension(const int value)										-> string;
+auto      		GetHoursDeclension(const int value)											-> string;
+auto      		GetDaysDeclension(const int value)											-> string;
+auto      		GetMonthsDeclension(const int value)										-> string;
+auto      		GetYearsDeclension(const int value)											-> string;
+auto      		GetHumanReadableTimeDifferenceFromNow (const string timeAgo)				-> string;
+auto      		SymbolReplace(const string where, const string src, const string dst)		-> string;
+auto      		SymbolReplace_KeepDigitsOnly(const string &where)							-> string;
+auto         	qw(const string src, vector<string> &dst)									-> int;
+auto			join(const vector<string>& vec, string separator = ",")						-> string;
+auto			split(const string& s, const char& c)										-> vector<string>;
+auto      		UniqueUserIDInUserIDLine(string userIDLine)									-> string; //-> decltype(static_cast<string>("123")
+auto      		AutodetectSexByName(string name, CMysql *)									-> string;
+auto			GetPasswordNounsList(CMysql *)												-> string;
+auto			GetPasswordAdjectivesList(CMysql *)											-> string;
+auto			GetPasswordCharacteristicsList(CMysql *)									-> string;
+auto			isAllowed_Guest_Action(string action, c_config *)						-> bool;
 
-auto      		GetHelpdeskBaseUserInfoInJSONFormat(string dbQuery, CMysql *, CUser *) -> string;
-auto      		GetGeoCountryListInJSONFormat(string dbQuery, CMysql *, CUser *) -> string;
+
+auto      		GetGeoCountryListInJSONFormat(string dbQuery, CMysql *, CUser *)			-> string;
 auto			GetGeoLocalityIDByCityAndRegion(string regionName, string cityName, CMysql *) -> string;
-bool        	AllowMessageInNewsFeed(CUser *me, const string messageOwnerID, const string messageAccessRights, vector<string> *messageFriendList);
-bool        	isPersistenceRateLimited(string REMOTE_ADDR, CMysql *);
-bool        	isFileExists(const std::string& name);
-off_t			getFileSize(const std::string& name);
-bool			isFilenameImage(const string &filename);
-bool			isFilenameVideo(const string &filename);
-void        	CopyFile(const string src, const string dst);
-string      	GetCompanyDuplicates(CMysql *);
-string      	GetPicturesWithEmptySet(CMysql *);
-string      	GetPicturesWithUnknownMessage(CMysql *);
-string      	GetPicturesWithUnknownUser(CMysql *);
-string      	GetRecommendationAdverse(CMysql *);
-string      	GetUserAvatarByUserID(string userID, CMysql *);
-void        	RemoveMessageImages(string sqlWhereStatement, CMysql *);
-void    		RemoveBookCover(string sqlWhereStatement, CMysql *);
-bool    		RemoveSpecifiedCover(string itemID, string itemType, CMysql *);
-bool        	CheckUserEmailExisting(string userNameToCheck, CMysql *);
-vector<string>	GetUserTagsFromText(string srcMessage);
-bool			RedirStdoutToFile(string fname);
-bool			RedirStderrToFile(string fname);
-bool 			AmIMessageOwner(string messageID, CUser *, CMysql *);
-pair<string, string> GetMessageOwner(string messageID, CUser *, CMysql *);
-string			GetUserSubscriptionsInJSONFormat(string sqlQuery, CMysql *);
-string			SubscribeToCompany(string companyID, CUser *, CMysql *);
-string			UnsubscribeFromCompany(string companyID, CUser *, CMysql *);
-string			SubscribeToGroup(string groupID, CUser *, CMysql *);
-string			UnsubscribeFromGroup(string groupID, CUser *, CMysql *);
-bool 			isBotIP(string ip);
-bool 			isAdverseWordsHere(string text, CMysql *);
-auto			CutTrailingZeroes(string number) -> string;
-auto			GetSiteThemesInJSONFormat(string sqlQuery, CMysql *, CUser *) -> string;
+auto			AllowMessageInNewsFeed(CUser *me, const string messageOwnerID, const string messageAccessRights, vector<string> *messageFriendList) -> bool;
+auto			isPersistenceRateLimited(string REMOTE_ADDR, CMysql *)						-> bool;
+auto			isFilenameImage(const string &filename)										-> bool;
+auto			isFilenameVideo(const string &filename)										-> bool;
+auto			CopyFile(const string src, const string dst)								-> void;
+auto			GetCompanyDuplicates(CMysql *)												-> string;
+auto			GetPicturesWithEmptySet(CMysql *)											-> string;
+auto			GetPicturesWithUnknownMessage(CMysql *)										-> string;
+auto			GetPicturesWithUnknownUser(CMysql *)										-> string;
+auto			GetRecommendationAdverse(CMysql *)											-> string;
+auto			GetUserAvatarByUserID(string userID, CMysql *)								-> string;
+auto			RemoveMessageImages(string sqlWhereStatement, CMysql *)						-> void;
+auto			RemoveBookCover(string sqlWhereStatement, c_config *, CMysql *)				-> void;
+auto			GetUserTagsFromText(string srcMessage)										-> vector<string>;
+auto    		RemoveSpecifiedCover(string itemID, string itemType, c_config *, CMysql *)	-> bool;
+auto        	CheckUserEmailExisting(string userNameToCheck, CMysql *)					-> bool;
+auto			RedirStdoutToFile(string fname)												-> bool;
+auto			RedirStderrToFile(string fname)												-> bool;
+auto 			isBotIP(string ip)															-> bool;
+auto			isAdverseWordsHere(string text, CMysql *)									-> bool;
+auto			stod_noexcept(const string &) noexcept 										-> double;
+auto			MaskSymbols(string src, int first_pos, int last_pos)						-> string;
+auto 			CutTrailingZeroes(string number)											-> string;
+auto			GetSiteThemesInJSONFormat(string sqlQuery, CMysql *, CUser *)				-> string;
+
+auto			GetMessageOwner(string messageID, CUser *, CMysql *)						-> pair<string, string>;
+auto 			AmIMessageOwner(string messageID, CUser *, CMysql *) 						-> bool;
+auto			GetUserSubscriptionsInJSONFormat(string sqlQuery, CMysql *) 				-> string;
+auto			SubscribeToCompany(string companyID, CUser *, CMysql *) 					-> string;
+auto			UnsubscribeFromCompany(string companyID, CUser *, CMysql *) 				-> string;
+auto			SubscribeToGroup(string groupID, CUser *, CMysql *) 						-> string;
+auto			UnsubscribeFromGroup(string groupID, CUser *, CMysql *) 					-> string;
+
+
+// --- file system functions
+auto			CleanupFilename(string filename) -> string;
 
 // --- string counters
 auto			GetNumberOfCntrls (const wstring &src) -> unsigned int;
@@ -131,11 +133,8 @@ auto			GetNumberOfDigits (const  string &src) -> unsigned int;
 auto			GetNumberOfLetters(const wstring &src) -> unsigned int;
 auto			GetNumberOfLetters(const  string &src) -> unsigned int;
 
-// --- file system functions
-auto			CleanupFilename(string	filename) -> string;
-
 // --- SMS functions
-auto			SendPhoneConfirmationCode(const string &country_code, const string &phone_number, const string &session, CMysql *db, CUser *user) -> string;
+auto			SendPhoneConfirmationCode(const string &country_code, const string &phone_number, const string &session, c_config * const config_dir, CMysql * const db, CUser * const user) -> string;
 auto			CheckPhoneConfirmationCode(const string &confirmation_code, const string &session, CMysql *, CUser *) -> vector<pair<string, string>>;
 auto			RemovePhoneConfirmationCodes(string sessid, CMysql *) -> string;
 
@@ -146,7 +145,20 @@ auto			GetValuesFromDB(string sql, CMysql *) -> vector<string>;
 // --- login functions
 auto			GetCountryCodeAndPhoneNumberBySMSCode(const string &confirmation_code, const string &session, CMysql *) -> tuple<string, string, string>;
 
+// --- file system functions
+auto			CreateDir(const string &dir) -> bool;
+auto 			RmDirRecursive(const char *dirname) -> bool;
+auto        	isDirExists(const std::string& name) -> bool;
+auto        	isFileExists(const std::string& name) -> bool;
+auto			isFilenameImage(const string &filename) -> bool;
+auto			isFilenameVideo(const string &filename) -> bool;
+auto			GetFileExtension(const string &filename) -> string;
+auto 			getFileSize(const std::string& name) -> off_t;
+auto			CleanupFilename(string	filename) -> string;
+auto        	CopyFile(const string src, const string dst) -> void;
+
 // --- helpdesk
+auto      		GetHelpdeskBaseUserInfoInJSONFormat(string dbQuery, CMysql *, CUser *) -> string;
 auto			GetHelpDeskTicketsInJSONFormat(string sqlQuery, CMysql *db, CUser *user) -> string;
 auto			GetHelpDeskTicketHistoryInJSONFormat(string sqlQuery, CMysql *db, CUser *user) -> string;
 auto			GetHelpDeskTicketAttachInJSONFormat(string sqlQuery, CMysql *db, CUser *user) -> string;
@@ -169,27 +181,28 @@ auto			PrintDate(const struct tm &_tm) -> string;
 auto			PrintSQLDate(const struct tm &_tm) -> string;
 auto			PrintDateTime(const struct tm &_tm) -> string;
 auto			PrintTime(const struct tm &_tm, string format) -> string;
-auto			stod_noexcept(const string &) noexcept -> double;
-auto			MaskSymbols(string src, int first_pos, int last_pos) -> string;
 
 // --- function set for image upload/removal
-auto 			GetSpecificData_GetNumberOfFolders(string itemType) -> int;
-auto 			GetSpecificData_GetMaxFileSize(string itemType) -> int;
-auto		 	GetSpecificData_GetMaxWidth(string itemType) -> unsigned int;
-auto		 	GetSpecificData_GetMaxHeight(string itemType) -> unsigned int;
-auto 			GetSpecificData_GetBaseDirectory(string itemType) -> string;
-auto			GetSpecificData_GetFinalFileExtension(string itemType) -> string;
-auto 			GetSpecificData_SelectQueryItemByID(string itemID, string itemType) -> string;
-auto 			GetSpecificData_UpdateQueryItemByID(string itemID, string itemType, string folderID, string fileName) -> string;
-auto 			GetSpecificData_GetDBCoverPhotoFolderString(string itemType) -> string;
-auto 			GetSpecificData_GetDBCoverPhotoFilenameString(string itemType) -> string;
-auto 			GetSpecificData_GetDataTypeByItemType(const string &itemType) -> string;
-auto 			GetSpecificData_AllowedToChange(string itemID, string itemType, CMysql *, CUser *) -> string;
+auto			isItemAllowedToChange(string itemID, string itemType, c_config *, CMysql *, CUser *) -> string;
+// auto 		GetSpecificData_GetNumberOfFolders(string itemType) -> int;
+// auto 		GetSpecificData_GetMaxFileSize(string itemType) -> int;
+// auto		 	GetSpecificData_GetMaxWidth(string itemType) -> unsigned int;
+// auto		 	GetSpecificData_GetMaxHeight(string itemType) -> unsigned int;
+// auto 		GetSpecificData_GetBaseDirectory(string itemType) -> string;
+// auto			GetSpecificData_GetFinalFileExtension(string itemType) -> string;
+// auto 		GetSpecificData_SelectQueryItemByID(string itemID, string itemType) -> string;
+// auto 		GetSpecificData_UpdateQueryItemByID(string itemID, string itemType, string folderID, string fileName) -> string;
+// auto 		GetSpecificData_GetDBCoverPhotoFolderString(string itemType) -> string;
+// auto 		GetSpecificData_GetDBCoverPhotoFilenameString(string itemType) -> string;
+// auto 		GetSpecificData_GetDataTypeByItemType(const string &itemType) -> string;
+// auto 		GetSpecificData_AllowedToChange(string itemID, string itemType, CMysql *, CUser *) -> string;
+
+
 
 // --- UTF8 encoding/decoding
-auto         	convert_utf8_to_windows1251(const char* utf8, char* windows1251, size_t n) -> int;
-auto			utf8_to_cp1251(const string &) -> string;
-auto 			convert_cp1251_to_utf8(const char *in, char *out, int size) -> bool;
+auto         	convert_utf8_to_windows1251(const char* utf8, char* windows1251, size_t n)	-> int;
+auto			utf8_to_cp1251(const string &)												-> string;
+auto 			convert_cp1251_to_utf8(const char *in, char *out, int size)					-> bool;
 
 // --- base64 encoding/decoding
 static const std::string base64_chars = 
@@ -198,10 +211,9 @@ static const std::string base64_chars =
              "0123456789+/";
 typedef unsigned char BYTE;
 
-bool 			is_base64(BYTE c);
-string 			base64_encode(BYTE const* buf, unsigned int bufLen) ;
-string 			base64_decode(std::string const& encoded_string) ;
-
+auto 			is_base64(BYTE c)										-> bool;
+auto 			base64_encode(BYTE const* buf, unsigned int bufLen) 	-> string;
+auto 			base64_decode(std::string const& encoded_string) 		-> string;
 
 struct ExifInfo 
 {
@@ -260,12 +272,12 @@ struct ExifInfo
 	string  YResolution;
 };
 
-string		ParseGPSLongitude(const string longitudeStr);
-string		ParseGPSLatitude(const string latitudeStr);
-string		ParseGPSAltitude(const string altitudeStr);
-string		ParseGPSSpeed(const string speedStr);
+auto		ParseGPSLongitude(const string longitudeStr)	-> string;
+auto		ParseGPSLatitude(const string latitudeStr)		-> string;
+auto		ParseGPSAltitude(const string altitudeStr)		-> string;
+auto		ParseGPSSpeed(const string speedStr)			-> string;
 
-auto		GetDomain() -> string;
-auto		isDemoDomain() -> bool;
+auto		GetDomain()										-> string;
+auto		isDemoDomain()									-> bool;
 
 #endif

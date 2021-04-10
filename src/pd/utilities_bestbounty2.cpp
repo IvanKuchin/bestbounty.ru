@@ -1022,11 +1022,3 @@ string GetUnreadChatMessagesInJSONFormat(CUser *user, CMysql *db)
 	return	result.str();
 }
 
-string GetDefaultActionLoggedinUser(void)
-{
-	MESSAGE_DEBUG("", "", "start");
-
-	MESSAGE_DEBUG("", "", "finish");
-
-	return LOGGEDIN_USER_DEFAULT_ACTION;
-}

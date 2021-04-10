@@ -1,16 +1,9 @@
 #include "index.h"
 
 // --- check that src image is actually image, resize it and save to dst
-bool ImageSaveAsJpgToFeedFolder (const string src, const string dst, struct ExifInfo &exifInfo)
+static bool ImageSaveAsJpgToFeedFolder (const string src, const string dst, struct ExifInfo &exifInfo, c_config *config)
 {
-	{
-		CLog	log;
-		ostringstream   ost;
-
-		ost.str("");
-		ost << "[" << __LINE__ << "]" << __func__ << " (" << src << ", " << dst << "): enter";
-		log.Write(DEBUG, ost.str());
-	}
+	MESSAGE_DEBUG("", "", "start (" + src + ", " + dst + ")");
 
 #ifndef IMAGEMAGICK_DISABLE
 	// Construct the image object. Separating image construction FROM the
@@ -20,6 +13,9 @@ bool ImageSaveAsJpgToFeedFolder (const string src, const string dst, struct Exif
 		Magick::Image		   image;
 		Magick::OrientationType imageOrientation;
 		Magick::Geometry		imageGeometry;
+
+		auto	feed_image_max_width = stod_noexcept(config->GetFromFile("image_max_width", "feed"));
+		auto	feed_image_max_height = stod_noexcept(config->GetFromFile("image_max_height", "feed"));
 
 		// Read a file into image object
 		image.read( src );
@@ -44,17 +40,17 @@ bool ImageSaveAsJpgToFeedFolder (const string src, const string dst, struct Exif
 		if(imageOrientation == Magick::RightBottomOrientation) { image.flop(); image.rotate(90); }
 		if(imageOrientation == Magick::LeftBottomOrientation) image.rotate(-90);
 
-		if((imageGeometry.width() > FEED_IMAGE_MAX_WIDTH) || (imageGeometry.height() > FEED_IMAGE_MAX_HEIGHT))
+		if((imageGeometry.width() > feed_image_max_width) || (imageGeometry.height() > feed_image_max_height))
 		{
 			int   newHeight, newWidth;
 			if(imageGeometry.width() >= imageGeometry.height())
 			{
-				newWidth = FEED_IMAGE_MAX_WIDTH;
+				newWidth = feed_image_max_width;
 				newHeight = newWidth * imageGeometry.height() / imageGeometry.width();
 			}
 			else
 			{
-				newHeight = FEED_IMAGE_MAX_HEIGHT;
+				newHeight = feed_image_max_height;
 				newWidth = newHeight * imageGeometry.width() / imageGeometry.height();
 			}
 
@@ -314,15 +310,13 @@ int main()
 {
 	CStatistics		appStat;  // --- CStatistics must be first statement to measure end2end param's
 	CCgi			indexPage(EXTERNAL_TEMPLATE);
+	c_config		config(CONFIG_DIR);
 	CUser			user;
 	string			action, partnerID;
 	CMysql			db;
 	struct timeval	tv;
 
-	{
-		CLog	log;
-		log.Write(DEBUG, string(__func__) + string("[") + to_string(__LINE__) + "] " + __FILE__);
-	}
+	MESSAGE_DEBUG("", "", __FILE__);
 
 	signal(SIGSEGV, crash_handler); 
 
@@ -343,7 +337,7 @@ int main()
 			throw CException("Template file was missing");
 		}
 
-		if(db.Connect() < 0)
+		if(db.Connect(&config) < 0)
 		{
 			CLog	log;
 
@@ -367,7 +361,7 @@ int main()
 			}
 
 			//------- Generate session
-			action = GenerateSession(action, &indexPage, &db, &user);
+			action = GenerateSession(action, &config, &indexPage, &db, &user);
 		}
 		// ------------ end generate common parts
 
@@ -464,7 +458,7 @@ int main()
 	                MESSAGE_DEBUG("", action, "re-login required");
 	            }
 
-	            indexPage.Redirect("/" + GUEST_USER_DEFAULT_ACTION + "?rand=" + GetRandom(10));
+	            indexPage.Redirect("/" + config.GetFromFile("default_action", "guest") + "?rand=" + GetRandom(10));
 	        }
 */
 
@@ -557,11 +551,9 @@ int main()
 
 	        if(user.GetLogin() == "Guest")
 	        {
-				{
-					MESSAGE_DEBUG("", action, "re-login required");
-				}
+				MESSAGE_DEBUG("", action, "re-login required");
 
-		        indexPage.RegisterVariableForce("result", "{\"status\":\"error\",\"description\":\"re-login required\",\"link\":\"/" + GUEST_USER_DEFAULT_ACTION + "?rand=" + GetRandom(10) + "\"}");
+		        indexPage.RegisterVariableForce("result", "{\"status\":\"error\",\"description\":\"re-login required\",\"link\":\"/" + config.GetFromFile("default_action", "guest") + "?rand=" + GetRandom(10) + "\"}");
 	        }
 	        else
 	        {
@@ -709,7 +701,7 @@ int main()
 						MESSAGE_DEBUG("", action, "re-login required");
 					}
 
-					indexPage.Redirect("/" + GUEST_USER_DEFAULT_ACTION + "?rand=" + GetRandom(10));
+					indexPage.Redirect("/" + config.GetFromFile("default_action", "guest") + "?rand=" + GetRandom(10));
 				}
 
 
@@ -823,7 +815,7 @@ int main()
 						MESSAGE_DEBUG("", action, "re-login required");
 					}
 
-					indexPage.Redirect("/" + GUEST_USER_DEFAULT_ACTION + "?rand=" + GetRandom(10));
+					indexPage.Redirect("/" + config.GetFromFile("default_action", "guest") + "?rand=" + GetRandom(10));
 				}
 
 				ost.str("");
@@ -1149,7 +1141,7 @@ int main()
 							ost << "/tmp/" << html.GetPreviewImagePrefix() << ".jpg";
 							tmpImageJPG = ost.str();
 
-							if(ImageSaveAsJpgToFeedFolder(tmpFile2Check, tmpImageJPG, exifInfo))
+							if(ImageSaveAsJpgToFeedFolder(tmpFile2Check, tmpImageJPG, exifInfo, &config))
 							{
 
 								{
@@ -1284,9 +1276,7 @@ int main()
 				throw CException("Template file was missing");
 			}
 
-			{
-				MESSAGE_DEBUG("", action, "end");
-			}
+			MESSAGE_DEBUG("", action, "finish");
 		}
 
 
@@ -1306,7 +1296,7 @@ int main()
 			{
 				MESSAGE_DEBUG("", action, "re-login required");
 
-				indexPage.Redirect("/" + GUEST_USER_DEFAULT_ACTION + "?rand=" + GetRandom(10));
+				indexPage.Redirect("/" + config.GetFromFile("default_action", "guest") + "?rand=" + GetRandom(10));
 			}
 
 			avatarID = indexPage.GetVarsHandler()->Get("id");
@@ -1317,30 +1307,18 @@ int main()
 			{
 				if(db.Get(0, "userid") == user.GetID())
 				{
-					string filename;
+					auto filename = config.GetFromFile("image_folders", "avatar") + "/avatars" +  db.Get(0, "folder") + "/" + db.Get(0, "filename");
 
-					filename += IMAGE_AVATAR_DIRECTORY;
-					filename += "/avatars";
-					filename += db.Get(0, "folder");
-					filename += "/";
-					filename += db.Get(0, "filename");
+					MESSAGE_DEBUG("", action, "removing avatar [id=" + avatarID + "] belongs to user " + user.GetLogin() + " [filename=" + filename + "]");
 
-					{
-						MESSAGE_DEBUG("", action, "removing avatar [id=" + avatarID + "] belongs to user " + user.GetLogin() + " [filename=" + filename + "]");
-					}
-
-					ost.str("");
-					ost << "DELETE FROM `users_avatars` WHERE `id`=\"" << avatarID << "\";";
-					db.Query(ost.str());
+					db.Query("DELETE FROM `users_avatars` WHERE `id`=\"" + avatarID + "\";");
 
 					if(isFileExists(filename))
 					{
 						unlink(filename.c_str());
 
 						// --- Update live feed
-						ost.str("");
-						ost << "INSERT INTO `feed` (`title`, `userId`, `actionTypeId`, `actionId`, `eventTimestamp`) values(\"\",\"" << user.GetID() << "\", \"9\", \"0\", NOW())";
-						if(db.InsertQuery(ost.str()))
+						if(db.InsertQuery("INSERT INTO `feed` (`title`, `userId`, `actionTypeId`, `actionId`, `eventTimestamp`) values(\"\",\"" + user.GetID() + "\", \"9\", \"0\", NOW())"))
 						{
 							result.str("");
 							result << "{ \"result\":\"success\", \"description\":\"\" }";
@@ -1541,7 +1519,7 @@ int main()
 			{
 				MESSAGE_DEBUG("", action, "re-login required");
 
-				indexPage.Redirect("/" + GUEST_USER_DEFAULT_ACTION + "?rand=" + GetRandom(10));
+				indexPage.Redirect("/" + config.GetFromFile("default_action", "guest") + "?rand=" + GetRandom(10));
 			}
 
 			ost.str("");
@@ -1617,7 +1595,7 @@ int main()
 			{
 				MESSAGE_DEBUG("", action, "re-login required");
 
-				indexPage.Redirect("/" + GUEST_USER_DEFAULT_ACTION + "?rand=" + GetRandom(10));
+				indexPage.Redirect("/" + config.GetFromFile("default_action", "guest") + "?rand=" + GetRandom(10));
 			}
 
 			ost.str("");
@@ -1694,13 +1672,9 @@ int main()
 
 			if(user.GetLogin() == "Guest")
 			{
-				ostringstream   ost;
+				MESSAGE_DEBUG("", action, "re-login required");
 
-				{
-					MESSAGE_DEBUG("", action, "re-login required");
-				}
-
-				indexPage.Redirect("/" + GUEST_USER_DEFAULT_ACTION + "?rand=" + GetRandom(10));
+				indexPage.Redirect("/" + config.GetFromFile("default_action", "guest") + "?rand=" + GetRandom(10));
 			}
 
 			messageId = CheckHTTPParam_Number(indexPage.GetVarsHandler()->Get("messageId"));
@@ -1890,9 +1864,7 @@ int main()
 				MESSAGE_ERROR("", action, " template file json_response.htmlt was missing");
 				throw CException("Template file was missing");
 			}
-			{
-				MESSAGE_DEBUG("", action, "end");
-			}
+			MESSAGE_DEBUG("", action, "finish");
 		}
 
 		// --- JSON FindFriend by ID
@@ -1929,7 +1901,7 @@ int main()
 			{
 				MESSAGE_DEBUG("", action, "re-login required");
 
-		        indexPage.RegisterVariableForce("result", "{\"status\":\"error\",\"description\":\"re-login required\",\"link\":\"/" + GUEST_USER_DEFAULT_ACTION + "?rand=" + GetRandom(10) + "\"}");
+		        indexPage.RegisterVariableForce("result", "{\"status\":\"error\",\"description\":\"re-login required\",\"link\":\"/" + config.GetFromFile("default_action", "guest") + "?rand=" + GetRandom(10) + "\"}");
 			}
 			else
 */
@@ -1951,7 +1923,7 @@ int main()
 			{
 				MESSAGE_DEBUG("", action, "re-login required");
 
-		        indexPage.RegisterVariableForce("result", "{\"status\":\"error\",\"description\":\"re-login required\",\"link\":\"/" + GUEST_USER_DEFAULT_ACTION + "?rand=" + GetRandom(10) + "\"}");
+		        indexPage.RegisterVariableForce("result", "{\"status\":\"error\",\"description\":\"re-login required\",\"link\":\"/" + config.GetFromFile("default_action", "guest") + "?rand=" + GetRandom(10) + "\"}");
 			}
 			else
 */
@@ -1983,7 +1955,7 @@ int main()
 			if(user.GetLogin() == "Guest")
 			{
 				MESSAGE_DEBUG("", action, "re-login required");
-				indexPage.Redirect("/" + GUEST_USER_DEFAULT_ACTION + "?rand=" + GetRandom(10));
+				indexPage.Redirect("/" + config.GetFromFile("default_action", "guest") + "?rand=" + GetRandom(10));
 			}
 
 			lookForKey = CheckHTTPParam_Text(indexPage.GetVarsHandler()->Get("lookForKey"));
@@ -2108,9 +2080,7 @@ int main()
 				throw CException("Template file was missing");
 			}
 
-			{
-				MESSAGE_DEBUG("", action, "end");
-			}
+			MESSAGE_DEBUG("", action, "finish");
 		}
 
 
@@ -2127,7 +2097,7 @@ int main()
 			{
 				MESSAGE_DEBUG("", action, "re-login required");
 
-				indexPage.Redirect("/" + GUEST_USER_DEFAULT_ACTION + "?rand=" + GetRandom(10));
+				indexPage.Redirect("/" + config.GetFromFile("default_action", "guest") + "?rand=" + GetRandom(10));
 			}
 
 			ost << "SELECT * FROM `users_avatars` WHERE `userid`=\"" << user.GetID() << "\";";
@@ -2214,7 +2184,7 @@ int main()
 			{
 				MESSAGE_DEBUG("", action, "re-login required");
 
-				indexPage.Redirect("/" + GUEST_USER_DEFAULT_ACTION + "?rand=" + GetRandom(10));
+				indexPage.Redirect("/" + config.GetFromFile("default_action", "guest") + "?rand=" + GetRandom(10));
 			}
 
 			messageID = indexPage.GetVarsHandler()->Get("messageID");
@@ -2380,9 +2350,7 @@ int main()
 
 			if(user.GetLogin() == "Guest")
 			{
-				{
-					MESSAGE_DEBUG("", action, "re-login required");
-				}
+				MESSAGE_DEBUG("", action, "re-login required");
 
 				indexPage.RegisterVariableForce("result", "{"
 															"\"result\":\"error\","
@@ -2438,7 +2406,7 @@ int main()
 				indexPage.RegisterVariableForce("result", "{"
 															"\"result\":\"error\","
 															"\"description\":\"re-login required\","
-															"\"location\":\"/" + GUEST_USER_DEFAULT_ACTION + "?rand=" + GetRandom(10) + "\""
+															"\"location\":\"/" + config.GetFromFile("default_action", "guest") + "?rand=" + GetRandom(10) + "\""
 															"}");
 
 			}
@@ -2580,7 +2548,7 @@ int main()
 			{
 				MESSAGE_DEBUG("", action, "re-login required");
 
-				indexPage.Redirect("/" + GUEST_USER_DEFAULT_ACTION + "?rand=" + GetRandom(10));
+				indexPage.Redirect("/" + config.GetFromFile("default_action", "guest") + "?rand=" + GetRandom(10));
 			}
 
 			ost.str("");
@@ -2856,9 +2824,7 @@ int main()
 				throw CExceptionHTML("user not activated");
 			} // if(!indexPage.SetTemplate("json_response.htmlt"))
 
-			{
-				MESSAGE_DEBUG("", action, "end");
-			}
+			MESSAGE_DEBUG("", action, "finish");
 		}
 
 		// --- AJAX update message to news feed
@@ -3062,9 +3028,7 @@ int main()
 			{
 				ostringstream   ost;
 
-				{
-					MESSAGE_DEBUG("", action, "re-login required");
-				}
+				MESSAGE_DEBUG("", action, "re-login required");
 
 				ost.str("");
 				ost << "{\"result\": \"error\", \"description\": \"session lost. Need to relogin\"}";
@@ -3490,7 +3454,7 @@ int main()
 			{
 				MESSAGE_DEBUG("", action, "re-login required");
 
-				indexPage.Redirect("/" + GUEST_USER_DEFAULT_ACTION + "?rand=" + GetRandom(10));
+				indexPage.Redirect("/" + config.GetFromFile("default_action", "guest") + "?rand=" + GetRandom(10));
 			}
 */
 			friendID = indexPage.GetVarsHandler()->Get("userid");
@@ -3689,7 +3653,7 @@ int main()
 			{
 				MESSAGE_DEBUG("", action, "re-login required");
 
-				indexPage.Redirect("/" + GUEST_USER_DEFAULT_ACTION + "?rand=" + GetRandom(10));
+				indexPage.Redirect("/" + config.GetFromFile("default_action", "guest") + "?rand=" + GetRandom(10));
 			}
 
 
@@ -3718,9 +3682,7 @@ int main()
 				throw CExceptionHTML("user not activated");
 			} // if(!indexPage.SetTemplate("json_response.htmlt"))
 
-			{
-				MESSAGE_DEBUG("", action, "end");
-			}
+			MESSAGE_DEBUG("", action, "finish");
 		}
 
 
@@ -3735,7 +3697,7 @@ int main()
 			{
 				MESSAGE_DEBUG("", action, "re-login required");
 
-				indexPage.Redirect("/" + GUEST_USER_DEFAULT_ACTION + "?rand=" + GetRandom(10));
+				indexPage.Redirect("/" + config.GetFromFile("default_action", "guest") + "?rand=" + GetRandom(10));
 			}
 
 			if(!indexPage.SetTemplate("user_notifications.htmlt"))
@@ -3746,9 +3708,7 @@ int main()
 				throw CException("Template file was missing");
 			}
 
-			{
-				MESSAGE_DEBUG("", action, "end");
-			}
+			MESSAGE_DEBUG("", action, "finish");
 		}
 
 		if(action == "chat")
@@ -3762,7 +3722,7 @@ int main()
 			{
 				MESSAGE_DEBUG("", action, "re-login required");
 
-				indexPage.Redirect("/" + GUEST_USER_DEFAULT_ACTION + "?rand=" + GetRandom(10));
+				indexPage.Redirect("/" + config.GetFromFile("default_action", "guest") + "?rand=" + GetRandom(10));
 			}
 
 			if(!indexPage.SetTemplate("chat.htmlt"))
@@ -3773,9 +3733,7 @@ int main()
 				throw CException("Template file was missing");
 			}
 
-			{
-				MESSAGE_DEBUG("", action, "end");
-			}
+			MESSAGE_DEBUG("", action, "finish");
 		}
 
 		if(action == "login")
@@ -3825,7 +3783,7 @@ int main()
 			{
 				MESSAGE_ERROR("", action, "(not an error, severity error to monitor) registered user(" + user.GetLogin() + ") attempts to access login page, redirect to default page");
 
-				indexPage.Redirect("/" + GetDefaultActionFromUserType(&user, &db) + "?rand=" + GetRandom(10));
+				indexPage.Redirect("/" + config.GetFromFile("default_action", user.GetType()) + "?rand=" + GetRandom(10));
 			}
 
 			MESSAGE_DEBUG("", action, "finish");
@@ -3857,9 +3815,7 @@ int main()
 				throw CException("Template file was missing");
 			}
 
-			{
-				MESSAGE_DEBUG("", action, "end");
-			}
+			MESSAGE_DEBUG("", action, "finish");
 		}
 
 		if(action == "forget_password_page")
@@ -3872,9 +3828,7 @@ int main()
 				throw CException("Template file was missing");
 			}
 
-			{
-				MESSAGE_DEBUG("", action, "end");
-			}
+			MESSAGE_DEBUG("", action, "finish");
 
 		}
 
@@ -4177,11 +4131,11 @@ int main()
 									indexPage.RegisterVariableForce("loginUser", user.GetLogin());
 									indexPage.RegisterVariableForce("menu_main_active", "active");
 
-									MESSAGE_DEBUG("", action, "redirect to \"/" + GetDefaultActionFromUserType(&user, &db) + "?rand=xxxxxx\"");
+									MESSAGE_DEBUG("", action, "redirect to \"/" + config.GetFromFile("default_action", user.GetType()) + "?rand=xxxxxx\"");
 
 									success_message = 	"\"result\": \"success\","
 														"\"description\": \"\","
-														"\"url\": \"/" + GetDefaultActionFromUserType(&user, &db) + "?rand=" + GetRandom(10) + "\"";
+														"\"url\": \"/" + config.GetFromFile("default_action", user.GetType()) + "?rand=" + GetRandom(10) + "\"";
 								}
 							}
 						}
@@ -4457,7 +4411,7 @@ int main()
 			{
 				MESSAGE_ERROR("", action, "(not an error, severity should be monitor) registered user(" + user.GetLogin() + ") attempts to access activateNewUser page, redirect to default page");
 
-				indexPage.Redirect("/" + GetDefaultActionFromUserType(&user, &db) + "?rand=" + GetRandom(10));
+				indexPage.Redirect("/" + config.GetFromFile("default_action", user.GetType()) + "?rand=" + GetRandom(10));
 			}
 
 
@@ -4477,7 +4431,7 @@ int main()
 			{
 				MESSAGE_DEBUG("", action, "re-login required");
 
-				indexPage.Redirect("/" + GUEST_USER_DEFAULT_ACTION + "?rand=" + GetRandom(10));
+				indexPage.Redirect("/" + config.GetFromFile("default_action", "guest") + "?rand=" + GetRandom(10));
 			}
 
 			ost.str("");
@@ -4534,9 +4488,7 @@ int main()
 				throw CExceptionHTML("Template file was missing");
 			}
 
-			{
-				MESSAGE_DEBUG("", action, "end");
-			}
+			MESSAGE_DEBUG("", action, "finish");
 		}
 
 		if(action == "edit_profile")
@@ -4551,7 +4503,7 @@ int main()
 			{
 				MESSAGE_DEBUG("", action, "re-login required");
 
-				indexPage.Redirect("/" + GUEST_USER_DEFAULT_ACTION + "?rand=" + GetRandom(10));
+				indexPage.Redirect("/" + config.GetFromFile("default_action", "guest") + "?rand=" + GetRandom(10));
 			}
 
 
@@ -4676,9 +4628,7 @@ int main()
 				log.Write(ERROR, string(__func__) + string("[") + to_string(__LINE__) + string("] template file edit_profile.htmlt was missing"));
 				throw CException("Template file edit_profile.htmlt was missing");
 			}  // if(!indexPage.SetTemplate("edit_profile.htmlt"))
-			{
-				MESSAGE_DEBUG("", action, "end");
-			}
+			MESSAGE_DEBUG("", action, "finish");
 		} 	// if(action == "edit_profile")
 
 		if(action == "edit_company")
@@ -4692,7 +4642,7 @@ int main()
 			{
 				MESSAGE_DEBUG("", action, "re-login required");
 
-				indexPage.Redirect("/" + GUEST_USER_DEFAULT_ACTION + "?rand=" + GetRandom(10));
+				indexPage.Redirect("/" + config.GetFromFile("default_action", "guest") + "?rand=" + GetRandom(10));
 			}
 
 			indexPage.RegisterVariableForce("title", "Редактирование данных компании");
@@ -4705,9 +4655,7 @@ int main()
 				throw CException("Template file edit_company.htmlt was missing");
 			}  // if(!indexPage.SetTemplate("edit_company.htmlt"))
 
-			{
-				MESSAGE_DEBUG("", action, "end");
-			}
+			MESSAGE_DEBUG("", action, "finish");
 		} 	// if(action == "edit_company")
 
 		if(action == "JSON_getUserProfile")
@@ -4848,7 +4796,7 @@ int main()
 			{
 				MESSAGE_DEBUG("", action, "re-login required");
 
-				indexPage.Redirect("/" + GUEST_USER_DEFAULT_ACTION + "?rand=" + GetRandom(10));
+				indexPage.Redirect("/" + config.GetFromFile("default_action", "guest") + "?rand=" + GetRandom(10));
 			}
 
 			imageIDMarkToRemove = CheckHTTPParam_Number(indexPage.GetVarsHandler()->Get("imageID"));
@@ -5005,9 +4953,7 @@ int main()
 				throw CException("Template file was missing");
 			}
 
-			{
-				MESSAGE_DEBUG("", action, "end");
-			}
+			MESSAGE_DEBUG("", action, "finish");
 		}
 
 
@@ -5024,7 +4970,7 @@ int main()
 			{
 				MESSAGE_DEBUG("", action, "re-login required");
 
-				indexPage.Redirect("/" + GUEST_USER_DEFAULT_ACTION + "?rand=" + GetRandom(10));
+				indexPage.Redirect("/" + config.GetFromFile("default_action", "guest") + "?rand=" + GetRandom(10));
 			}
 
 			firstName = CheckHTTPParam_Text(indexPage.GetVarsHandler()->Get("value"));
@@ -5146,7 +5092,7 @@ int main()
 			{
 				MESSAGE_DEBUG("", action, "re-login required");
 
-				indexPage.Redirect("/" + GUEST_USER_DEFAULT_ACTION + "?rand=" + GetRandom(10));
+				indexPage.Redirect("/" + config.GetFromFile("default_action", "guest") + "?rand=" + GetRandom(10));
 			}
 
 			lastName = CheckHTTPParam_Text(indexPage.GetVarsHandler()->Get("value"));
@@ -5226,7 +5172,7 @@ int main()
 			{
 				MESSAGE_DEBUG("", action, "re-login required");
 
-				indexPage.Redirect("/" + GUEST_USER_DEFAULT_ACTION + "?rand=" + GetRandom(10));
+				indexPage.Redirect("/" + config.GetFromFile("default_action", "guest") + "?rand=" + GetRandom(10));
 			}
 
 			firstName = CheckHTTPParam_Text(indexPage.GetVarsHandler()->Get("firstName"));
@@ -5360,9 +5306,7 @@ int main()
 			ostResult.str("");
 			if(user.GetLogin() == "Guest")
 			{
-				{
-					MESSAGE_DEBUG("", action, "re-login required");
-				}
+				MESSAGE_DEBUG("", action, "re-login required");
 
 				ostResult << "{\"result\":\"error\",\"description\":\"re-login required\"}";
 			}
@@ -5433,7 +5377,7 @@ int main()
 			{
 				MESSAGE_DEBUG("", action, "re-login required");
 
-				// indexPage.Redirect("/" + GUEST_USER_DEFAULT_ACTION + "?rand=" + GetRandom(10));
+				// indexPage.Redirect("/" + config.GetFromFile("default_action", "guest") + "?rand=" + GetRandom(10));
 			}	
 
 			if(strPageToGet.empty()) strPageToGet = "0";
@@ -5470,9 +5414,7 @@ int main()
 			if(user.GetLogin() == "Guest")
 			{
 
-				{
-					MESSAGE_DEBUG("", action, "re-login required");
-				}
+				MESSAGE_DEBUG("", action, "re-login required");
 
 				ost.str("");
 				ost << "/?rand=" << GetRandom(10);
@@ -5544,9 +5486,7 @@ int main()
 			{
 				ostringstream   ost;
 
-				{
-					MESSAGE_DEBUG("", action, "re-login required");
-				}
+				MESSAGE_DEBUG("", action, "re-login required");
 
 				ost.str("");
 				ost << "/?rand=" << GetRandom(10);
@@ -5599,7 +5539,7 @@ int main()
 			{
 				MESSAGE_DEBUG("", action, "re-login required");
 
-				indexPage.Redirect("/" + GUEST_USER_DEFAULT_ACTION + "?rand=" + GetRandom(10));
+				indexPage.Redirect("/" + config.GetFromFile("default_action", "guest") + "?rand=" + GetRandom(10));
 			}
 */
 
@@ -5637,7 +5577,7 @@ int main()
 			{
 				MESSAGE_ERROR("", action, "(not an error, severity error to monitor) registered user(" + user.GetLogin() + ") attempts to access showmain page, redirect to default page");
 
-				indexPage.Redirect("/" + GetDefaultActionFromUserType(&user, &db) + "?rand=" + GetRandom(10));
+				indexPage.Redirect("/" + config.GetFromFile("default_action", user.GetType()) + "?rand=" + GetRandom(10));
 			}
 		}
 
@@ -5692,97 +5632,78 @@ int main()
 			if(invite_hash.length())
 			{
 
-			if(user.GetLogin() == "Guest")
-			{
-				MESSAGE_DEBUG("", action, "guest workflow");
-
-				indexPage.Cookie_InitialAction_Assign(invite_hash);
-				indexPage.RegisterVariableForce("redirect_url", "/login?rand=" + GetRandom(10));
-			}
-			else
-			{
-				string		eventLink = "";
-
-				MESSAGE_DEBUG("", action, "userID(" + user.GetID() + ") workflow");
-
-				// --- remove "inviteHash" cookie
-				if(!indexPage.Cookie_InitialAction_Expire()) 
+				if(user.GetLogin() == "Guest")
 				{
-					MESSAGE_DEBUG("", action, "issue in session expiration");
+					MESSAGE_DEBUG("", action, "guest workflow");
+
+					indexPage.Cookie_InitialAction_Assign(invite_hash);
+					indexPage.RegisterVariableForce("redirect_url", "/login?rand=" + GetRandom(10));
 				}
-
-				// --- update db
-				indexPage.RegisterVariableForce("redirect_url", "/" + GetDefaultActionLoggedinUser() + "?rand=" + GetRandom(10));
-
-				if(db.Query("SELECT * FROM `quick_registration` WHERE `invite_hash`=\"" + invite_hash + "\";"))
+				else
 				{
-					string		quick_registration_id = db.Get(0, "id");
-					string		quick_registration_action = db.Get(0, "action");
-					string		quick_registration_action_id = db.Get(0, "action_id");
+					MESSAGE_DEBUG("", action, "userID(" + user.GetID() + ") workflow");
 
-					if(quick_registration_action == "event")
+					// --- remove "inviteHash" cookie
+					if(!indexPage.Cookie_InitialAction_Expire()) 
 					{
-						if(db.Query("SELECT `event_id` FROM `event_guests` WHERE `quick_registration_id`=\"" + quick_registration_id + "\";"))
+						MESSAGE_DEBUG("", action, "issue in session expiration");
+					}
+
+					// --- update db
+					indexPage.RegisterVariableForce("redirect_url", "/" + config.GetFromFile("default_action", "user") + "?rand=" + GetRandom(10));
+
+					if(db.Query("SELECT * FROM `quick_registration` WHERE `invite_hash`=\"" + invite_hash + "\";"))
+					{
+						auto		quick_registration_id = db.Get(0, "id");
+						auto		quick_registration_action = db.Get(0, "action");
+						auto		quick_registration_action_id = db.Get(0, "action_id");
+
+						if(quick_registration_action == "event")
 						{
-							string		event_id = db.Get(0, "event_id");
-
-							if(db.Query("SELECT `link` FROM `events` WHERE `id`=\"" + event_id + "\";"))
+							if(db.Query("SELECT `event_id` FROM `event_guests` WHERE `quick_registration_id`=\"" + quick_registration_id + "\";"))
 							{
-								string		event_link = db.Get(0, "link");
+								auto		event_id = db.Get(0, "event_id");
 
-								db.Query("UPDATE `event_guests` SET `user_id`=\"" + user.GetID() + "\" WHERE `quick_registration_id`=\"" + quick_registration_id + "\";");
-								if(db.isError())
+								if(db.Query("SELECT `link` FROM `events` WHERE `id`=\"" + event_id + "\";"))
 								{
+									auto		event_link = db.Get(0, "link");
+
+									db.Query("UPDATE `event_guests` SET `user_id`=\"" + user.GetID() + "\" WHERE `quick_registration_id`=\"" + quick_registration_id + "\";");
+									if(db.isError())
 									{
 										MESSAGE_DEBUG("", action, "issue updating event_guest table");
+									}
+									else
+									{
+										indexPage.RegisterVariableForce("redirect_url", "/event/" + event_link + "?rand=" + GetRandom(10));
 									}
 								}
 								else
 								{
-									indexPage.RegisterVariableForce("redirect_url", "/event/" + event_link + "?rand=" + GetRandom(10));
-								}
-							}
-							else
-							{
-								{
 									MESSAGE_DEBUG("", action, "event.id(" + event_id + ") not found");
 								}
+
+								// --- redirect to /event/_____
 							}
-
-
-							// --- redirect to /event/_____
-						}
-						else
-						{
+							else
 							{
 								MESSAGE_DEBUG("", action, "quick_registration_id(" + quick_registration_id + ") not found");
 							}
 						}
-					}
-					else
-					{
+						else
 						{
 							MESSAGE_DEBUG("", action, "unknown action(" + quick_registration_action + ")");
 						}
 					}
-				}
-				else
-				{
+					else
 					{
 						MESSAGE_DEBUG("", action, "invite_hash(" + invite_hash + ") not found");
 					}
 				}
-
-			}
-
-
 			}
 			else
 			{
-				{
-					MESSAGE_DEBUG("", action, "invite_hash[" + indexPage.GetVarsHandler()->Get("id") + "] is not a number");
-				}
-
+				MESSAGE_DEBUG("", action, "invite_hash[" + indexPage.GetVarsHandler()->Get("id") + "] is not a number");
 			}
 
 			if(!indexPage.SetTemplate("check_invite.htmlt"))
@@ -5794,14 +5715,9 @@ int main()
 			MESSAGE_DEBUG("", action, "finish");
 		}
 
-
-		{
-			CLog	log;
-			log.Write(DEBUG, string(__func__) + "[" + to_string(__LINE__) + "] end (action's == \"" + action + "\") condition");
-		}
+		MESSAGE_DEBUG("", action, "finish");
 
 		indexPage.OutTemplate();
-
 	}
 	catch(CExceptionHTML &c)
 	{

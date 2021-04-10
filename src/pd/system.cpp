@@ -22,15 +22,14 @@ int main()
 {
 	CStatistics			appStat;  // --- CStatistics must be a first statement to measure end2end param's
 	CCgi				indexPage(EXTERNAL_TEMPLATE);
+	c_config			config(CONFIG_DIR);
 	CUser				user;
 	auto				action = ""s;
 	CMysql				db;
 	struct timeval		tv;
 	map<string,string>	mapResult;
 
-	{
-		MESSAGE_DEBUG("", action, __FILE__);
-	}
+	MESSAGE_DEBUG("", action, __FILE__);
 
 	signal(SIGSEGV, crash_handler);
 
@@ -48,7 +47,7 @@ int main()
 			throw CException("Template file was missing");
 		}
 
-		if(db.Connect() < 0)
+		if(db.Connect(&config) < 0)
 		{
 			MESSAGE_ERROR("", action, "Can not connect to mysql database");
 			throw CExceptionHTML("MySql connection");
@@ -323,7 +322,7 @@ int main()
 			mapResult["result"] = "error";
 			mapResult["sessionPersistence"] = "false";
 			mapResult["userPersistence"] = "false";
-			mapResult["redirect"] = "/" + GetDefaultActionFromUserType(&user, &db) + "?rand=" + GetRandom(10);
+			mapResult["redirect"] = "/" + config.GetFromFile("default_action", user.GetType()) + "?rand=" + GetRandom(10);
 
 			if(remoteAddr && (!isPersistenceRateLimited(remoteAddr, &db)))
 			{
@@ -429,7 +428,7 @@ int main()
 											db.Query("UPDATE `sessions` SET `previous_sessid`=\"" + sessidPersistence + "\"  WHERE `id`=\"" + indexPage.SessID_Get_FromHTTP() + "\";");
 										}
 
-										mapResult["redirect"] = "/" + GetDefaultActionFromUserType(&user, &db) + "?rand=" + GetRandom(10);
+										mapResult["redirect"] = "/" + config.GetFromFile("default_action", user.GetType()) + "?rand=" + GetRandom(10);
 
 										db.Query("UPDATE `sessions` SET `user_id`=\"" + persistedUserID + "\", expire=\"" + persistedExpire + "\" WHERE `id`=\"" + sessidHTTP + "\";");
 										if(db.isError())

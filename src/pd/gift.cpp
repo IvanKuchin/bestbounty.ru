@@ -1,7 +1,7 @@
 #include "gift.h"
 
 // --- check that src image is actually image, resize it and save to dst
-bool ImageSaveAsJpgToFeedFolder (const string src, const string dst, struct ExifInfo &exifInfo)
+static bool ImageSaveAsJpgToFeedFolder (const string src, const string dst, struct ExifInfo &exifInfo, c_config *config)
 {
 	{
 		CLog	log;
@@ -20,6 +20,9 @@ bool ImageSaveAsJpgToFeedFolder (const string src, const string dst, struct Exif
 		Magick::Image		   image;
 		Magick::OrientationType imageOrientation;
 		Magick::Geometry		imageGeometry;
+
+		auto	feed_image_max_width = stod_noexcept(config->GetFromFile("image_max_width", "gift"));
+		auto	feed_image_max_height = stod_noexcept(config->GetFromFile("image_max_height", "gift"));
 
 		// Read a file into image object
 		image.read( src );
@@ -44,17 +47,17 @@ bool ImageSaveAsJpgToFeedFolder (const string src, const string dst, struct Exif
 		if(imageOrientation == Magick::RightBottomOrientation) { image.flop(); image.rotate(90); }
 		if(imageOrientation == Magick::LeftBottomOrientation) image.rotate(-90);
 
-		if((imageGeometry.width() > FEED_IMAGE_MAX_WIDTH) || (imageGeometry.height() > FEED_IMAGE_MAX_HEIGHT))
+		if((imageGeometry.width() > feed_image_max_width) || (imageGeometry.height() > feed_image_max_height))
 		{
 			int   newHeight, newWidth;
 			if(imageGeometry.width() >= imageGeometry.height())
 			{
-				newWidth = FEED_IMAGE_MAX_WIDTH;
+				newWidth = feed_image_max_width;
 				newHeight = newWidth * imageGeometry.height() / imageGeometry.width();
 			}
 			else
 			{
-				newHeight = FEED_IMAGE_MAX_HEIGHT;
+				newHeight = feed_image_max_height;
 				newWidth = newHeight * imageGeometry.width() / imageGeometry.height();
 			}
 
@@ -222,6 +225,7 @@ int main()
 {
 	CStatistics		appStat;  // --- CStatistics must be first statement to measure end2end param's
 	CCgi			indexPage(EXTERNAL_TEMPLATE);
+	c_config		config(CONFIG_DIR);
 	CUser			user;
 	string			action, partnerID;
 	CMysql			db;
@@ -250,7 +254,7 @@ int main()
 		throw CException("Template file was missing");
 	}
 
-	if(db.Connect() < 0)
+	if(db.Connect(&config) < 0)
 	{
 		CLog	log;
 
@@ -274,7 +278,7 @@ int main()
 		}
 
 		//------- Generate session
-		action = GenerateSession(action, &indexPage, &db, &user);
+		action = GenerateSession(action, &config, &indexPage, &db, &user);
 	}
 	// ------------ end generate common parts
 
@@ -662,7 +666,7 @@ int main()
 #ifndef IMAGEMAGICK_DISABLE
 									Magick::InitializeMagick(NULL);
 #endif
-									if(ImageSaveAsJpgToFeedFolder(tmpFile2Check, tmpImageJPG, exifInfo))
+									if(ImageSaveAsJpgToFeedFolder(tmpFile2Check, tmpImageJPG, exifInfo, &config))
 									{
 
 										{
@@ -983,19 +987,17 @@ int main()
 			{
 				if(db.Query("SELECT * FROM `gifts` WHERE `id`=\"" + giftID + "\" AND `user_id`=\"" + user.GetID() + "\";"))
 				{
-					string	logo_folder = db.Get(0, "logo_folder");
-					string	logo_filename = db.Get(0, "logo_filename");
+					auto	logo_folder		= db.Get(0, "logo_folder");
+					auto	logo_filename	= db.Get(0, "logo_filename");
 
 					if(logo_folder.length() && logo_filename.length())
 					{
-						string  currLogo = GetSpecificData_GetBaseDirectory("gift") + "/" + logo_folder + "/" + logo_filename;
+						auto  currLogo = config.GetFromFile("image_folders", "gift") + "/" + logo_folder + "/" + logo_filename;
 
 						if(isFileExists(currLogo)) 
 						{
-							{
-								CLog			log;
-								log.Write(DEBUG, string(__func__) + "[" + to_string(__LINE__) + "]: remove current logo (" + currLogo + ")");
-							}
+							MESSAGE_DEBUG("", "", "remove current logo (" + currLogo + ")");
+
 							unlink(currLogo.c_str());
 						}
 					}
@@ -1004,10 +1006,7 @@ int main()
 
 					if(db.isError())
 					{
-						{
-							CLog		log;
-							log.Write(ERROR, string(__func__) + "[" + to_string(__LINE__) + "]:ERROR: removing form `gifts` table (" + db.GetErrorMessage() + ")");
-						}
+						MESSAGE_ERROR("", "", "removing form `gifts` table (" + db.GetErrorMessage() + ")");
 
 						ostResult << "{\"result\":\"error\",\"description\":\"ошибка БД\"}";
 					}
@@ -1019,27 +1018,19 @@ int main()
 					db.Query("DELETE FROM `users_notification` WHERE (`actionTypeId`=\"66\") AND (`actionId` in (SELECT `id` FROM `gift_thanks` WHERE `gift_id`=\"" + giftID + "\"))");
 					if(db.isError())
 					{
-						{
-							CLog		log;
-							log.Write(ERROR, string(__func__) + "[" + to_string(__LINE__) + "]:ERROR: removing form `users_notification` table (" + db.GetErrorMessage() + ")");
-						}
+						MESSAGE_ERROR("", "", "removing form `users_notification` table (" + db.GetErrorMessage() + ")");
 					}
 					
 					db.Query("DELETE FROM `gifts_to_give` WHERE `gift_id`=\"" + giftID + "\";");
 					if(db.isError())
 					{
-						{
-							CLog		log;
-							log.Write(ERROR, string(__func__) + "[" + to_string(__LINE__) + "]:ERROR: removing form `gifts_to_give` table (" + db.GetErrorMessage() + ")");
-						}
+						MESSAGE_ERROR("", "", "removing form `gifts_to_give` table (" + db.GetErrorMessage() + ")");
 					}
 				}
 				else
 				{
-					{
-						CLog	log;
-						log.Write(ERROR, string(__func__) + string("[") + to_string(__LINE__) + "]:action == " + action + ":ERROR: gift(" + giftID + ") not found or doesn't belongs to user(" + user.GetID() + ")");
-					}
+					MESSAGE_ERROR("", "", "gift(" + giftID + ") not found or doesn't belongs to user(" + user.GetID() + ")");
+
 					ostResult << "{\"result\":\"error\",\"description\":\"подарок отсутствует в БД\"}";
 				}
 			}
@@ -1059,14 +1050,7 @@ int main()
 	}   // if(action == "AJAX_removeGiftEntry")
 
 
-	{
-		CLog	log;
-		ostringstream	ost;
-
-		ost.str("");
-		ost << __func__ << "[" << __LINE__ << "]: end (action's == \"" << action << "\") condition";
-		log.Write(DEBUG, ost.str());
-	}
+	MESSAGE_DEBUG("", action, "finish");
 
 	indexPage.OutTemplate();
 

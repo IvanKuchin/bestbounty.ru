@@ -1,0 +1,4 @@
+__default__			= 512
+
+helpdesk_ticket_attach		= 2048
+language			= 1
