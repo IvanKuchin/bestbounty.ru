@@ -106,7 +106,7 @@ string GetUserListInJSONFormat(string dbQuery, CMysql *db, CUser *user)
 				auto				userLastOnlineSecondSinceY2k= itemsList[i].userLastOnlineSecondSinceY2k;
 				auto				isMe						= user && (userID == user->GetID());
 
-				setOfUserID.insert(atol(userID.c_str()));
+				setOfUserID.insert(stol(userID));
 
 				// --- Defining title and company of user
 				ost1.str("");

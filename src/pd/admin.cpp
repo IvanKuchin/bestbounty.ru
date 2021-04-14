@@ -17,7 +17,7 @@ int main()
 	signal(SIGSEGV, crash_handler); 
 
 	gettimeofday(&tv, NULL);
-	srand(tv.tv_sec * tv.tv_usec * 100000);
+	srand(tv.tv_sec * tv.tv_usec * 100000);  /* Flawfinder: ignore */
 	appStat.SetLogFile(ADMIN_LOG_FILE_NAME);
 
 	try

@@ -25,7 +25,7 @@ static bool ImageSaveAsJpgToFeedFolder (const string src, const string dst, stru
 		auto	feed_image_max_height = stod_noexcept(config->GetFromFile("image_max_height", "gift"));
 
 		// Read a file into image object
-		image.read( src );
+		image.read( src );  /* Flawfinder: ignore */
 
 		imageGeometry = image.size();
 		imageOrientation = image.orientation();
@@ -231,15 +231,12 @@ int main()
 	CMysql			db;
 	struct timeval	tv;
 
-	{
-		CLog	log;
-		log.Write(DEBUG, __func__ + string("[") + to_string(__LINE__) + "]: " + __FILE__);
-	}
+	MESSAGE_DEBUG("", "", __FILE__);
 
 	signal(SIGSEGV, crash_handler); 
 
 	gettimeofday(&tv, NULL);
-	srand(tv.tv_sec * tv.tv_usec * 100000);
+	srand(tv.tv_sec * tv.tv_usec * 100000);  /* Flawfinder: ignore */
 
 	try
 	{
