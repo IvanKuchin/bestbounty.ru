@@ -3,7 +3,7 @@
 auto	GetSHA512(const string &src) -> string
 {
 	string			result = "";
-    unsigned char	digest[SHA512_DIGEST_LENGTH + 1];   /* Flawfinder: ignore */
+    unsigned char	digest[SHA512_DIGEST_LENGTH];   /* Flawfinder: ignore */
 
 	MESSAGE_DEBUG("", "", "start");
 
@@ -14,7 +14,7 @@ auto	GetSHA512(const string &src) -> string
 
     char mdString[SHA512_DIGEST_LENGTH*2+ 1 ];   /* Flawfinder: ignore */
     for (int i = 0; i < SHA512_DIGEST_LENGTH; i++)
-		snprintf(&mdString[i*2], sizeof(mdString) - 1, "%02x", (unsigned int)digest[i]);
+		sprintf(&mdString[i*2], "%02x", (unsigned int)digest[i]);    /* Flawfinder: ignore */
 
     result = mdString;
 
