@@ -12,7 +12,7 @@ auto	GetSHA512(const string &src) -> string
     SHA512_Update(&ctx, src.c_str(), src.length());
     SHA512_Final(digest, &ctx);
 
-    char mdString[SHA512_DIGEST_LENGTH*2+ 1 ];   /* Flawfinder: ignore */
+    char mdString[SHA512_DIGEST_LENGTH*2+1];   /* Flawfinder: ignore */
     for (int i = 0; i < SHA512_DIGEST_LENGTH; i++)
 		sprintf(&mdString[i*2], "%02x", (unsigned int)digest[i]);    /* Flawfinder: ignore */
 
