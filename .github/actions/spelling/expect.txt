@@ -662,3 +662,5 @@ ofs
 DIRS
 executables
 Wkhtml
+multiline
+Flawfinder

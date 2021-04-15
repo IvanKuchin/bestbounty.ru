@@ -7,10 +7,7 @@ bool BirthdayNotificationToFriends(CMysql *db)
 	long int			affected;
 	vector<string>		birthdayUserList;
 
-	{
-		CLog	log;
-		log.Write(DEBUG, string(__func__) + "[" + to_string(__LINE__) + "]: start");
-	}
+	MESSAGE_DEBUG("", "", "start");
 
 	affected = db->Query("SELECT `id` FROM `users` WHERE `birthday` LIKE DATE_FORMAT(NOW(), '%d/%m/%') AND `birthdayAccess`=\"public\" AND `isblocked`=\"N\";");
 	for(long int i = 0; i < affected; ++i)
@@ -128,23 +125,21 @@ bool UpdateGiftsToGive(CMysql *db)
 int main()
 {
 	CStatistics		appStat;  // --- CStatistics must be first statement to measure end2end param's
+	c_config		config(CONFIG_DIR);
 	CMysql			db;
 	struct timeval	tv;
 
-	{
-		CLog	log;
-		log.Write(DEBUG, __func__ + string("[") + to_string(__LINE__) + "]: " + __FILE__);
-	}
+	MESSAGE_DEBUG("", "", __FILE__);
 
 	signal(SIGSEGV, crash_handler); 
 
 	gettimeofday(&tv, NULL);
-	srand(tv.tv_sec * tv.tv_usec * 100000);
+	srand(tv.tv_sec * tv.tv_usec * 100000);  /* Flawfinder: ignore */
 
 	try
 	{
 
-		if(db.Connect() < 0)
+		if(db.Connect(&config) < 0)
 		{
 			CLog	log;
 

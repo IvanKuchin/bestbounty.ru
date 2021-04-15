@@ -6,18 +6,16 @@ int main()
 	CCgi			indexPage(EXTERNAL_TEMPLATE);
 	CUser			user;
 	string			action, partnerID;
+	c_config		config(CONFIG_DIR);
 	CMysql			db;
 	struct timeval	tv;
 
-	{
-		CLog	log;
-		log.Write(DEBUG, __func__ + string("[") + to_string(__LINE__) + "]: " + __FILE__);
-	}
+	MESSAGE_DEBUG("", "", __FILE__);
 
 	signal(SIGSEGV, crash_handler); 
 
 	gettimeofday(&tv, NULL);
-	srand(tv.tv_sec * tv.tv_usec * 100000);
+	srand(tv.tv_sec * tv.tv_usec * 100000);  /* Flawfinder: ignore */
 
 	try
 	{
@@ -26,17 +24,15 @@ int main()
 
 		if(!indexPage.SetTemplate("index.htmlt"))
 		{
-			CLog	log;
+			MESSAGE_ERROR("", "", "template file was missing");
 
-			log.Write(ERROR, string(__func__) + string("[") + to_string(__LINE__) + "]:ERROR: template file was missing");
 			throw CException("Template file was missing");
 		}
 
-		if(db.Connect() < 0)
+		if(db.Connect(&config) < 0)
 		{
-			CLog	log;
+			MESSAGE_ERROR("", "", "Can not connect to mysql database");
 
-			log.Write(ERROR, string(__func__) + string("[") + to_string(__LINE__) + "]:ERROR: Can not connect to mysql database");
 			throw CExceptionHTML("MySql connection");
 		}
 
@@ -59,7 +55,7 @@ int main()
 			}
 
 			//------- Generate session
-			action = GenerateSession(action, &indexPage, &db, &user);
+			action = GenerateSession(action, &config, &indexPage, &db, &user);
 		}
 		// ------------ end generate common parts
 

@@ -1,0 +1,3 @@
+guest		= autologin
+user		= find_friends
+helpdesk	= helpdesk_dashboard

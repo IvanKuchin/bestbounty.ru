@@ -21,4 +21,6 @@
 #include "utilities_bestbounty.h"
 #include "locale.h"
 
+#define	ADMIN_LOG_FILE_NAME							string(LOGDIR) + DOMAIN_NAME + ".admin"
+
 #endif

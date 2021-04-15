@@ -4,7 +4,8 @@
 #include "utilities.h"
 #include "utilities_sql_queries.h"
 
-string			GetDefaultActionLoggedinUser(void);
+// --- HTML definition
+#define	HTML_MAX_POLL_URL_LENGTH					512
 
 string      	GetUserListInJSONFormat(string dbQuery, CMysql *, CUser *);
 string 			GetNewsFeedInJSONFormat(string whereStatement, int currPage, int newsOnSinglePage, CUser *, CMysql *);

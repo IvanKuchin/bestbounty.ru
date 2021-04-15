@@ -4874,7 +4874,7 @@ string  GetUserNotificationInJSONFormat(string sqlRequest, CMysql *db, CUser *us
 			ostUserNotifications << "\"notificationActionID\":\"" << it.feed_actionId << "\",";
 			ostUserNotifications << "\"notificationStatus\":\"" << it.notificationStatus << "\"";
 
-			userNotificationEnrichment = GetUserNotificationSpecificDataByType(atol(it.feed_actionTypeId.c_str()), atol(it.feed_actionId.c_str()), db, user);
+			userNotificationEnrichment = GetUserNotificationSpecificDataByType(stol(it.feed_actionTypeId), stol(it.feed_actionId), db, user);
 			if(userNotificationEnrichment.length()) ostUserNotifications << "," << userNotificationEnrichment;
 
 			ostUserNotifications << "}";
