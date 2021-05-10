@@ -342,7 +342,7 @@ int main()
 			CLog	log;
 
 			log.Write(ERROR, string(__func__) + string("[") + to_string(__LINE__) + "]: can't connect to DB");
-			throw CExceptionHTML("MySql connection");
+			throw CException("MySql connection");
 		}
 
 		indexPage.SetDB(&db);
