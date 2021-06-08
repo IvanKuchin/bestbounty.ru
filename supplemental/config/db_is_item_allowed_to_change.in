@@ -9,4 +9,4 @@ university	= SELECT `id` FROM `university`			WHERE `id`="<<var:itemID>>" AND `<<
 ribbon		= SELECT `id` FROM `ribbons`			WHERE `id`="<<var:itemID>>" AND `<<config:db_field_name_photo_filename:<<var:itemType>>>>`="";
 
 event		= SELECT `id` FROM `event_hosts`		WHERE `event_id`="<<var:itemID>>" AND `user_id`="<<var:user_id>>";
-gift		= SELECT `id` FROM `gift`			WHERE `id`="<<var:itemID>>" AND `user_id`="<<var:user_id>>";
+gift		= SELECT `id` FROM `gifts`			WHERE `id`="<<var:itemID>>" AND `user_id`="<<var:user_id>>";
