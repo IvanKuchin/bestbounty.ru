@@ -1,5 +1,4 @@
 set(EXECUTABLE_CGIs_with_PD_PI_LIBS
-    admin.cgi
     index.cgi
     company.cgi
     event.cgi
@@ -80,16 +79,14 @@ endforeach()
 
 # --- Install part
 
-install(TARGETS index.cgi			DESTINATION		${CGIDIR})
-install(TARGETS company.cgi			DESTINATION		${CGIDIR})
-install(TARGETS event.cgi	        DESTINATION		${CGIDIR})
-install(TARGETS gift.cgi            DESTINATION     ${CGIDIR})
-install(TARGETS group.cgi           DESTINATION		${CGIDIR})
-install(TARGETS system.cgi          DESTINATION     ${CGIDIR})
-install(TARGETS anyrole_1.cgi       DESTINATION     ${CGIDIR})
+install(TARGETS index.cgi			DESTINATION	${CGIDIR} COMPONENT app)
+install(TARGETS company.cgi			DESTINATION	${CGIDIR} COMPONENT app)
+install(TARGETS event.cgi	        DESTINATION	${CGIDIR} COMPONENT app)
+install(TARGETS gift.cgi            DESTINATION ${CGIDIR} COMPONENT app)
+install(TARGETS group.cgi           DESTINATION	${CGIDIR} COMPONENT app)
+install(TARGETS system.cgi          DESTINATION ${CGIDIR} COMPONENT app)
+install(TARGETS anyrole_1.cgi       DESTINATION ${CGIDIR} COMPONENT app)
 
-install(TARGETS admin.cgi           DESTINATION     ${CGIADMINDIR})
-
-install(TARGETS cron_daily_pd			DESTINATION		${CRON_INSTALL_DIR})
+install(TARGETS cron_daily_pd		DESTINATION	${CRON_INSTALL_DIR} COMPONENT cron)
 
 # print_all_variables()

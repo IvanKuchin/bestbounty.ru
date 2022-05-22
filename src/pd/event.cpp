@@ -47,7 +47,7 @@ int main()
 
 		indexPage.ParseURL();
 
-		if(!indexPage.SetTemplate("index.htmlt"))
+		if(!indexPage.SetProdTemplate("index.htmlt"))
 		{
 			MESSAGE_DEBUG("", action, "template file was missing");
 			throw CException("Template file was missing");
@@ -93,7 +93,7 @@ int main()
 			{
 				string		template_name = action.substr(0, action.length() - 9) + ".htmlt";
 
-				if(!indexPage.SetTemplate(template_name))
+				if(!indexPage.SetProdTemplate(template_name))
 				{
 					MESSAGE_ERROR("", action, "can't find template " + template_name);
 				}
@@ -123,7 +123,7 @@ int main()
 				indexPage.RegisterVariableForce("myLastName", user.GetNameLast());
 
 
-				if(!indexPage.SetTemplate("events_list.htmlt"))
+				if(!indexPage.SetProdTemplate("events_list.htmlt"))
 				{
 					MESSAGE_DEBUG("", action, "can't find template");
 					throw CExceptionHTML("user not activated");
@@ -199,7 +199,7 @@ int main()
 
 			indexPage.RegisterVariableForce("result", ostFinal.str());
 
-			if(!indexPage.SetTemplate("json_response.htmlt"))
+			if(!indexPage.SetProdTemplate("json_response.htmlt"))
 			{
 				MESSAGE_DEBUG("", action, "template file json_response.htmlt was missing");
 				throw CException("Template file was missing");
@@ -272,11 +272,11 @@ int main()
 
 			indexPage.RegisterVariableForce("result", ostResult.str());
 
-			if(!indexPage.SetTemplate("json_response.htmlt"))
+			if(!indexPage.SetProdTemplate("json_response.htmlt"))
 			{
 				MESSAGE_DEBUG("", action, "template file json_response.htmlt was missing");
 				throw CException("Template file json_response.htmlt was missing");
-			}  // if(!indexPage.SetTemplate("AJAX_precreateNewOpenVacancy.htmlt"))
+			}  // if(!indexPage.SetProdTemplate("AJAX_precreateNewOpenVacancy.htmlt"))
 
 			MESSAGE_DEBUG("", action, "start");
 		}
@@ -350,7 +350,7 @@ int main()
 
 			indexPage.RegisterVariableForce("result", ostFinal.str());
 
-			if(!indexPage.SetTemplate("json_response.htmlt"))
+			if(!indexPage.SetProdTemplate("json_response.htmlt"))
 			{
 				MESSAGE_DEBUG("", action, "template file json_response.htmlt was missing");
 				throw CException("Template file was missing");
@@ -421,7 +421,7 @@ int main()
 
 			indexPage.RegisterVariableForce("title", "Редактирование события");
 
-			if(!indexPage.SetTemplate("edit_event.htmlt"))
+			if(!indexPage.SetProdTemplate("edit_event.htmlt"))
 			{
 				MESSAGE_DEBUG("", action, "template file edit_event.htmlt was missing");
 				throw CException("Template file edit_event.htmlt was missing");
@@ -502,7 +502,7 @@ int main()
 
 			indexPage.RegisterVariableForce("result", ostFinal.str());
 
-			if(!indexPage.SetTemplate("json_response.htmlt"))
+			if(!indexPage.SetProdTemplate("json_response.htmlt"))
 			{
 				MESSAGE_DEBUG("", action, "template file json_response.htmlt was missing");
 				throw CException("Template file was missing");
@@ -583,7 +583,7 @@ int main()
 
 			indexPage.RegisterVariableForce("result", ostFinal.str());
 
-			if(!indexPage.SetTemplate("json_response.htmlt"))
+			if(!indexPage.SetProdTemplate("json_response.htmlt"))
 			{
 				MESSAGE_DEBUG("", action, "template file json_response.htmlt was missing");
 				throw CException("Template file was missing");
@@ -732,7 +732,7 @@ int main()
 
 			indexPage.RegisterVariableForce("result", ostFinal.str());
 
-			if(!indexPage.SetTemplate("json_response.htmlt"))
+			if(!indexPage.SetProdTemplate("json_response.htmlt"))
 			{
 				MESSAGE_DEBUG("", action, "template file json_response.htmlt was missing");
 				throw CException("Template file was missing");
@@ -894,7 +894,7 @@ int main()
 
 			indexPage.RegisterVariableForce("result", ostFinal.str());
 
-			if(!indexPage.SetTemplate("json_response.htmlt"))
+			if(!indexPage.SetProdTemplate("json_response.htmlt"))
 			{
 				MESSAGE_DEBUG("", action, "template file json_response.htmlt was missing");
 				throw CException("Template file was missing");
@@ -1030,7 +1030,7 @@ int main()
 
 			indexPage.RegisterVariableForce("result", ostFinal.str());
 
-			if(!indexPage.SetTemplate("json_response.htmlt"))
+			if(!indexPage.SetProdTemplate("json_response.htmlt"))
 			{
 				MESSAGE_DEBUG("", action, "template file json_response.htmlt was missing");
 				throw CException("Template file was missing");
@@ -1135,7 +1135,7 @@ int main()
 
 			indexPage.RegisterVariableForce("result", ostFinal.str());
 
-			if(!indexPage.SetTemplate("json_response.htmlt"))
+			if(!indexPage.SetProdTemplate("json_response.htmlt"))
 			{
 				MESSAGE_DEBUG("", action, "template file json_response.htmlt was missing");
 				throw CException("Template file was missing");
@@ -1215,7 +1215,7 @@ int main()
 
 			indexPage.RegisterVariableForce("result", ostFinal.str());
 
-			if(!indexPage.SetTemplate("json_response.htmlt"))
+			if(!indexPage.SetProdTemplate("json_response.htmlt"))
 			{
 				MESSAGE_DEBUG("", action, "template file json_response.htmlt was missing");
 				throw CException("Template file was missing");
@@ -1293,7 +1293,7 @@ int main()
 
 			indexPage.RegisterVariableForce("result", ostFinal.str());
 
-			if(!indexPage.SetTemplate("json_response.htmlt"))
+			if(!indexPage.SetProdTemplate("json_response.htmlt"))
 			{
 				MESSAGE_DEBUG("", action, "template file json_response.htmlt was missing");
 				throw CException("Template file was missing");
@@ -1343,13 +1343,13 @@ int main()
 
 			indexPage.RegisterVariableForce("result", ostResult.str());
 
-			if(!indexPage.SetTemplate("json_response.htmlt"))
+			if(!indexPage.SetProdTemplate("json_response.htmlt"))
 			{
 				{
 					MESSAGE_DEBUG("", action, "template file json_response.htmlt was missing");
 				}
 				throw CException("Template file json_response.htmlt was missing");
-			}  // if(!indexPage.SetTemplate("AJAX_precreateNewOpenVacancy.htmlt"))
+			}  // if(!indexPage.SetProdTemplate("AJAX_precreateNewOpenVacancy.htmlt"))
 
 			MESSAGE_DEBUG("", action, "start");
 		}
@@ -1401,7 +1401,7 @@ int main()
 			}
 
 			indexPage.RegisterVariableForce("result", ostResult.str());
-			if(!indexPage.SetTemplate("json_response.htmlt"))
+			if(!indexPage.SetProdTemplate("json_response.htmlt"))
 			{
 				MESSAGE_ERROR("", action, "can't find template json_response.htmlt");
 				throw CExceptionHTML("user not activated");
@@ -1485,7 +1485,7 @@ int main()
 				}
 
 				indexPage.RegisterVariableForce("result", ostResult.str());
-				if(!indexPage.SetTemplate("json_response.htmlt"))
+				if(!indexPage.SetProdTemplate("json_response.htmlt"))
 				{
 					MESSAGE_ERROR("", action, "can't find template json_response.htmlt");
 					throw CExceptionHTML("user not activated");
@@ -1683,7 +1683,7 @@ int main()
 			}
 
 			indexPage.RegisterVariableForce("result", ostResult.str());
-			if(!indexPage.SetTemplate("json_response.htmlt"))
+			if(!indexPage.SetProdTemplate("json_response.htmlt"))
 			{
 				MESSAGE_ERROR("", action, "can't find template json_response.htmlt");
 				throw CExceptionHTML("user not activated");
@@ -1757,7 +1757,7 @@ int main()
 
 			indexPage.RegisterVariableForce("result", ostFinal.str());
 
-			if(!indexPage.SetTemplate("json_response.htmlt"))
+			if(!indexPage.SetProdTemplate("json_response.htmlt"))
 			{
 				MESSAGE_DEBUG("", action, "template file json_response.htmlt was missing");
 				throw CException("Template file was missing");
@@ -2063,7 +2063,7 @@ int main()
 
 			indexPage.RegisterVariableForce("result", ostFinal.str());
 
-			if(!indexPage.SetTemplate("json_response.htmlt"))
+			if(!indexPage.SetProdTemplate("json_response.htmlt"))
 			{
 				MESSAGE_DEBUG("", action, "template file json_response.htmlt was missing");
 				throw CException("Template file was missing");
@@ -2078,7 +2078,7 @@ int main()
 
 			indexPage.RegisterVariableForce("title", "Новое событие");
 
-			if(!indexPage.SetTemplate("create_event.htmlt"))
+			if(!indexPage.SetProdTemplate("create_event.htmlt"))
 			{
 				MESSAGE_DEBUG("", action, "template file createnewevent.htmlt was missing");
 				throw CException("Template file createnewevent.htmlt was missing");
@@ -2347,7 +2347,7 @@ int main()
 
 			indexPage.RegisterVariableForce("result", result);
 
-			if(!indexPage.SetTemplate(template_name)) MESSAGE_ERROR("", action, "can't find template " + template_name);
+			if(!indexPage.SetProdTemplate(template_name)) MESSAGE_ERROR("", action, "can't find template " + template_name);
 		}
 		if(action == "AJAX_getChecklistTitleAutocompleteList")
 		{
@@ -2391,7 +2391,7 @@ int main()
 
 			indexPage.RegisterVariableForce("result", result);
 
-			if(!indexPage.SetTemplate(template_name)) MESSAGE_ERROR("", action, "can't find template " + template_name);
+			if(!indexPage.SetProdTemplate(template_name)) MESSAGE_ERROR("", action, "can't find template " + template_name);
 		}
 
 		MESSAGE_DEBUG("", "", "post-condition if(action == \"" + action + "\")");
@@ -2407,7 +2407,7 @@ int main()
 
 		c.SetDB(&db);
 
-		if(!indexPage.SetTemplate(c.GetTemplate())) 
+		if(!indexPage.SetProdTemplate(c.GetTemplate())) 
 		{
 			MESSAGE_ERROR("", "", "catch CRedirectHTML: ERROR, template redirect.htmlt not found");
 			throw CException("Template file was missing");
@@ -2425,7 +2425,7 @@ int main()
 
 		MESSAGE_DEBUG("", action, "catch CExceptionHTML: DEBUG exception reason: [" + c.GetReason() + "]");
 
-		if(!indexPage.SetTemplate(c.GetTemplate()))
+		if(!indexPage.SetProdTemplate(c.GetTemplate()))
 		{
 			MESSAGE_ERROR("", "", "template (" + c.GetTemplate() + ") not found");
 			return(-1);
@@ -2440,7 +2440,7 @@ int main()
 	{
 		MESSAGE_ERROR("", action, "catch CException: exception: ERROR  " + c.GetReason());
 
-		if(!indexPage.SetTemplateFile("templates/error.htmlt"))
+		if(!indexPage.SetProdTemplate("error.htmlt"))
 		{
 			MESSAGE_ERROR("", "", "template not found");
 			return(-1);
@@ -2455,7 +2455,7 @@ int main()
 	{
 		MESSAGE_ERROR("", action, "catch(exception& e): catch standard exception: ERROR  " + e.what());
 
-		if(!indexPage.SetTemplateFile("templates/error.htmlt"))
+		if(!indexPage.SetProdTemplate("error.htmlt"))
 		{
 			MESSAGE_ERROR("", "", "template not found");
 			return(-1);
