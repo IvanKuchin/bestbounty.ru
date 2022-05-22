@@ -1,5 +1,4 @@
 set(EXECUTABLE_CGIs_with_PD_PI_LIBS
-    admin.cgi
     index.cgi
     company.cgi
     event.cgi
@@ -87,8 +86,6 @@ install(TARGETS gift.cgi            DESTINATION     ${CGIDIR})
 install(TARGETS group.cgi           DESTINATION		${CGIDIR})
 install(TARGETS system.cgi          DESTINATION     ${CGIDIR})
 install(TARGETS anyrole_1.cgi       DESTINATION     ${CGIDIR})
-
-install(TARGETS admin.cgi           DESTINATION     ${CGIADMINDIR})
 
 install(TARGETS cron_daily_pd			DESTINATION		${CRON_INSTALL_DIR})
 
