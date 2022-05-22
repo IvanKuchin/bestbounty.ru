@@ -308,7 +308,7 @@ int main()
 
 			if(!indexPage.SetProdTemplate("autologin.htmlt"))
 			{
-				MESSAGE_ERROR("", action, " template file index.htmlt was missing");
+				MESSAGE_ERROR("", action, " template file autologin.htmlt was missing");
 				throw CException("Template file was missing");
 			}
 
@@ -4160,7 +4160,7 @@ int main()
 
 								if(!indexPage.SetProdTemplate("activator_regNewUser.htmlt"))
 								{
-									MESSAGE_ERROR("", action, "template file index.htmlt was missing");
+									MESSAGE_ERROR("", action, "template file activator_regNewUser.htmlt was missing");
 									throw CException("Template file was missing");
 								} // if(!indexPage.SetProdTemplate("activator_regNewUser.htmlt"))
 
