@@ -1309,7 +1309,7 @@ int main()
 	{
 		MESSAGE_ERROR("", action, "catch CException: exception: ERROR  " + c.GetReason());
 
-		if(!indexPage.SetProdTemplateFile("templates/error.htmlt"))
+		if(!indexPage.SetProdTemplate("error.htmlt"))
 		{
 			MESSAGE_ERROR("", "", "template not found");
 			return(-1);
@@ -1324,7 +1324,7 @@ int main()
 	{
 		MESSAGE_ERROR("", action, "catch(exception& e): catch standard exception: ERROR  " + e.what());
 
-		if(!indexPage.SetProdTemplateFile("templates/error.htmlt"))
+		if(!indexPage.SetProdTemplate("error.htmlt"))
 		{
 			MESSAGE_ERROR("", "", "template not found");
 			return(-1);
