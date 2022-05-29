@@ -1,7 +1,0 @@
-IMAGEAVATARDIR 			=> "IMAGEROOTDIR_HTML/images/avatars/",
-IMAGEEVENTDIR 			=> "IMAGEROOTDIR_HTML/images/events/",
-IMAGEGIFTDIR 			=> "IMAGEROOTDIR_HTML/images/gifts/",
-IMAGECAPTCHADIR 		=> "IMAGEROOTDIR_HTML/images/captcha/",
-IMAGEFEEDDIR 			=> "IMAGEROOTDIR_HTML/images/feed/",
-IMAGETEMPDIR 			=> "IMAGEROOTDIR_HTML/images/temp/", # --- temp images downloaded as a part of pulling info out of 3-rd party site
-VIDEOFEEDDIR 			=> "IMAGEROOTDIR_HTML/video/feed/",
