@@ -1,3 +1,3 @@
 # enumerate actions using comma
 
-__default__	=
+__default__	= API_login
