@@ -5,7 +5,6 @@ autocomplete
 autocompleted
 Autodetect
 autologin
-BESTBOUNTY
 bestbounty
 btn
 cactivator
