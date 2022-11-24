@@ -40,16 +40,10 @@ jobs:
       # Run check spelling action #
       #############################
       - name: Check spelling
-        uses: check-spelling/check-spelling@master
+        uses: check-spelling/check-spelling@main
         with:
           bucket: .github/actions
           project: spelling
-          extra_dictionaries:
-            cspell:filetypes/filetypes.txt
-            cspell:django/django.txt
-            cspell:aws/aws.txt
-            cspell:golang/go.txt
-            cspell:npm/npm.txt
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           
