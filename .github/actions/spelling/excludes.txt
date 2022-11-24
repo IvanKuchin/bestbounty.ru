@@ -1,0 +1,4 @@
+^\Qsrc/pd/include/anyrole.h\E$
+^\Qsrc/pd/include/event.h\E$
+^\Qsrc/pd/include/gift.h\E$
+^\Qsrc/pd/include/index.h\E$

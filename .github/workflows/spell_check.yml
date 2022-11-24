@@ -44,12 +44,6 @@ jobs:
         with:
           bucket: .github/actions
           project: spelling
-          extra_dictionaries:
-            cspell:filetypes/filetypes.txt
-            cspell:django/django.txt
-            cspell:aws/aws.txt
-            cspell:golang/go.txt
-            cspell:npm/npm.txt
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           
