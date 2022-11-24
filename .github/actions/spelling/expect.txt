@@ -663,14 +663,4 @@ executables
 Wkhtml
 multiline
 Flawfinder
-CHTML
-DBby
-Dest
-HDR
-HTTP
-IDBy
-LEN
-REFERER
-Unsubscribe
-Vec
-XXXX
+
