@@ -650,7 +650,6 @@ xxxx
 xxxxxxxx
 xxxxxxxxxxxx
 yxxx
-
 bestbounty
 BESTBOUNTY
 createnewevent
@@ -664,8 +663,6 @@ executables
 Wkhtml
 multiline
 Flawfinder
-
-
 CHTML
 DBby
 Dest
